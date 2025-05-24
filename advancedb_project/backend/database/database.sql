@@ -1,9 +1,6 @@
-CREATE DATABASE IF NOT EXISTS LabaRide_DB;
-USE LabaRide_DB;
-
--- User table
+-- Users table
 CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
@@ -14,16 +11,16 @@ CREATE TABLE users (
     street VARCHAR(255),
     barangay VARCHAR(255),
     building VARCHAR(255),
-    is_shop_owner BOOLEAN DEFAULT FALSE, -- 0 = False, 1 = True
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    is_shop_owner BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
-#Transaction table
+-- Transactions table
 CREATE TABLE transactions (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
-    shop_id INT NOT NULL,
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    shop_id INTEGER NOT NULL,
     user_name VARCHAR(255) NOT NULL,
     user_email VARCHAR(255) NOT NULL,
     user_phone VARCHAR(20),
@@ -40,18 +37,18 @@ CREATE TABLE transactions (
     building VARCHAR(255) NOT NULL,
     scheduled_date DATE NOT NULL,
     scheduled_time TIME NOT NULL,
-    payment_method VARCHAR(50) NOT NULL DEFAULT 'Cash on Delivery',
+    payment_method VARCHAR(50) DEFAULT 'Cash on Delivery',
     notes TEXT,
-    status ENUM('Pending', 'Processing', 'Completed', 'Cancelled') DEFAULT 'Pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(20) DEFAULT 'Pending',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (shop_id) REFERENCES shops(id)
 );
 
-#Shop table
+-- Shops table
 CREATE TABLE shops (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    user_id INT NOT NULL,
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
     shop_name VARCHAR(255) NOT NULL,
     contact_number VARCHAR(20) NOT NULL,
     zone VARCHAR(255) NOT NULL,
@@ -60,36 +57,31 @@ CREATE TABLE shops (
     building VARCHAR(255),
     opening_time VARCHAR(20) NOT NULL,
     closing_time VARCHAR(20) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    latitude DOUBLE,
-    longitude DOUBLE,
-    address VARCHAR(255)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    latitude DOUBLE PRECISION,
+    longitude DOUBLE PRECISION,
+    address VARCHAR(255),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS shop_services (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    shop_id INT NOT NULL,
+-- Shop services table
+CREATE TABLE shop_services (
+    id SERIAL PRIMARY KEY,
+    shop_id INTEGER NOT NULL,
     service_name VARCHAR(255) NOT NULL,
     price DECIMAL(10,2) DEFAULT 0,
     color VARCHAR(255),
     FOREIGN KEY (shop_id) REFERENCES shops(id)
 );
 
-CREATE TABLE IF NOT EXISTS kilo_prices (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    shop_id INT NOT NULL,
+-- Kilo prices table
+CREATE TABLE kilo_prices (
+    id SERIAL PRIMARY KEY,
+    shop_id INTEGER NOT NULL,
     min_kilo DECIMAL(10,2) NOT NULL,
     max_kilo DECIMAL(10,2) NOT NULL,
     price_per_kilo DECIMAL(10,2) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (shop_id) REFERENCES shops(id),
-    UNIQUE KEY unique_range (shop_id, min_kilo, max_kilo)
+    UNIQUE (shop_id, min_kilo, max_kilo)
 );
-
-
-select * from users;
-select * from shops;
-select * from transactions;
-select * from shop_services;
-select * from kilo_prices;
