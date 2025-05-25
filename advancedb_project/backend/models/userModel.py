@@ -30,64 +30,44 @@ class User:
         }
     
     def get_user_shop(self, user_id):
-        conn = create_connection()
-        if not conn:
-            return None
-            
         try:
-            cursor = conn.cursor(dictionary=True)
-            query = """
-                SELECT s.* 
-                FROM shops s
-                WHERE s.user_id = %s
-            """
-            cursor.execute(query, (user_id,))
-            return cursor.fetchone()
-        finally:
-            if conn.is_connected():
-                cursor.close()
-                conn.close()
+            supabase = create_connection()
+            response = supabase.table('shops')\
+                .select('*')\
+                .eq('user_id', user_id)\
+                .single()\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error getting user shop: {e}")
+            return None
 
     def create_shop(self, user_id, shop_data):
-        conn = create_connection()
-        if not conn:
-            return None
-            
         try:
-            cursor = conn.cursor()
-            cursor.execute('START TRANSACTION')
+            supabase = create_connection()
             
-            shop_query = """
-                INSERT INTO shops (
-                    user_id, shop_name, contact_number, zone, 
-                    street, barangay, building, opening_time, closing_time
-                ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-            """
-            shop_values = (
-                user_id,
-                shop_data['shop_name'],
-                shop_data['contact_number'],
-                shop_data['zone'],
-                shop_data['street'],
-                shop_data['barangay'],
-                shop_data.get('building'),
-                shop_data['opening_time'],
-                shop_data['closing_time']
-            )
-            cursor.execute(shop_query, shop_values)
-            shop_id = cursor.lastrowid
+            # Insert shop data
+            shop_insert = supabase.table('shops').insert({
+                'user_id': user_id,
+                'shop_name': shop_data['shop_name'],
+                'contact_number': shop_data['contact_number'],
+                'zone': shop_data['zone'],
+                'street': shop_data['street'],
+                'barangay': shop_data['barangay'],
+                'building': shop_data.get('building'),
+                'opening_time': shop_data['opening_time'],
+                'closing_time': shop_data['closing_time']
+            }).execute()
             
-            cursor.execute(
-                "UPDATE users SET is_shop_owner = TRUE WHERE id = %s",
-                (user_id,)
-            )
+            shop_id = shop_insert.data[0]['id']
             
-            cursor.execute('COMMIT')
+            # Update user to shop owner
+            supabase.table('users')\
+                .update({'is_shop_owner': True})\
+                .eq('id', user_id)\
+                .execute()
+            
             return shop_id
-        except:
-            cursor.execute('ROLLBACK')
+        except Exception as e:
+            print(f"Error creating shop: {e}")
             raise
-        finally:
-            if conn.is_connected():
-                cursor.close()
-                conn.close()

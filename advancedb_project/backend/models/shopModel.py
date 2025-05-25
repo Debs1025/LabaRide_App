@@ -5,55 +5,34 @@ class ShopModel:
         pass
 
     def get_shop_by_user(self, user_id):
-        conn = create_connection()
         try:
-            cursor = conn.cursor(dictionary=True)
-            cursor.execute("""
-                SELECT s.*, ss.service_name, ss.price
-                FROM shops s
-                LEFT JOIN shop_services ss ON s.id = ss.shop_id
-                WHERE s.user_id = %s
-            """, (user_id,))
-            return cursor.fetchall()
-        finally:
-            if conn and conn.is_connected():
-                cursor.close()
-                conn.close()
+            supabase = create_connection()
+            response = supabase.table('shops')\
+                .select('*, shop_services(*)')\
+                .eq('user_id', user_id)\
+                .execute()
+            return response.data
+        except Exception as e:
+            print(f"Error getting shop: {e}")
+            return None
 
     def update_shop_details(self, shop_id, data):
-        conn = create_connection()
-        if not conn:
-            return False
-            
         try:
-            cursor = conn.cursor()
-            query = """
-                UPDATE shops 
-                SET shop_name = %s,
-                    contact_number = %s,
-                    zone = %s,
-                    street = %s,
-                    barangay = %s,
-                    building = %s,
-                    opening_time = %s,
-                    closing_time = %s
-                WHERE id = %s
-            """
-            values = (
-                data['shop_name'],
-                data['contact_number'],
-                data['zone'],
-                data['street'],
-                data['barangay'],
-                data.get('building'),
-                data['opening_time'],
-                data['closing_time'],
-                shop_id
-            )
-            cursor.execute(query, values)
-            conn.commit()
-            return True
-        finally:
-            if conn.is_connected():
-                cursor.close()
-                conn.close()
+            supabase = create_connection()
+            response = supabase.table('shops')\
+                .update({
+                    'shop_name': data['shop_name'],
+                    'contact_number': data['contact_number'],
+                    'zone': data['zone'],
+                    'street': data['street'],
+                    'barangay': data['barangay'],
+                    'building': data.get('building'),
+                    'opening_time': data['opening_time'],
+                    'closing_time': data['closing_time']
+                })\
+                .eq('id', shop_id)\
+                .execute()
+            return True if response.data else False
+        except Exception as e:
+            print(f"Error updating shop: {e}")
+            return False

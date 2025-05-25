@@ -163,55 +163,42 @@ def delete_account(user_id):
 @app.route('/register_shop/<int:user_id>', methods=['POST'])
 @jwt_required
 def register_shop(user_id):
-    connection = None
     try:
         data = request.json
         if not data:
             return jsonify({'status': 400, 'message': 'No data provided'}), 400
 
-        # Update required fields (remove services)
         required_fields = ['shop_name', 'contact_number', 'zone', 'street', 
                          'barangay', 'opening_time', 'closing_time']
         
         # Validate required fields
         for field in required_fields:
             if field not in data:
-                return jsonify({
-                    'status': 400, 
-                    'message': f'Missing required field: {field}'
-                }), 400
+                return jsonify({'status': 400, 'message': f'Missing {field}'}), 400
 
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-
-        # Create shop without services
-        shop_query = """
-            INSERT INTO shops (
-                user_id, shop_name, contact_number, zone, street, 
-                barangay, building, opening_time, closing_time
-            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        cursor.execute(shop_query, (
-            user_id,
-            data['shop_name'],
-            data['contact_number'],
-            data['zone'],
-            data['street'],
-            data['barangay'],
-            data.get('building'),
-            data['opening_time'],
-            data['closing_time']
-        ))
+        supabase = create_connection()
         
-        shop_id = cursor.lastrowid
+        # Create shop
+        shop_data = {
+            'user_id': user_id,
+            'shop_name': data['shop_name'],
+            'contact_number': data['contact_number'],
+            'zone': data['zone'],
+            'street': data['street'],
+            'barangay': data['barangay'],
+            'building': data.get('building'),
+            'opening_time': data['opening_time'],
+            'closing_time': data['closing_time']
+        }
+        
+        response = supabase.table('shops').insert(shop_data).execute()
+        shop_id = response.data[0]['id']
 
         # Update user to shop owner
-        cursor.execute(
-            "UPDATE users SET is_shop_owner = TRUE WHERE id = %s",
-            (user_id,)
-        )
+        supabase.table('users').update({
+            'is_shop_owner': True
+        }).eq('id', user_id).execute()
         
-        connection.commit()
         return jsonify({
             'status': 201,
             'message': 'Shop registered successfully',
@@ -219,134 +206,56 @@ def register_shop(user_id):
         }), 201
 
     except Exception as e:
-        if connection:
-            connection.rollback()
         return jsonify({'status': 500, 'message': f'Error: {str(e)}'}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 @app.route('/shops', methods=['GET'])
 def get_shops():
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        query = """
-            SELECT s.*, u.name as owner_name, u.email as owner_email,
-                   GROUP_CONCAT(
-                       JSON_OBJECT(
-                           'name', ss.service_name,
-                           'price', ss.price
-                       )
-                   ) as services
-            FROM shops s
-            JOIN users u ON s.user_id = u.id
-            LEFT JOIN shop_services ss ON s.id = ss.shop_id
-            GROUP BY s.id
-        """
-        cursor.execute(query)
-        shops = cursor.fetchall()
-        
-        return jsonify({"shops": shops}), 200
+        supabase = create_connection()
+        response = supabase.table('shops')\
+            .select('*, users!inner(name, email), shop_services(*)')\
+            .execute()
+        return jsonify({"shops": response.data}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
-
-@app.route('/shop/user/<int:user_id>', methods=['GET'])
-@jwt_required
-def get_user_shop(user_id):
-    connection = None
-    try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        print(f"DEBUG: Checking shop for user_id: {user_id}")
-        
-        cursor.execute("""
-            SELECT * FROM shops WHERE user_id = %s
-        """, (user_id,))
-        
-        shop = cursor.fetchone()
-        print(f"DEBUG: Shop query result: {shop}")
-        
-        if shop:
-            return jsonify(shop), 200
-        return jsonify({}), 404
-        
-    except Exception as e:
-        print(f"DEBUG: Error in get_user_shop: {str(e)}")
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 @app.route('/shops/recent', methods=['GET'])
 def get_recent_shops():
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        # Query to fetch the most recent shops
-        query = """
-            SELECT id, shop_name, contact_number, zone, street, barangay, building, 
-                opening_time, closing_time, created_at
-            FROM shops
-            ORDER BY created_at DESC
-            LIMIT 10
-        """
-        cursor.execute(query)
-        shops = cursor.fetchall()
-        
-        return jsonify(shops), 200
+        supabase = create_connection()
+        response = supabase.table('shops')\
+            .select('id, shop_name, contact_number, zone, street, barangay, building, opening_time, closing_time, created_at')\
+            .order('created_at', desc=True)\
+            .limit(10)\
+            .execute()
+        return jsonify(response.data), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()       
+        return jsonify({'error': str(e)}), 500     
             
 @app.route('/shop/<int:shop_id>', methods=['GET'])
 @jwt_required
 def get_shop_by_id(shop_id):
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        # Get shop details
-        cursor.execute("""
-            SELECT id, shop_name, contact_number, zone, street, barangay, 
-                   building, opening_time, closing_time, created_at 
-            FROM shops
-            WHERE id = %s
-        """, (shop_id,))
-        
-        shop = cursor.fetchone()
-        
-        if not shop:
-            return jsonify({'error': 'Shop not found'}), 404
+        supabase = create_connection()
+        response = supabase.table('shops')\
+            .select('id, shop_name, contact_number, zone, street, barangay, building, opening_time, closing_time, created_at')\
+            .eq('id', shop_id)\
+            .single()\
+            .execute()
+            
+        if not response.data:
+            return jsonify({'message': 'Shop not found'}), 404
 
+        shop = response.data
         # Format datetime for JSON
-        if shop and 'created_at' in shop:
-            shop['created_at'] = shop['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+        if 'created_at' in shop:
+            shop['created_at'] = datetime.fromisoformat(shop['created_at']).strftime('%Y-%m-%d %H:%M:%S')
             
         return jsonify(shop)
         
     except Exception as e:
-        print(f"Error fetching shop {shop_id}: {str(e)}")  # Debug log
+        print(f"Error fetching shop {shop_id}: {str(e)}")
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
             
 # Transaction Routes
 @app.route('/create_transaction/<int:user_id>', methods=['POST'])
@@ -379,86 +288,35 @@ def create_transaction(user_id):
 @app.route('/user_transactions/<int:user_id>', methods=['GET'])
 @jwt_required
 def get_user_transactions(user_id):
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        # Query to get user's transactions with shop details
-        query = """
-            SELECT t.*, s.shop_name
-            FROM transactions t
-            JOIN shops s ON t.shop_id = s.id
-            WHERE t.user_id = %s
-            ORDER BY t.created_at DESC
-        """
-        cursor.execute(query, (user_id,))
-        transactions = cursor.fetchall()
-        
-        # Convert decimal values to strings for JSON serialization
-        for transaction in transactions:
-            if 'total_amount' in transaction:
-                transaction['total_amount'] = str(transaction['total_amount'])
-            if 'created_at' in transaction:
-                transaction['created_at'] = transaction['created_at'].strftime('%Y-%m-%d %H:%M:%S')
-        
+        supabase = create_connection()
+        response = supabase.table('transactions')\
+            .select('*, shops(shop_name)')\
+            .eq('user_id', user_id)\
+            .order('created_at', desc=True)\
+            .execute()
+            
+        transactions = response.data
         return jsonify({'status': 'success', 'data': transactions}), 200
-        
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
-
-from datetime import datetime, timedelta
 
 @app.route('/shop_transactions/<int:shop_id>', methods=['GET'])
 @jwt_required
 def get_shop_transactions(shop_id):
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        query = """
-            SELECT t.*, u.name as customer_name, u.email as customer_email
-            FROM transactions t
-            JOIN users u ON t.user_id = u.id
-            WHERE t.shop_id = %s
-            ORDER BY t.created_at DESC
-        """
-        cursor.execute(query, (shop_id,))
-        transactions = cursor.fetchall()
-        
-        # Convert datetime, timedelta, and Decimal objects to JSON serializable format
-        formatted_transactions = []
-        for transaction in transactions:
-            formatted_transaction = {}
-            for key, value in transaction.items():
-                if isinstance(value, datetime):
-                    formatted_transaction[key] = value.strftime('%Y-%m-%d %H:%M:%S')
-                elif isinstance(value, timedelta):
-                    total_seconds = int(value.total_seconds())
-                    hours = total_seconds // 3600
-                    minutes = (total_seconds % 3600) // 60
-                    seconds = total_seconds % 60
-                    formatted_transaction[key] = f"{hours:02}:{minutes:02}:{seconds:02}"
-                elif isinstance(value, Decimal):
-                    formatted_transaction[key] = float(value)
-                else:
-                    formatted_transaction[key] = value
-            formatted_transactions.append(formatted_transaction)
-
-        return jsonify({"transactions": formatted_transactions}), 200
-        
+        supabase = create_connection()
+        response = supabase.table('transactions')\
+            .select('*, users!inner(name:customer_name, email:customer_email)')\
+            .eq('shop_id', shop_id)\
+            .order('created_at', desc=True)\
+            .execute()
+            
+        transactions = response.data
+        return jsonify({"transactions": transactions}), 200
     except Exception as e:
         print(f"Error fetching transactions: {e}")
         return jsonify({"error": str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 @app.route('/update_transaction_status/<string:transaction_id>', methods=['PUT'])
 @jwt_required
@@ -503,539 +361,300 @@ def cancel_transaction(transaction_id):
 @app.route('/user/<int:user_id>/has_shop', methods=['GET'])
 @jwt_required
 def check_user_shop(user_id):
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        cursor.execute('SELECT is_shop_owner FROM users WHERE id = %s', (user_id,))
-        result = cursor.fetchone()
-        
-        if result:
+        supabase = create_connection()
+        response = supabase.table('users')\
+            .select('is_shop_owner')\
+            .eq('id', user_id)\
+            .single()\
+            .execute()
+            
+        if response.data:
             return jsonify({
-                'has_shop': result['is_shop_owner']
+                'has_shop': response.data['is_shop_owner']
             }), 200
         return jsonify({'message': 'User not found'}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 #Service Routes
 @app.route('/shop/<int:shop_id>/services', methods=['GET'])
 @jwt_required
 def get_shop_services(shop_id):
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        cursor.execute("""
-            SELECT id, service_name, color, CAST(price AS FLOAT) as price 
-            FROM shop_services 
-            WHERE shop_id = %s
-        """, (shop_id,))
-        
-        services = cursor.fetchall()
-        return jsonify({'services': services}), 200
-        
+        supabase = create_connection()
+        response = supabase.table('shop_services')\
+            .select('id, service_name, color, price')\
+            .eq('shop_id', shop_id)\
+            .execute()
+        return jsonify({'services': response.data}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 @app.route('/shop/<int:shop_id>/service', methods=['POST'])
 @jwt_required
 def add_shop_service(shop_id):
-    connection = None
     try:
         data = request.json
-        connection = create_connection()
-        cursor = connection.cursor()
+        supabase = create_connection()
         
-        # Convert Decimal to float for JSON serialization
-        cursor.execute("""
-            INSERT INTO shop_services (
-                shop_id, 
-                service_name, 
-                color,
-                price
-            ) VALUES (%s, %s, %s, %s)
-        """, (
-            shop_id, 
-            data['service_name'],
-            data['color'],
-            float(data.get('price', 0))  # Convert to float
-        ))
+        service_data = {
+            'shop_id': shop_id,
+            'service_name': data['service_name'],
+            'color': data['color'],
+            'price': float(data.get('price', 0))
+        }
         
-        connection.commit()
+        response = supabase.table('shop_services')\
+            .insert(service_data)\
+            .execute()
+            
         return jsonify({'message': 'Service added successfully'}), 201
-        
     except Exception as e:
-        if connection:
-            connection.rollback()
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 @app.route('/shop/service/<int:service_id>', methods=['PUT', 'DELETE'])
 @jwt_required
 def manage_shop_service(service_id):
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor()
+        supabase = create_connection()
         
         if request.method == 'DELETE':
-            cursor.execute("DELETE FROM shop_services WHERE id = %s", (service_id,))
+            supabase.table('shop_services').delete().eq('id', service_id).execute()
             message = 'Service deleted successfully'
         else:
             data = request.json
-            cursor.execute("""
-                UPDATE shop_services 
-                SET service_name = %s, price = %s 
-                WHERE id = %s
-            """, (data['name'], data['price'], service_id))
+            supabase.table('shop_services').update({
+                'service_name': data['name'],
+                'price': data['price']
+            }).eq('id', service_id).execute()
             message = 'Service updated successfully'
             
-        connection.commit()
         return jsonify({'message': message}), 200
         
     except Exception as e:
-        if connection:
-            connection.rollback()
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
-# Item Routes
 @app.route('/shop/<int:shop_id>/household', methods=['GET', 'POST'])
 @jwt_required
 def manage_household_items(shop_id):
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
+        supabase = create_connection()
         
         if request.method == 'GET':
-            cursor.execute("""
-                SELECT * FROM household_items 
-                WHERE shop_id = %s
-            """, (shop_id,))
-            items = cursor.fetchall()
-            return jsonify({'items': items}), 200
+            response = supabase.table('household_items')\
+                .select('*')\
+                .eq('shop_id', shop_id)\
+                .execute()
+            return jsonify({'items': response.data}), 200
             
         else:  # POST
             data = request.json
-            cursor.execute("""
-                INSERT INTO household_items (shop_id, item_name, price)
-                VALUES (%s, %s, %s)
-            """, (shop_id, data['name'], data['price']))
-            connection.commit()
+            # Check if item exists
+            existing = supabase.table('household_items')\
+                .select('id')\
+                .eq('shop_id', shop_id)\
+                .eq('item_name', data['name'])\
+                .execute()
+                
+            if existing.data:
+                return jsonify({
+                    'message': 'Item already exists',
+                    'item_id': existing.data[0]['id']
+                }), 409
+
+            response = supabase.table('household_items').insert({
+                'shop_id': shop_id,
+                'item_name': data['name'],
+                'price': data['price']
+            }).execute()
             return jsonify({'message': 'Item added successfully'}), 201
             
     except Exception as e:
-        if connection:
-            connection.rollback()
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 @app.route('/shop/<int:shop_id>/clothing', methods=['GET', 'POST'])
 @jwt_required
 def manage_clothing_types(shop_id):
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
+        supabase = create_connection()
         
         if request.method == 'GET':
-            cursor.execute("""
-                SELECT * FROM clothing_types 
-                WHERE shop_id = %s
-            """, (shop_id,))
-            types = cursor.fetchall()
-            return jsonify({'types': types}), 200
+            response = supabase.table('clothing_types')\
+                .select('*')\
+                .eq('shop_id', shop_id)\
+                .execute()
+            return jsonify({'types': response.data}), 200
             
         else:  # POST
             data = request.json
-            cursor.execute("""
-                INSERT INTO clothing_types (shop_id, type_name, price)
-                VALUES (%s, %s, %s)
-            """, (shop_id, data['name'], data['price']))
-            connection.commit()
+            # Check if type exists
+            existing = supabase.table('clothing_types')\
+                .select('id')\
+                .eq('shop_id', shop_id)\
+                .eq('type_name', data['name'])\
+                .execute()
+                
+            if existing.data:
+                return jsonify({
+                    'message': 'Type already exists',
+                    'type_id': existing.data[0]['id']
+                }), 409
+
+            response = supabase.table('clothing_types').insert({
+                'shop_id': shop_id,
+                'type_name': data['name'],
+                'price': data['price']
+            }).execute()
             return jsonify({'message': 'Clothing type added successfully'}), 201
             
     except Exception as e:
-        if connection:
-            connection.rollback()
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
-
-@app.route('/shop/<int:shop_id>/clothing', methods=['GET'])
-@jwt_required
-def get_clothing_types(shop_id):
-    connection = None
-    try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        cursor.execute("""
-            SELECT * FROM clothing_types 
-            WHERE shop_id = %s
-        """, (shop_id,))
-        
-        types = cursor.fetchall()
-        return jsonify({'types': types}), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
-
-@app.route('/shop/<int:shop_id>/household', methods=['GET'])
-@jwt_required
-def get_household_items(shop_id):
-    connection = None
-    try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        cursor.execute("""
-            SELECT * FROM household_items 
-            WHERE shop_id = %s
-        """, (shop_id,))
-        
-        items = cursor.fetchall()
-        return jsonify({'items': items}), 200
-        
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
-
-@app.route('/shop/<int:shop_id>/household', methods=['POST'])
-@jwt_required
-def add_household_item(shop_id):
-    connection = None
-    try:
-        data = request.json
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-
-        # Check if item exists
-        cursor.execute("""
-            SELECT id FROM household_items 
-            WHERE shop_id = %s AND item_name = %s
-        """, (shop_id, data['name']))
-        
-        existing_item = cursor.fetchone()
-        
-        if existing_item:
-            return jsonify({
-                'message': 'Item already exists',
-                'item_id': existing_item['id']
-            }), 409
-
-        # Add new item
-        cursor.execute("""
-            INSERT INTO household_items (shop_id, item_name, price)
-            VALUES (%s, %s, %s)
-        """, (shop_id, data['name'], data['price']))
-        
-        connection.commit()
-        return jsonify({'message': 'Item added successfully'}), 201
-        
-    except Exception as e:
-        if connection:
-            connection.rollback()
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
-
-@app.route('/shop/<int:shop_id>/clothing', methods=['POST'])
-@jwt_required
-def add_clothing_type(shop_id):
-    connection = None
-    try:
-        data = request.json
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-
-        # Check if type exists
-        cursor.execute("""
-            SELECT id FROM clothing_types 
-            WHERE shop_id = %s AND type_name = %s
-        """, (shop_id, data['name']))
-        
-        existing_type = cursor.fetchone()
-        
-        if existing_type:
-            return jsonify({
-                'message': 'Type already exists',
-                'type_id': existing_type['id']
-            }), 409
-
-        # Add new type
-        cursor.execute("""
-            INSERT INTO clothing_types (shop_id, type_name, price)
-            VALUES (%s, %s, %s)
-        """, (shop_id, data['name'], data['price']))
-        
-        connection.commit()
-        return jsonify({'message': 'Type added successfully'}), 201
-        
-    except Exception as e:
-        if connection:
-            connection.rollback()
-        return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 @app.route('/shop/household/<int:item_id>', methods=['PUT'])
 @jwt_required
 def update_household_item(item_id):
-    connection = None
     try:
         data = request.json
-        connection = create_connection()
-        cursor = connection.cursor()
+        supabase = create_connection()
         
-        cursor.execute("""
-            UPDATE household_items 
-            SET price = %s 
-            WHERE id = %s
-        """, (data['price'], item_id))
-        
-        connection.commit()
+        supabase.table('household_items')\
+            .update({'price': data['price']})\
+            .eq('id', item_id)\
+            .execute()
+            
         return jsonify({'message': 'Item updated successfully'}), 200
         
     except Exception as e:
-        if connection:
-            connection.rollback()
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 @app.route('/shop/clothing/<int:type_id>', methods=['PUT'])
 @jwt_required
 def update_clothing_type(type_id):
-    connection = None
     try:
         data = request.json
-        connection = create_connection()
-        cursor = connection.cursor()
+        supabase = create_connection()
         
-        cursor.execute("""
-            UPDATE clothing_types 
-            SET price = %s 
-            WHERE id = %s
-        """, (data['price'], type_id))
-        
-        connection.commit()
+        supabase.table('clothing_types')\
+            .update({'price': data['price']})\
+            .eq('id', type_id)\
+            .execute()
+            
         return jsonify({'message': 'Type updated successfully'}), 200
         
     except Exception as e:
-        if connection:
-            connection.rollback()
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 # Order System Routes
 @app.route('/shop/services', methods=['GET'])
 @jwt_required
 def get_all_shop_services():
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        # Get all active services with their prices and colors
-        cursor.execute("""
-            SELECT s.id, s.service_name, s.price, s.color, s.description
-            FROM shop_services s
-            WHERE s.is_active = true
-            ORDER BY s.service_name
-        """)
-        
-        services = cursor.fetchall()
-        
-        # Convert Decimal to float for JSON serialization
-        for service in services:
-            service['price'] = float(service['price'])
+        supabase = create_connection()
+        response = supabase.table('shop_services')\
+            .select('id, service_name, price, color, description')\
+            .eq('is_active', True)\
+            .order('service_name')\
+            .execute()
+            
+        services = [{**service, 'price': float(service['price'])} 
+                   for service in response.data]
         
         return jsonify({'services': services}), 200
-        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 @app.route('/shop/items', methods=['GET'])
 @jwt_required
 def get_all_shop_items():
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        # Get all household items
-        cursor.execute("""
-            SELECT hi.id, hi.item_name, hi.price
-            FROM household_items hi
-            ORDER BY hi.item_name
-        """)
-        
-        items = cursor.fetchall()
-        
-        # Convert Decimal to float
-        for item in items:
-            item['price'] = float(item['price'])
+        supabase = create_connection()
+        response = supabase.table('household_items')\
+            .select('id, item_name, price')\
+            .order('item_name')\
+            .execute()
+            
+        items = [{**item, 'price': float(item['price'])} 
+                for item in response.data]
         
         return jsonify({'items': items}), 200
-        
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 # Kilo Price Routes
 @app.route('/shop/<int:shop_id>/kilo-prices', methods=['GET'])
 @jwt_required
 def get_kilo_prices(shop_id):
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor()
+        supabase = create_connection()
+        response = supabase.table('kilo_prices')\
+            .select('min_kilo, max_kilo, price_per_kilo')\
+            .eq('shop_id', shop_id)\
+            .execute()
+            
+        prices = [{
+            'min_kilo': float(price['min_kilo']),
+            'max_kilo': float(price['max_kilo']),
+            'price_per_kilo': float(price['price_per_kilo'])
+        } for price in response.data]
         
-        cursor.execute("""
-            SELECT min_kilo, max_kilo, price_per_kilo 
-            FROM kilo_prices 
-            WHERE shop_id = %s
-        """, (shop_id,))
-        
-        prices = cursor.fetchall()
-        
-        # Convert Decimal objects to float before JSON serialization
-        formatted_prices = [
-            {
-                'min_kilo': float(price[0]),
-                'max_kilo': float(price[1]),
-                'price_per_kilo': float(price[2])
-            }
-            for price in prices
-        ]
-        
-        return jsonify({'prices': formatted_prices}), 200
-        
+        return jsonify({'prices': prices}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
-
+    
 @app.route('/shop/<int:shop_id>/kilo-price', methods=['POST'])
 @jwt_required
 def add_kilo_price(shop_id):
-    connection = None
     try:
         data = request.json
-        connection = create_connection()
-        cursor = connection.cursor()
+        supabase = create_connection()
 
         # Check for overlapping ranges
-        cursor.execute("""
-            SELECT COUNT(*) FROM kilo_prices 
-            WHERE shop_id = %s AND (
-                (%s BETWEEN min_kilo AND max_kilo) OR
-                (%s BETWEEN min_kilo AND max_kilo) OR
-                (min_kilo BETWEEN %s AND %s)
-            )
-        """, (shop_id, data['min_kilo'], data['max_kilo'], 
-              data['min_kilo'], data['max_kilo']))
-        
-        if cursor.fetchone()[0] > 0:
+        existing = supabase.table('kilo_prices')\
+            .select('id')\
+            .eq('shop_id', shop_id)\
+            .gte('min_kilo', data['min_kilo'])\
+            .lte('max_kilo', data['max_kilo'])\
+            .execute()
+            
+        if existing.data:
             return jsonify({
                 'error': 'This range overlaps with an existing range'
             }), 400
             
-        cursor.execute("""
-            INSERT INTO kilo_prices (shop_id, min_kilo, max_kilo, price_per_kilo)
-            VALUES (%s, %s, %s, %s)
-        """, (shop_id, data['min_kilo'], data['max_kilo'], data['price_per_kilo']))
+        response = supabase.table('kilo_prices').insert({
+            'shop_id': shop_id,
+            'min_kilo': data['min_kilo'],
+            'max_kilo': data['max_kilo'],
+            'price_per_kilo': data['price_per_kilo']
+        }).execute()
         
-        connection.commit()
         return jsonify({'message': 'Price range added successfully'}), 201
         
     except Exception as e:
-        if connection:
-            connection.rollback()
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 @app.route('/shop/<int:shop_id>/kilo-price', methods=['DELETE'])
 @jwt_required
 def delete_kilo_price(shop_id):
-    connection = None
     try:
         data = request.json
-        connection = create_connection()
-        cursor = connection.cursor()
+        supabase = create_connection()
         
-        cursor.execute("""
-            DELETE FROM kilo_prices 
-            WHERE shop_id = %s AND min_kilo = %s AND max_kilo = %s
-        """, (shop_id, data['min_kilo'], data['max_kilo']))
-        
-        connection.commit()
+        supabase.table('kilo_prices')\
+            .delete()\
+            .eq('shop_id', shop_id)\
+            .eq('min_kilo', data['min_kilo'])\
+            .eq('max_kilo', data['max_kilo'])\
+            .execute()
+            
         return jsonify({'message': 'Price range deleted successfully'}), 200
-        
     except Exception as e:
-        if connection:
-            connection.rollback()
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
             
 @app.route('/api/orders', methods=['GET'])
 @jwt_required
 def get_orders():
-    connection = None
     try:
         shop_id = request.args.get('shop_id')
         status = request.args.get('status')
@@ -1043,130 +662,113 @@ def get_orders():
         if not shop_id:
             return jsonify({'error': 'shop_id is required'}), 400
 
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-
-        query = "SELECT * FROM transactions WHERE shop_id = %s"
-        params = [shop_id]
-
+        supabase = create_connection()
+        query = supabase.table('transactions').select('*').eq('shop_id', shop_id)
+        
         if status:
-            query += " AND status = %s"
-            params.append(status)
-
-        query += " ORDER BY created_at DESC"
-
-        cursor.execute(query, params)
-        orders = cursor.fetchall()
-
-        # Always serialize datetime and Decimal fields
-        for order in orders:
-            for key, value in order.items():
-                if isinstance(value, (datetime, timedelta)):
-                    order[key] = str(value)
-                elif isinstance(value, Decimal):
-                    order[key] = float(value)
+            query = query.eq('status', status)
+            
+        response = query.order('created_at', desc=True).execute()
+        orders = response.data
 
         return jsonify({'orders': orders}), 200
 
     except Exception as e:
         print(f"Error in /api/orders: {e}")
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 @app.route('/api/orders/<int:order_id>/decline', methods=['PUT'])
 @jwt_required
 def decline_order(order_id):
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor()
-        # Update the transaction status to 'cancelled'
-        cursor.execute(
-            "UPDATE transactions SET status = %s WHERE id = %s",
-            ('cancelled', order_id)
-        )
-        connection.commit()
+        supabase = create_connection()
+        supabase.table('transactions')\
+            .update({'status': 'cancelled'})\
+            .eq('id', order_id)\
+            .execute()
         return jsonify({'message': 'Order declined successfully'}), 200
     except Exception as e:
-        if connection:
-            connection.rollback()
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 
 @app.route('/api/orders/<int:order_id>/set_price', methods=['PUT'])
 @jwt_required
 def set_order_price(order_id):
-    connection = None
     try:
         data = request.get_json()
         price_per_kilo = data.get('price_per_kilo')
         if price_per_kilo is None:
             return jsonify({'error': 'Missing price_per_kilo'}), 400
 
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        # Update price in transactions table
-        cursor.execute(
-            "UPDATE transactions SET price_per_kilo = %s, status = %s WHERE id = %s",
-            (price_per_kilo, 'processing', order_id)
-        )
-        # Get user_id and shop_id for this transaction
-        cursor.execute("SELECT user_id, shop_id FROM transactions WHERE id = %s", (order_id,))
-        row = cursor.fetchone()
-        user_id = row['user_id']
-        shop_id = row['shop_id']
+        supabase = create_connection()
+        
+        # Update transaction
+        supabase.table('transactions')\
+            .update({
+                'price_per_kilo': price_per_kilo,
+                'status': 'processing'
+            })\
+            .eq('id', order_id)\
+            .execute()
+            
+        # Get transaction details
+        transaction = supabase.table('transactions')\
+            .select('user_id, shop_id')\
+            .eq('id', order_id)\
+            .single()\
+            .execute()
+            
+        if not transaction.data:
+            return jsonify({'error': 'Transaction not found'}), 404
+            
+        user_id = transaction.data['user_id']
+        shop_id = transaction.data['shop_id']
+        
         # Get shop name
-        cursor.execute("SELECT shop_name FROM shops WHERE id = %s", (shop_id,))
-        shop_row = cursor.fetchone()
-        shop_name = shop_row['shop_name'] if shop_row else 'Shop'
-        # Insert notification with shop name
-        message = f"The shop set the price per kilo to ₱{price_per_kilo} for your order."
-        cursor.execute(
-            "INSERT INTO notifications (user_id, message, is_read, created_at, from_name) VALUES (%s, %s, 0, NOW(), %s)",
-            (user_id, message, shop_name)
-        )
-        connection.commit()
+        shop = supabase.table('shops')\
+            .select('shop_name')\
+            .eq('id', shop_id)\
+            .single()\
+            .execute()
+            
+        shop_name = shop.data['shop_name'] if shop.data else 'Shop'
+        
+        # Create notification
+        notification_data = {
+            'user_id': user_id,
+            'message': f"The shop set the price per kilo to ₱{price_per_kilo} for your order.",
+            'is_read': False,
+            'from_name': shop_name
+        }
+        
+        supabase.table('notifications').insert(notification_data).execute()
+        
         return jsonify({'message': 'Price per kilo updated and user notified successfully'}), 200
     except Exception as e:
-        if connection:
-            connection.rollback()
         print(f"Error in set_order_price: {e}")
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
             
 @app.route('/api/notifications/<int:user_id>', methods=['GET'])
 @jwt_required
 def get_notifications(user_id):
-    connection = None
     try:
-        connection = create_connection()
-        cursor = connection.cursor(dictionary=True)
-        cursor.execute(
-            "SELECT * FROM notifications WHERE user_id = %s ORDER BY created_at DESC",
-            (user_id,)
-        )
-        notifications = cursor.fetchall()
-        # Optionally format datetime
+        supabase = create_connection()
+        response = supabase.table('notifications')\
+            .select('*')\
+            .eq('user_id', user_id)\
+            .order('created_at', desc=True)\
+            .execute()
+            
+        notifications = response.data
+        
+        # Format datetime
         for n in notifications:
-            if 'created_at' in n and n['created_at'] is not None:
-                n['created_at'] = n['created_at'].strftime('%Y-%m-%d %H:%M:%S')
+            if 'created_at' in n and n['created_at']:
+                n['created_at'] = datetime.fromisoformat(n['created_at']).strftime('%Y-%m-%d %H:%M:%S')
+                
         return jsonify({'notifications': notifications}), 200
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    finally:
-        if connection and connection.is_connected():
-            cursor.close()
-            connection.close()
 
 if __name__ == '__main__':
     try:

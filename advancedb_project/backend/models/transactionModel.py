@@ -1,4 +1,5 @@
 import datetime
+from database.connection import create_connection
 
 class Transaction:
     def __init__(self, 
@@ -76,3 +77,15 @@ class Transaction:
 
     def get_total(self):
         return self.subtotal + self.delivery_fee - self.voucher_discount
+    
+    def save_to_db(self):
+        try:
+            supabase = create_connection()
+            transaction_data = self.to_dict()
+            response = supabase.table('transactions')\
+                .insert(transaction_data)\
+                .execute()
+            return response.data[0]['id'] if response.data else None
+        except Exception as e:
+            print(f"Error saving transaction: {e}")
+            return None
