@@ -10,11 +10,9 @@ def create_connection():
         supabase_key = os.getenv('SUPABASE_ANON_KEY')
 
         if not supabase_url or not supabase_key:
-            raise ValueError("Supabase credentials not found in environment variables")
+            raise ValueError("Supabase credentials not found")
             
-        supabase = create_client(supabase_url, supabase_key)
-        print("Successfully connected to Supabase")
-        return supabase
+        return create_client(supabase_url, supabase_key)
     except Exception as e:
         print(f"Error connecting to Supabase: {e}")
         raise

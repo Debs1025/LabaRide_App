@@ -23,6 +23,11 @@ transaction_controller = TransactionController()
 @socketio.on('connect')
 def handle_connect():
     print('Client connected')
+    supabase = create_connection()
+    # Subscribe to real-time changes
+    supabase.table('transactions').on('INSERT', lambda payload: 
+        socketio.emit('new_transaction', payload.new_record)
+    ).subscribe()
     return True
 
 @socketio.on('disconnect')
