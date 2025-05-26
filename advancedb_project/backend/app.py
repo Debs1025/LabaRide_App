@@ -5,6 +5,7 @@ from controllers.transactionController import TransactionController
 from database.connection import create_connection
 from functools import wraps
 import jwt
+import os
 from flask_socketio import SocketIO, emit, join_room 
 from datetime import datetime, timedelta
 from decimal import Decimal
@@ -13,8 +14,17 @@ import json
 app = Flask(__name__)
 CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
-app.config['SECRET_KEY'] = '1025'
+app.config['SECRET_KEY'] = os.getenv('JWT_SECRET_KEY', 'labaride102504')
 
+@app.route('/test-connection', methods=['GET'])
+def test_connection():
+    try:
+        supabase = create_connection()
+        response = supabase.table('users').select('count').execute()
+        return jsonify({'message': 'Connection successful', 'data': response.data}), 200
+    except Exception as e:
+        return jsonify({'error': f'Connection failed: {str(e)}'}), 500
+    
 # Initialize controllers
 user_controller = UserController()
 transaction_controller = TransactionController()
@@ -112,10 +122,46 @@ def verify_token():
 @app.route('/signup', methods=['POST'])
 def signup():
     try:
-        result = user_controller.signup(request.json)
-        return jsonify(result), result['status']
+        data = request.get_json()
+        supabase = create_connection()
+        
+        # Create complete user data
+        user = {
+            'name': data['name'],
+            'email': data['email'],
+            'password': data['password'],
+            'phone': data.get('phone', ''),
+            'zone': data.get('zone', ''),
+            'street': data.get('street', ''),
+            'barangay': data.get('barangay', ''),
+            'building': data.get('building', ''),
+            'gender': data.get('gender', ''),
+            'is_shop_owner': False
+        }
+        
+        # Insert into users table first
+        response = supabase.table('users').insert(user).execute()
+        
+        if response.data:
+            # Then create auth user
+            auth_response = supabase.auth.sign_up({
+                'email': data['email'],
+                'password': data['password'],
+                'data': {
+                    'name': data['name']
+                }
+            })
+            
+            return jsonify({
+                'message': 'User created successfully',
+                'user_id': response.data[0]['id']
+            }), 201
+            
+        return jsonify({'error': 'Failed to create user'}), 500
+        
     except Exception as e:
-        return jsonify({'status': 500, 'message': str(e)}), 500
+        print(f"Signup error: {str(e)}")
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/login', methods=['POST'])
 def login():
@@ -773,6 +819,11 @@ def get_notifications(user_id):
 if __name__ == '__main__':
     try:
         print("Starting Flask-SocketIO server...")
-        socketio.run(app, debug=True, port=5000, allow_unsafe_werkzeug=True)
+        # For development
+        if app.debug:
+            socketio.run(app, debug=True, port=5000, allow_unsafe_werkzeug=True)
+        # For production
+        else:
+            socketio.run(app, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
     except Exception as e:
         print(f"Error starting server: {e}")
