@@ -6,6 +6,7 @@ import '../OrderScreen/OrderScreen.dart';
 import '../ProfileShop/ShopProfile.dart';
 import '../CustomerOrder/CustomerOrder.dart';
 import '../ShopDashboard/homescreen.dart';
+import '../../../supabase_config.dart';
 
 class KiloPrice {
     double minKilo;
@@ -64,7 +65,7 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
     setState(() => _isLoading = true);
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/shop/${widget.shopData['id']}/services'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/${widget.shopData['id']}/services'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -89,15 +90,15 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
     }
   }
 
- Future<void> _loadKiloPrices() async {
-  try {
-    final response = await http.get(
-      Uri.parse('http://localhost:5000/shop/${widget.shopData['id']}/kilo-prices'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      }
-    );
+  Future<void> _loadKiloPrices() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/${widget.shopData['id']}/kilo-prices'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        }
+      );
 
     print('Loading kilo prices... Status: ${response.statusCode}'); // Debug print
     print('Response body: ${response.body}'); // Debug print
@@ -127,20 +128,20 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
 }
 
   Future<void> _addService(String name, Color color, double price) async {
-  setState(() => _isLoading = true);
-  try {
-    final response = await http.post(
-      Uri.parse('http://localhost:5000/shop/${widget.shopData['id']}/service'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'service_name': name.toUpperCase(),
-        'color': color.value.toString(),
-        'price': price,
-      }),
-    );
+    setState(() => _isLoading = true);
+    try {
+      final response = await http.post(
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/${widget.shopData['id']}/service'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'service_name': name.toUpperCase(),
+          'color': color.value.toString(),
+          'price': price,
+        }),
+      );
 
     if (response.statusCode == 201) {
       await _loadServices();
@@ -157,19 +158,19 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
   }
 }
 
-  Future<void> _updateService(int serviceId, String name, double price) async {
-  try {
-    final response = await http.put(
-      Uri.parse('http://localhost:5000/shop/service/$serviceId'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        'name': name,
-        'price': price,
-      }),
-    );
+   Future<void> _updateService(int serviceId, String name, double price) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/service/$serviceId'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'name': name,
+          'price': price,
+        }),
+      );
 
     if (response.statusCode == 200) {
       await _loadServices(); // Reload services to update UI
@@ -191,7 +192,7 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
   Future<void> _deleteService(int serviceId) async {
     try {
       final response = await http.delete(
-        Uri.parse('http://localhost:5000/shop/service/$serviceId'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/service/$serviceId'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },
@@ -243,7 +244,7 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
     }
 
     final response = await http.post(
-      Uri.parse('http://localhost:5000/shop/${widget.shopData['id']}/kilo-price'),
+      Uri.parse('${SupabaseConfig.apiUrl}/shop/${widget.shopData['id']}/kilo-price'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -297,7 +298,7 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
   Future<void> _deleteKiloPrice(double minKilo, double maxKilo) async {
     try {
       final response = await http.delete(
-        Uri.parse('http://localhost:5000/shop/${widget.shopData['id']}/kilo-price'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/${widget.shopData['id']}/kilo-price'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

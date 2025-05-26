@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../../supabase_config.dart';
 
 class ShopDetails extends StatefulWidget {
   final int userId;
@@ -97,7 +98,7 @@ class _ShopDetailsState extends State<ShopDetails> {
 
   Future<void> _saveShopLocationToBackend(LatLng latlng, String address) async {
     final response = await http.put(
-      Uri.parse('http://localhost:5000/update_shop_location/${widget.shopData['id']}'),
+      Uri.parse('${SupabaseConfig.apiUrl}/update_shop_location/${widget.shopData['id']}'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -132,7 +133,7 @@ class _ShopDetailsState extends State<ShopDetails> {
       if (updateData.isEmpty) return;
 
       final response = await http.put(
-        Uri.parse('http://localhost:5000/update_shop/${widget.shopData['id']}'),
+        Uri.parse('${SupabaseConfig.apiUrl}/update_shop/${widget.shopData['id']}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

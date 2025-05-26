@@ -10,6 +10,7 @@ import '../ProfileShop/ShopProfile.dart';
 import '../CustomerOrder/CustomerOrder.dart';
 import 'notifpage.dart';
 import 'shop_map.dart';
+import '../../../supabase_config.dart';
 
 class DashboardScreen extends StatefulWidget {
   final int userId;
@@ -82,7 +83,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 Future<void> _fetchNearbyShops(Position position) async {
   try {
     final response = await http.get(
-      Uri.parse('http://localhost:5000/nearby_shops?lat=${position.latitude}&lng=${position.longitude}'),
+      Uri.parse('${SupabaseConfig.apiUrl}/nearby_shops?lat=${position.latitude}&lng=${position.longitude}'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -133,14 +134,14 @@ void _showShopDetails(Map<String, dynamic> shop) {
 }
 
   Future<void> _loadDashboardData() async {
-    try {
-      final response = await http.get(
-        Uri.parse('http://localhost:5000/shop_transactions/${widget.shopData['id']}'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+  try {
+    final response = await http.get(
+      Uri.parse('${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

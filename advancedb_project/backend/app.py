@@ -276,8 +276,32 @@ def get_recent_shops():
             .execute()
         return jsonify(response.data), 200
     except Exception as e:
-        return jsonify({'error': str(e)}), 500     
+        return jsonify({'error': str(e)}), 500 
+
+@app.route('/nearby_shops', methods=['GET'])
+@jwt_required
+def get_nearby_shops():
+    try:
+        lat = float(request.args.get('lat'))
+        lng = float(request.args.get('lng'))
+        radius = 5  # 5km radius
+        supabase = create_connection()
+        
+        # Get shops from Supabase with location filtering
+        response = supabase.rpc(
+            'nearby_shops',
+            {
+                'user_lat': lat,
+                'user_lng': lng,
+                'radius_km': radius
+            }
+        ).execute()
             
+        shops = response.data
+        return jsonify({'shops': shops}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/shop/<int:shop_id>', methods=['GET'])
 @jwt_required
 def get_shop_by_id(shop_id):
@@ -302,7 +326,41 @@ def get_shop_by_id(shop_id):
     except Exception as e:
         print(f"Error fetching shop {shop_id}: {str(e)}")
         return jsonify({'error': str(e)}), 500
+
+@app.route('/delete_shop/<int:shop_id>', methods=['DELETE'])
+@jwt_required
+def delete_shop(shop_id):
+    try:
+        supabase = create_connection()
+        
+        # Get user_id from shop first
+        shop = supabase.table('shops')\
+            .select('user_id')\
+            .eq('id', shop_id)\
+            .single()\
+            .execute()
             
+        if not shop.data:
+            return jsonify({'message': 'Shop not found'}), 404
+            
+        user_id = shop.data['user_id']
+        
+        # Delete shop
+        supabase.table('shops')\
+            .delete()\
+            .eq('id', shop_id)\
+            .execute()
+            
+        # Update user is_shop_owner to false
+        supabase.table('users')\
+            .update({'is_shop_owner': False})\
+            .eq('id', user_id)\
+            .execute()
+            
+        return jsonify({'message': 'Shop deleted successfully'}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+        
 # Transaction Routes
 @app.route('/create_transaction/<int:user_id>', methods=['POST'])
 @jwt_required

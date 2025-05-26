@@ -4,7 +4,6 @@ import '../../loginscreen.dart';
 import 'Logout.dart';
 import 'AccountInfo.dart';
 import 'ShopDetails.dart';
-import 'Security.dart';
 import '../CustomerOrder/CustomerOrder.dart';
 import '../ShopDashboard/homescreen.dart';
 import '../Services/ServiceScreen1.dart';
@@ -104,44 +103,31 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
                                 'contact_number': widget.shopData['user']?['contact_number'] ?? widget.shopData['user']?['phone'],
                                 'email': widget.shopData['user']?['email'],
                               },
+                              shopData: widget.shopData,  // Add this
                             ),
                           ),
                         ),
                       ),
                       _buildMenuItem(
-                      'Shop Details',
-                      'assets/ProfileScreen/Shop.png',
-                      onTap: () async {
-                        final updatedShopData = await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ShopDetails(
-                              userId: widget.userId,
-                              token: widget.token,
-                              shopData: widget.shopData,
+                        'Shop Details',
+                        'assets/ProfileScreen/Shop.png',
+                        onTap: () async {
+                          final updatedShopData = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ShopDetails(
+                                userId: widget.userId,
+                                token: widget.token,
+                                shopData: widget.shopData,
+                              ),
                             ),
-                          ),
-                        );
-                        if (updatedShopData != null) {
-                          setState(() {
-                            widget.shopData.addAll(updatedShopData);
-                          });
-                        }
-                      },
-),
-                      _buildMenuItem(
-                        'Security',
-                        'assets/ProfileScreen/Security.png',
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => Security(
-                              userId: widget.userId,
-                              token: widget.token,
-                              shopData: widget.shopData,
-                            ),
-                          ),
-                        ),
+                          );
+                          if (updatedShopData != null) {
+                            setState(() {
+                              widget.shopData.addAll(updatedShopData);
+                            });
+                          }
+                        },
                       ),
                       _buildUserModeButton(),
                       const SizedBox(height: 8),

@@ -6,6 +6,7 @@ import '../Services/ServiceScreen1.dart';
 import '../CustomerOrder/CustomerOrder.dart';
 import '../ProfileShop/ShopProfile.dart';
 import '../ShopDashboard/homescreen.dart';
+import '../../../supabase_config.dart';
 
 class TransactionsScreen extends StatefulWidget {
   final int userId;
@@ -46,14 +47,12 @@ Future<void> fetchTransactions() async {
   });
 
   try {
-    // Changed null check to properly verify shop ID
     if (widget.shopData.isEmpty || widget.shopData['id'] == null) {
       throw Exception('No shop data available');
     }
 
-    print('Fetching transactions for shop ID: ${widget.shopData['id']}');
     final response = await http.get(
-      Uri.parse('http://localhost:5000/shop_transactions/${widget.shopData['id']}'),
+      Uri.parse('${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}'), // Already correct
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ${widget.token}',
@@ -118,24 +117,20 @@ Future<void> fetchTransactions() async {
   }
 
   Future<void> _deleteSelectedTransactions() async {
-    if (isDeleting) return;
-
-    setState(() => isDeleting = true);
-
     try {
-      final selectedTransactionIds = selectedItems.entries
-          .where((entry) => entry.value)
-          .map((entry) => entry.key)
-          .toList();
+    final selectedTransactionIds = selectedItems.entries
+        .where((entry) => entry.value)
+        .map((entry) => entry.key)
+        .toList();
 
-      for (final id in selectedTransactionIds) {
-        final response = await http.delete(
-          Uri.parse('http://localhost:5000/transactions/$id'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ${widget.token}',
-          },
-        );
+    for (final id in selectedTransactionIds) {
+      final response = await http.delete(
+        Uri.parse('${SupabaseConfig.apiUrl}/transactions/$id'), // Already correct
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
 
         if (response.statusCode != 200) {
           throw Exception('Failed to delete transaction $id');

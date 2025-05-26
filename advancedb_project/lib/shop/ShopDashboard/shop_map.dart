@@ -4,6 +4,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../../supabase_config.dart';
 
 class ShopMap extends StatefulWidget {
   final String token;
@@ -29,6 +30,31 @@ class _ShopMapState extends State<ShopMap> {
     super.initState();
     _getCurrentLocation();
   }
+  void _showShopDetails(Map<String, dynamic> shop) {
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: Text(shop['shop_name'] ?? 'Shop Details'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Address: ${shop['building'] ?? ''} ${shop['street'] ?? ''}, ${shop['barangay'] ?? ''}'),
+          const SizedBox(height: 8),
+          Text('Contact: ${shop['contact_number'] ?? 'N/A'}'),
+          const SizedBox(height: 8),
+          Text('Hours: ${shop['opening_time'] ?? ''} - ${shop['closing_time'] ?? ''}'),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    ),
+  );
+}
 
   Future<void> _getCurrentLocation() async {
     try {
@@ -69,41 +95,35 @@ class _ShopMapState extends State<ShopMap> {
     }
   }
 
-  Future<void> _fetchNearbyShops(Position position) async {
-    try {
-      final response = await http.get(
-        Uri.parse('http://localhost:5000/nearby_shops?lat=${position.latitude}&lng=${position.longitude}'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+Future<void> _fetchNearbyShops(Position position) async {
+  try {
+    final response = await http.get(
+      Uri.parse('${SupabaseConfig.apiUrl}/nearby_shops?lat=${position.latitude}&lng=${position.longitude}'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final shops = List<Map<String, dynamic>>.from(data['shops']);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final shops = List<Map<String, dynamic>>.from(data['shops']);
+      
+      setState(() {
+        // Keep current location marker
+        markers = [markers.first];
         
-        setState(() {
-          for (var shop in shops) {
+        // Add shop markers
+        for (var shop in shops) {
+          if (shop['latitude'] != null && shop['longitude'] != null) {
             markers.add(
               Marker(
-                point: LatLng(shop['latitude'], shop['longitude']),
+                point: LatLng(
+                  double.parse(shop['latitude'].toString()),
+                  double.parse(shop['longitude'].toString())
+                ),
                 child: GestureDetector(
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text(shop['name']),
-                        content: Text(shop['address']),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Close'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                  onTap: () => _showShopDetails(shop),
                   child: const Icon(
                     Icons.local_laundry_service,
                     color: Colors.purple,
@@ -113,12 +133,13 @@ class _ShopMapState extends State<ShopMap> {
               ),
             );
           }
-        });
-      }
-    } catch (e) {
-      print('Error fetching nearby shops: $e');
+        }
+      });
     }
+  } catch (e) {
+    print('Error fetching nearby shops: $e');
   }
+}
 
   @override
   Widget build(BuildContext context) {

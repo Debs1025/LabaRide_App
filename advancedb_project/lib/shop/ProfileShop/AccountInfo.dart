@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'DeleteAcc.dart';
+import '../../../supabase_config.dart';
 
 class AdminAccountInfo extends StatefulWidget {
   final int userId;
   final String token;
   final Map<String, dynamic> userData;
+  final Map<String, dynamic> shopData;  
 
   const AdminAccountInfo({
     super.key,
     required this.userId,
     required this.token,
-    required this.userData, 
+    required this.userData,
+    required this.shopData,  
   });
 
   @override
@@ -40,22 +45,33 @@ class _AccountInfoState extends State<AdminAccountInfo> {
     );
   }
 
-  Future<void> _saveField(String field) async {
-    try {
-      // TODO: Implement API call to update user data
-      setState(() {
-        _isEditing[field] = false;
-      });
-      
+Future<void> _saveField(String field) async {
+  try {
+    final response = await http.put(
+      Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        field.toLowerCase().replaceAll(' ', '_'): _controllers[field]?.text
+      }),
+    );
+    
+    if (response.statusCode == 200) {
+      setState(() => _isEditing[field] = false);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Changes saved successfully')),
       );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to save changes')),
-      );
+    } else {
+      throw Exception('Failed to save changes');
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to save changes: $e')),
+    );
   }
+}
 
   Widget _buildTextField(String label, {bool isEditable = true}) {
     return Column(
@@ -252,7 +268,11 @@ class _AccountInfoState extends State<AdminAccountInfo> {
                 onPressed: () {
                   showDialog(
                     context: context,
-                    builder: (context) => const ConfirmDeleteDialog(),
+                    builder: (context) => ConfirmDeleteDialog(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopId: widget.shopData['id'],
+                    ),
                   );
                 },
                 child: const Text(

@@ -1,8 +1,50 @@
 import 'package:flutter/material.dart';
 import 'AccDelete.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../../../supabase_config.dart';
 
 class ConfirmDeleteDialog extends StatelessWidget {
-  const ConfirmDeleteDialog({super.key});
+  final int userId;
+  final String token;
+  final int shopId;
+
+  const ConfirmDeleteDialog({
+    super.key, 
+    required this.userId,
+    required this.token,
+    required this.shopId,
+  });
+
+  Future<bool> _deleteShop() async {
+  try {
+    final response = await http.delete(
+      Uri.parse('${SupabaseConfig.apiUrl}/delete_shop/$shopId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      // Also update user's is_shop_owner status
+      await http.put(
+        Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/$userId'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'is_shop_owner': false
+        }),
+      );
+      return true;
+    }
+    return false;
+  } catch (e) {
+    return false;
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -59,14 +101,16 @@ class ConfirmDeleteDialog extends StatelessWidget {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AccountDelete(),
-                        ),
-                      );
+                    onPressed: () async {
+                      final success = await _deleteShop();
+                      if (success && context.mounted) {
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AccountDelete(),
+                          ),
+                        );
+                      }
                     },
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 12),

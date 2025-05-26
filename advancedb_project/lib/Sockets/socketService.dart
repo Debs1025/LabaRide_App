@@ -1,4 +1,5 @@
 import 'package:socket_io_client/socket_io_client.dart' as IO;
+import '../supabase_config.dart';
 
 class SocketService {
   static IO.Socket? socket;
@@ -7,7 +8,7 @@ class SocketService {
   static void initializeSocket() {
     if (socket != null) return;
 
-    socket = IO.io('http://localhost:5000', <String, dynamic>{
+    socket = IO.io('${SupabaseConfig.url}', <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
       'reconnection': true,
