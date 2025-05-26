@@ -257,18 +257,24 @@ class _AddressesState extends State<Addresses> {
     }
 
     try {
+      // Split the selected address into parts
+      List<String> addressParts = selectedAddress!.split(', ');
+      
+      // Create address data
+      Map<String, dynamic> addressData = {
+        'zone': addressParts[0].replaceAll('Zone ', ''),
+        'street': addressParts.length > 1 ? addressParts[1] : '',
+        'barangay': addressParts.length > 2 ? addressParts[2] : '',
+        'building': addressParts.length > 3 ? addressParts[3] : ''
+      };
+
       final response = await http.put(
         Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'zone': addressParts[0].replaceAll('Zone ', ''),
-          'street': addressParts.length > 1 ? addressParts[1] : '',
-          'barangay': addressParts.length > 2 ? addressParts[2] : '',
-          'building': addressParts.length > 3 ? addressParts[3] : ''
-        }),
+        body: jsonEncode(addressData),
       );
 
       if (response.statusCode == 200) {
@@ -289,7 +295,7 @@ class _AddressesState extends State<Addresses> {
     } catch (e) {
       _showError('Failed to save location');
     }
-  }
+}
 
   void _handleMapTap(TapPosition tapPosition, LatLng point) async {
     if (!isSelectingLocation) return;

@@ -95,45 +95,43 @@ class UserController:
         try:
             supabase = create_connection()
             
-            if not data.get('name') or not data.get('name').strip():
-                return {'status': 400, 'message': 'Name cannot be empty'}
-                
-            if not data.get('email'):
-                return {'status': 400, 'message': 'Email field is missing'}
-                
-            if not data.get('password'):
-                return {'status': 400, 'message': 'Password field is missing'}
-
-            # Check if email exists
-            existing_user = supabase.table('users').select('email').eq('email', data['email']).execute()
-            if existing_user.data:
-                return {'status': 400, 'message': 'Email already exists'}
-
-            hashed_password = bcrypt.hashpw(data['password'].encode('utf-8'), bcrypt.gensalt())
+            # Create user with Supabase auth
+            auth_response = supabase.auth.sign_up({
+                'email': data['email'],
+                'password': data['password'],
+                'data': {
+                    'name': data['name'],
+                    'is_shop_owner': False
+                }
+            })
             
+            if 'error' in auth_response:
+                return {
+                    'status': 400,
+                    'message': auth_response['error']['message']
+                }
+                
+            user = auth_response['user']
+            
+            # Insert additional user data
             user_data = {
+                'id': user['id'],
                 'name': data['name'].strip(),
                 'email': data['email'].strip(),
-                'password': hashed_password.decode('utf-8')
+                'is_shop_owner': False
             }
             
-            response = supabase.table('users').insert(user_data).execute()
-            user_id = response.data[0]['id']
-            
-            token = jwt.encode({
-                'user_id': user_id,
-                'email': data['email'],
-                'exp': datetime.utcnow() + timedelta(hours=24)
-            }, '1025', algorithm="HS256")
+            supabase.table('users').insert(user_data).execute()
             
             return {
                 'status': 201,
                 'message': 'User registered successfully',
-                'user_id': user_id,
-                'token': token
+                'user_id': user['id'],
+                'token': auth_response['access_token']
             }
                 
         except Exception as e:
+            print(f"Signup error: {str(e)}")
             return {'status': 500, 'message': str(e)}
 
     def delete_account(self, user_id):

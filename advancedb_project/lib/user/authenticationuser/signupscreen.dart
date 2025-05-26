@@ -29,10 +29,18 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) return;
+    
+    setState(() => _isLoading = true);
+    
     try {
+      // First create user in Supabase auth
       final response = await http.post(
-        Uri.parse('${SupabaseConfig.apiUrl}/signup'),
-        headers: {'Content-Type': 'application/json'},
+        Uri.parse('${SupabaseConfig.apiUrl}/signup'),  // Changed to use apiUrl
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': SupabaseConfig.anonKey,
+        },
         body: jsonEncode({
           'name': _nameController.text.trim(),
           'email': _emailController.text.trim(),
@@ -40,45 +48,37 @@ class _SignupScreenState extends State<SignupScreen> {
         }),
       );
       
-      print('Debug - Signup Response: ${response.body}'); // Add debug print
-
-      if (response.statusCode == 201) {
-        final data = jsonDecode(response.body);
-        
-        // Verify token exists
-        if (data['token'] == null || data['token'].isEmpty) {
-          throw Exception('No token received from server');
-        }
-        
+      print('Debug - Signup Response: ${response.body}');
+      
+      final data = jsonDecode(response.body);
+      
+      if (response.statusCode == 201) { // Changed to check for 201 specifically
         if (!mounted) return;
         
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (context) => UserDetailsScreen(
-              userId: data['user_id'],
-              token: data['token'],
+              userId: data['user_id'],  // Changed from data['user']['id']
+              token: data['token'],     // Changed from data['access_token']
             ),
           ),
         );
       } else {
-        if (!mounted) return;
-        final data = jsonDecode(response.body);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Registration failed')),
-        );
+        throw Exception(data['message'] ?? data['error'] ?? 'Registration failed');
       }
     } catch (e) {
+      print('Debug - Registration error: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
+        SnackBar(content: Text(e.toString())),
       );
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
-  }
+}
 
   @override
   Widget build(BuildContext context) {
