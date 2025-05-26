@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'PastTransact.dart';
 import 'DetailTransact.dart';
 import '../../Sockets/socketService.dart';
+import '../../../supabase_config.dart';
 
 class ActiveTransact extends StatefulWidget {
   final int userId;
@@ -35,7 +36,6 @@ class _ActiveTransactState extends State<ActiveTransact> {
     try {
       SocketService.initializeSocket();
       SocketService.joinUserRoom(widget.userId.toString());
-      
       SocketService.listenToStatusUpdates((data) {
         if (!mounted) return;
         
@@ -95,8 +95,7 @@ class _ActiveTransactState extends State<ActiveTransact> {
 
   try {
     final response = await http.get(
-      // Changed from /active to filtering in the frontend
-      Uri.parse('http://localhost:5000/user_transactions/${widget.userId}'),
+      Uri.parse('${SupabaseConfig.apiUrl}/user_transactions/${widget.userId}'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',

@@ -10,6 +10,7 @@ import 'viewmap.dart';
 import '../Transaction/ConfirmedTranct.dart';
 import '../../loginscreen.dart';
 import 'allshops.dart';
+import '../../../supabase_config.dart';
 
 class LaundryShop {
   final String id; // Add this field
@@ -108,13 +109,13 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
     }
 
     try {
-      final response = await http.get(
-        Uri.parse('http://localhost:5000/user/${widget.userId}'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
-      );
+    final response = await http.get(
+      Uri.parse('${SupabaseConfig.apiUrl}/user/${widget.userId}'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -140,7 +141,7 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
   Future<void> _fetchShopData() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/shops/recent'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shops/recent'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
@@ -236,16 +237,8 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
 
   Future<Map<String, dynamic>> _fetchCompleteShopData(String shopId) async {
     try {
-      // Check shopId is not null/empty
-      if (shopId.isEmpty) {
-        throw Exception('Shop ID is empty');
-      }
-
-      print('Fetching shop data for ID: $shopId'); // Debug log
-
-      // Fetch basic shop data
       final shopResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -263,20 +256,16 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
 
       // Fetch services for this shop
       final servicesResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/services'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/services'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
         },
       );
 
-      print(
-        'Services response status: ${servicesResponse.statusCode}',
-      ); // Debug log
-
       // Fetch clothing types
       final clothingResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/clothing'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/clothing'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -285,7 +274,7 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
 
       // Fetch household items
       final householdResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/household'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/household'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

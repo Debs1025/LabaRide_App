@@ -7,6 +7,7 @@ import '../Location/CurrentLocation.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'transaction_service.dart';
+import '../../../supabase_config.dart';
 
 
 class CheckoutScreen extends StatefulWidget {
@@ -151,7 +152,7 @@ Future<void> _placeOrder() async {
  Future<double> _getPricePerKilo(double kiloAmount) async {
   try {
     final response = await http.get(
-      Uri.parse('http://localhost:5000/shop/${widget.shopData['id']}/kilo-prices'),
+      Uri.parse('${SupabaseConfig.apiUrl}/shop/${widget.shopData['id']}/kilo-prices'),  // Updated URL
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',

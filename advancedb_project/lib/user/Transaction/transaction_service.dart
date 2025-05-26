@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../../supabase_config.dart';
 
 class TransactionService {
   static Future<Map<String, dynamic>> createTransaction({
@@ -14,7 +15,7 @@ class TransactionService {
       }
 
       final response = await http.post(
-        Uri.parse('http://localhost:5000/create_transaction/$userId'),
+        Uri.parse('${SupabaseConfig.apiUrl}/create_transaction/$userId'),  // Updated URL
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

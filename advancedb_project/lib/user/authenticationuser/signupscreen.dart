@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:async';
 import 'dart:convert';
 import 'userdetails.dart';
+import '../../../supabase_config.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -28,15 +29,9 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _register() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:5000/signup'),
+        Uri.parse('${SupabaseConfig.apiUrl}/signup'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'name': _nameController.text.trim(),

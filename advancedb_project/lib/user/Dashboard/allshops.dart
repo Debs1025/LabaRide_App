@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../OrderingSystem/ordershopsystem.dart';
 import 'viewmap.dart';
+import '../../../supabase_config.dart';
 
 class LaundryShop {
   final String id;
@@ -80,7 +81,7 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
       setState(() => _isLoading = true);
 
       final response = await http.get(
-        Uri.parse('http://localhost:5000/shops'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shops'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
@@ -131,12 +132,8 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
 
   Future<Map<String, dynamic>> _fetchCompleteShopData(String shopId) async {
     try {
-      if (shopId.isEmpty) {
-        throw Exception('Shop ID is empty');
-      }
-
       final shopResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -150,28 +147,29 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
       final shopData = jsonDecode(shopResponse.body);
 
       final servicesResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/services'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+      Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/services'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
       final clothingResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/clothing'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+      Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/clothing'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
-      final householdResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/household'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+
+    final householdResponse = await http.get(
+      Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/household'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
       return {
         'id': shopId,

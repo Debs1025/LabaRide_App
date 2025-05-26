@@ -15,6 +15,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../supabase_config.dart';
 
 
 class ProfileScreen extends StatefulWidget {
@@ -137,17 +138,12 @@ void initState() {
    Future<void> _updateUserAddress(Map<String, dynamic> address) async {
     try {
       final response = await http.put(
-        Uri.parse('http://localhost:5000/update_user_details/${widget.userId}'),
+        Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
         },
-        body: jsonEncode({
-          'zone': address['zone'],
-          'street': address['street'],
-          'barangay': address['barangay'],
-          'building': address['building'],
-        }),
+        body: jsonEncode(address),
       );
 
       if (response.statusCode != 200) {
@@ -166,11 +162,8 @@ void initState() {
   }
 
   try {
-    print('DEBUG: Fetching user data for ID: ${widget.userId}');
-    
-    // First, get user data
     final userResponse = await http.get(
-      Uri.parse('http://localhost:5000/user/${widget.userId}'),
+      Uri.parse('${SupabaseConfig.apiUrl}/user/${widget.userId}'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ${widget.token}',
@@ -185,7 +178,7 @@ void initState() {
       
       // Now, check if user has a shop
       final shopResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/user/${widget.userId}'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/user/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',

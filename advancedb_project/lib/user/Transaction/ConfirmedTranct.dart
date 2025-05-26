@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../Dashboard/laundry_dashboard_screen.dart';
 import 'CancelOrder.dart';
+import '../../../supabase_config.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
   final int userId;
@@ -62,12 +63,10 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     }
 
     try {
-      print('Making API request for transaction ${widget.transactionId}');
       final response = await http.get(
-        Uri.parse('http://localhost:5000/transactions/${widget.transactionId}'),
+        Uri.parse('${SupabaseConfig.apiUrl}/transactions/${widget.transactionId}'),  // Updated URL
         headers: {
           'Content-Type': 'application/json',
-          'Accept': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
         },
       );

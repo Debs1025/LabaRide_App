@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../loginscreen.dart';
+import '../../../supabase_config.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   final int userId;
@@ -47,7 +48,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     try {
       final response = await http.put(
-        Uri.parse('http://localhost:5000/update_password/${widget.userId}'),
+        Uri.parse('${SupabaseConfig.apiUrl}/update_password/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',

@@ -6,6 +6,7 @@ import '../ProfileUser/UserProfile.dart';
 import 'search_screen.dart';
 import '../../loginscreen.dart';
 import '../History/ActiveTransact.dart';
+import '../../../supabase_config.dart';
 
 class ActivitiesScreen extends StatefulWidget {
   final int userId;
@@ -36,7 +37,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
     }
   }
 
-  Future<void> _fetchUserTransactions() async {
+ Future<void> _fetchUserTransactions() async {
   setState(() {
     _isLoading = true;
     _errorMessage = '';
@@ -44,7 +45,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
 
   try {
     final response = await http.get(
-      Uri.parse('http://localhost:5000/user_transactions/${widget.userId}'),
+      Uri.parse('${SupabaseConfig.apiUrl}/user_transactions/${widget.userId}'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -53,9 +54,8 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      // The backend returns transactions directly in the response
       setState(() {
-        _recentTransactions = List<Map<String, dynamic>>.from(data['transactions'] ?? []);
+        _recentTransactions = List<Map<String, dynamic>>.from(data['data'] ?? []);
         _isLoading = false;
       });
     } else {

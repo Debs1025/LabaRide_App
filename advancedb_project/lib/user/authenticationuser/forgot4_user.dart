@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'forgot3_user.dart';
 import 'forgot5_user.dart';
+import '../../../supabase_config.dart';
 
 class NewPasswordScreen extends StatefulWidget {
   const NewPasswordScreen({super.key});
@@ -21,6 +24,42 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
     _confirmPasswordController.dispose();
     super.dispose();
   }
+
+  Future<void> _updatePassword() async {
+  if (_passwordController.text != _confirmPasswordController.text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Passwords do not match')),
+    );
+    return;
+  }
+
+  try {
+    final response = await http.put(
+      Uri.parse('${SupabaseConfig.apiUrl}/update_password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'password': _passwordController.text,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PasswordChangedComplete(),
+        ),
+      );
+    } else {
+      throw Exception('Failed to update password');
+    }
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -91,11 +130,10 @@ class _NewPasswordScreenState extends State<NewPasswordScreen> {
                 child: ElevatedButton(
                   onPressed: () {
                     if (_passwordController.text == _confirmPasswordController.text) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const PasswordChangedComplete(),
-                        ),
+                      _updatePassword();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Passwords do not match')),
                       );
                     }
                   },

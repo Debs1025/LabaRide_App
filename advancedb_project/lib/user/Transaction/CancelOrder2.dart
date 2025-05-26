@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'OrderCancelled.dart';
+import '../../../supabase_config.dart';
 
 class ConfirmCancelScreen2 extends StatefulWidget { 
   final String transactionId;
@@ -31,8 +32,8 @@ class _ConfirmCancelScreen2State extends State<ConfirmCancelScreen2> {
     print('Cancelling transaction: ${widget.transactionId}');
     print('Selected reason: $selectedReason');
     
-    final response = await http.put( // Changed from delete to put
-      Uri.parse('http://localhost:5000/cancel_transaction/${widget.transactionId}'), // Changed endpoint
+    final response = await http.put(
+      Uri.parse('${SupabaseConfig.apiUrl}/cancel_transaction/${widget.transactionId}'),  // Updated URL
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ${widget.token}',

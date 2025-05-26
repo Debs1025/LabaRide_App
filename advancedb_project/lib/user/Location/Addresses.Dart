@@ -8,6 +8,7 @@ import '../OrderingSystem/ordershopsystem.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:geolocator/geolocator.dart';
+import '../../../supabase_config.dart';
 
 class Addresses extends StatefulWidget {
   final int userId;
@@ -58,8 +59,11 @@ class _AddressesState extends State<Addresses> {
   Future<void> _loadSavedAddresses() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/user/${widget.userId}'),
-        headers: {'Authorization': 'Bearer ${widget.token}'},
+        Uri.parse('${SupabaseConfig.apiUrl}/user/${widget.userId}'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
       );
 
       if (response.statusCode == 200) {
@@ -253,22 +257,18 @@ class _AddressesState extends State<Addresses> {
     }
 
     try {
-      final addressParts = selectedAddress!.split(', ');
-      
-      final Map<String, dynamic> addressData = {
-        'zone': addressParts[0].replaceAll('Zone ', ''),
-        'street': addressParts.length > 1 ? addressParts[1] : '',
-        'barangay': addressParts.length > 2 ? addressParts[2] : '',
-        'building': addressParts.length > 3 ? addressParts[3] : ''
-      };
-
       final response = await http.put(
-        Uri.parse('http://localhost:5000/update_user_details/${widget.userId}'),
+        Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode(addressData),
+        body: jsonEncode({
+          'zone': addressParts[0].replaceAll('Zone ', ''),
+          'street': addressParts.length > 1 ? addressParts[1] : '',
+          'barangay': addressParts.length > 2 ? addressParts[2] : '',
+          'building': addressParts.length > 3 ? addressParts[3] : ''
+        }),
       );
 
       if (response.statusCode == 200) {

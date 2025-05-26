@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../../supabase_config.dart';
 
 class NotificationsScreen extends StatefulWidget {
   final int userId;
@@ -29,7 +30,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/notifications/${widget.userId}'),
+        Uri.parse('${SupabaseConfig.apiUrl}/api/notifications/${widget.userId}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

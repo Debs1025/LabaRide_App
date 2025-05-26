@@ -3,6 +3,7 @@ import './laundryfulldetails.dart';
 import '../Transaction/1OrderConfirm.dart';
 import '../../loginscreen.dart';
 
+
 class Service {
   final String title;
   final String description;
@@ -107,19 +108,13 @@ class _OrderShopSystemState extends State<OrderShopSystem> {
   });
 }
 
-  Future<void> _loadServices() async {
+Future<void> _loadServices() async {
   setState(() => _isLoading = true);
   try {
-    print("Shop Data received: ${widget.shopData}"); // Debug print
-
-    // Extract services from shop data with null check and type casting
+    // Extract data directly from shopData since it already contains the services
     final List<dynamic> services = widget.shopData['services'] as List<dynamic>? ?? [];
     final List<dynamic> clothingTypes = widget.shopData['clothing_types'] as List<dynamic>? ?? [];
     final List<dynamic> householdItems = widget.shopData['household_items'] as List<dynamic>? ?? [];
-
-    print("Services found: ${services.length}"); // Debug print
-    print("Clothing types found: ${clothingTypes.length}"); // Debug print
-    print("Household items found: ${householdItems.length}"); // Debug print
 
     setState(() {
       this.services = services.map((service) => Service(
@@ -148,7 +143,7 @@ class _OrderShopSystemState extends State<OrderShopSystem> {
       _updateTotalPrice();
     });
   } catch (e) {
-    print('Error loading services: $e'); //Error Handling
+    print('Error loading services: $e');
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error loading services: $e')),

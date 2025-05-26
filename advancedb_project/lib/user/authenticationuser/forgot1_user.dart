@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import 'forgot2_user.dart';
 import '../../loginscreen.dart';
+import '../../../supabase_config.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -18,14 +21,45 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     _emailController.dispose();
     super.dispose();
   }
-
+  
   void _validateEmail(String value) {
     setState(() {
       _isValidEmail = value.isNotEmpty && 
           RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value);
     });
   }
+  
+  Future<void> _resetPassword() async {
+  try {
+    final response = await http.post(
+      Uri.parse('${SupabaseConfig.apiUrl}/reset_password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': _emailController.text.trim(),
+      }),
+    );
 
+    if (response.statusCode == 200) {
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TypeCodeScreen(
+            email: _emailController.text,
+          ),
+        ),
+      );
+    } else {
+      throw Exception('Failed to send reset email');
+    }
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  }
+}
+      
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -108,18 +142,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 width: double.infinity,
                 height: 48,
                 child: ElevatedButton(
-                  onPressed: _isValidEmail
-                      ? () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TypeCodeScreen(
-                                email: _emailController.text,
-                              ),
-                            ),
-                          );
-                        }
-                      : null,
+                  onPressed: _isValidEmail ? _resetPassword : null,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _isValidEmail 
                         ? const Color(0xFF375DFB) 
@@ -140,10 +163,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+                  ],
+                ),
+              ),
+            ),
+          );
+        }
+      }

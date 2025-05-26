@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'ActiveTransact.dart';
 import 'DetailTransact.dart';
 import '../ProfileUser/UserProfile.dart';
+import '../../../supabase_config.dart';
 
 class PastTransact extends StatefulWidget {
   final int userId;
@@ -38,8 +39,7 @@ class _PastTransactState extends State<PastTransact> {
 
   try {
     final response = await http.get(
-      // Changed from /completed to filtering in the frontend
-      Uri.parse('http://localhost:5000/user_transactions/${widget.userId}'),
+      Uri.parse('${SupabaseConfig.apiUrl}/user_transactions/${widget.userId}'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',

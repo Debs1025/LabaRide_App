@@ -4,6 +4,7 @@ import 'dart:convert';
 import '../OrderingSystem/ordershopsystem.dart';
 import 'laundry_dashboard_screen.dart';
 import '../../loginscreen.dart';
+import '../../../supabase_config.dart';
 
 class SearchScreen extends StatefulWidget {
   final int userId;
@@ -56,12 +57,12 @@ class _SearchScreenState extends State<SearchScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/shops'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shops'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
         },
-      ).timeout(const Duration(seconds: 10));
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -175,7 +176,7 @@ Future<void> _handleShopTap(LaundryShop shop) async {
       print('Fetching shop data for ID: $shopId');
 
       final shopResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -187,8 +188,9 @@ Future<void> _handleShopTap(LaundryShop shop) async {
       }
 
       final shopData = jsonDecode(shopResponse.body);
+
       final servicesResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/services'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/services'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -196,7 +198,7 @@ Future<void> _handleShopTap(LaundryShop shop) async {
       );
 
       final clothingResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/clothing'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/clothing'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -204,7 +206,7 @@ Future<void> _handleShopTap(LaundryShop shop) async {
       );
 
       final householdResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/household'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/household'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

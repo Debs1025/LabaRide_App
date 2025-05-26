@@ -5,6 +5,8 @@ import 'ConfirmDelete.dart';
 import 'ChangePassword.dart';
 import 'AccountDelete.dart';
 import 'package:intl/intl.dart';
+import '../../../supabase_config.dart';
+
 
 class EditProfileScreen extends StatefulWidget {
   final int userId;
@@ -91,7 +93,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     final response = await http.put(
-      Uri.parse('http://localhost:5000/update_user_details/${widget.userId}'),
+      Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ${widget.token}',

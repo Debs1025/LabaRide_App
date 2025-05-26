@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'signupcomplete.dart';
 import '../../shop/AuthenticationShop/registershop.dart';
+import '../../../supabase_config.dart';
 
 class UserDetailsScreen extends StatefulWidget {
   final int userId;
@@ -93,27 +94,23 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     setState(() => _isLoading = true);
 
     try {
-    // Add debug prints
-    print('Debug - Token being sent: ${widget.token}');
-    print('Debug - User ID: ${widget.userId}');
-
-    final response = await http.put(
-      Uri.parse('http://localhost:5000/update_user_details/${widget.userId}'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',  // Add Accept header
-        'Authorization': 'Bearer ${widget.token}',
-      },
-      body: jsonEncode({
-        'phone': _phoneController.text.trim(),  // Add trim()
-        'birthdate': _birthdateController.text,
-        'gender': selectedGender,
-        'zone': _zoneController.text.trim(),
-        'street': _streetController.text.trim(),
-        'barangay': _barangayController.text.trim(),
-        'building': _buildingController.text.trim(),
-      }),
-    );
+      final response = await http.put(
+        Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+        body: jsonEncode({
+          'phone': _phoneController.text.trim(),
+          'birthdate': _birthdateController.text,
+          'gender': selectedGender,
+          'zone': _zoneController.text.trim(),
+          'street': _streetController.text.trim(),
+          'barangay': _barangayController.text.trim(),
+          'building': _buildingController.text.trim(),
+        }),
+      );
 
     print('Debug - Response Status: ${response.statusCode}');
     print('Debug - Response Body: ${response.body}');
