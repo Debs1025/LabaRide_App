@@ -37,37 +37,41 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
     }
   }
 
- Future<void> _fetchUserTransactions() async {
-  setState(() {
-    _isLoading = true;
-    _errorMessage = '';
-  });
+  Future<void> _fetchUserTransactions() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
 
-  try {
-    final response = await http.get(
-      Uri.parse('${SupabaseConfig.apiUrl}/user_transactions/${widget.userId}'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/user_transactions/${widget.userId}',
+        ),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _recentTransactions = List<Map<String, dynamic>>.from(
+            data['data'] ?? [],
+          );
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load transactions');
+      }
+    } catch (e) {
       setState(() {
-        _recentTransactions = List<Map<String, dynamic>>.from(data['data'] ?? []);
+        _errorMessage = 'Error: $e';
         _isLoading = false;
       });
-    } else {
-      throw Exception('Failed to load transactions');
     }
-  } catch (e) {
-    setState(() {
-      _errorMessage = 'Error: $e';
-      _isLoading = false;
-    });
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -111,10 +115,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
               const SizedBox(height: 8),
               const Text(
                 'Please login to view your activities',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.grey, fontSize: 16),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -201,10 +202,11 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ActiveTransact(
-                    userId: widget.userId,
-                    token: widget.token,
-                  ),
+                  builder:
+                      (context) => ActiveTransact(
+                        userId: widget.userId,
+                        token: widget.token,
+                      ),
                 ),
               );
             },
@@ -230,29 +232,29 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   }
 
   Widget _buildRecentSection() {
-  return Column(
-    children: [
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Row(
-          children: const [
-            Text(
-              'Recent',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontFamily: 'Inter',
-                fontWeight: FontWeight.bold,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Row(
+            children: const [
+              Text(
+                'Recent',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontFamily: 'Inter',
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-      const SizedBox(height: 8),
-      _buildTransactionsList(),
-    ],
-  );
-}
+        const SizedBox(height: 8),
+        _buildTransactionsList(),
+      ],
+    );
+  }
 
   Widget _buildTransactionsList() {
     if (_isLoading) {
@@ -277,9 +279,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: _fetchUserTransactions,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                ),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
                 child: const Text('Retry'),
               ),
             ],
@@ -445,9 +445,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
       height: 80,
       decoration: const BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.vertical(
-          top: Radius.circular(24),
-        ),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -459,11 +457,12 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
             () => Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => LaundryDashboardScreen(
-                  userId: widget.userId,
-                  token: widget.token,
-                  isGuest: widget.isGuest,
-                ),
+                builder:
+                    (context) => LaundryDashboardScreen(
+                      userId: widget.userId,
+                      token: widget.token,
+                      isGuest: widget.isGuest,
+                    ),
               ),
             ),
           ),
@@ -474,11 +473,12 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
             () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => SearchScreen(
-                  userId: widget.userId,
-                  token: widget.token,
-                  isGuest: widget.isGuest,
-                ),
+                builder:
+                    (context) => SearchScreen(
+                      userId: widget.userId,
+                      token: widget.token,
+                      isGuest: widget.isGuest,
+                    ),
               ),
             ),
           ),
@@ -495,11 +495,12 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
             () => Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ProfileScreen(
-                  userId: widget.userId,
-                  token: widget.token,
-                  isGuest: widget.isGuest,
-                ),
+                builder:
+                    (context) => ProfileScreen(
+                      userId: widget.userId,
+                      token: widget.token,
+                      isGuest: widget.isGuest,
+                    ),
               ),
             ),
           ),
@@ -523,11 +524,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: color,
-              fontFamily: 'Inter',
-            ),
+            style: TextStyle(fontSize: 12, color: color, fontFamily: 'Inter'),
           ),
         ],
       ),

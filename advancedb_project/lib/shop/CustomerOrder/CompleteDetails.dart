@@ -40,7 +40,9 @@ class _CompleteDetailsState extends State<CompleteDetails> {
 
     try {
       final response = await http.get(
-        Uri.parse('${SupabaseConfig.apiUrl}/order_items/${widget.orderDetails['id']}'),
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/order_items/${widget.orderDetails['id']}',
+        ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -93,20 +95,11 @@ class _CompleteDetailsState extends State<CompleteDetails> {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            item,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
+          Text(item, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           const Spacer(),
           Text(
             price,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ],
       ),
@@ -116,8 +109,16 @@ class _CompleteDetailsState extends State<CompleteDetails> {
   @override
   Widget build(BuildContext context) {
     // Calculate totals
-    double subtotal = double.tryParse(widget.orderDetails['total_amount']?.toString() ?? '0') ?? 0;
-    double deliveryFee = double.tryParse(widget.orderDetails['delivery_fee']?.toString() ?? '50') ?? 50;
+    double subtotal =
+        double.tryParse(
+          widget.orderDetails['total_amount']?.toString() ?? '0',
+        ) ??
+        0;
+    double deliveryFee =
+        double.tryParse(
+          widget.orderDetails['delivery_fee']?.toString() ?? '50',
+        ) ??
+        50;
     double total = subtotal + deliveryFee;
 
     return Scaffold(
@@ -159,198 +160,207 @@ class _CompleteDetailsState extends State<CompleteDetails> {
               const SizedBox(height: 24),
               // Order Card
               Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _error.isNotEmpty
+                child:
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _error.isNotEmpty
                         ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _error,
+                                style: const TextStyle(color: Colors.white),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _loadOrderDetails,
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
+                        : Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: SingleChildScrollView(
+                            padding: const EdgeInsets.all(16),
                             child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  _error,
-                                  style: const TextStyle(color: Colors.white),
-                                  textAlign: TextAlign.center,
+                                const Text(
+                                  'Order',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1A0066),
+                                  ),
+                                ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      '#${widget.orderDetails['id'] ?? widget.orderDetails['orderId'] ?? '0123456891'}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Color(0xFF9747FF),
+                                      ),
+                                    ),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green[50],
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        'Complete',
+                                        style: TextStyle(
+                                          color: Colors.green[400],
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                                 const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: _loadOrderDetails,
-                                  child: const Text('Retry'),
+                                // Service type
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: _getServiceColor(
+                                      widget.orderDetails['service_name'] ??
+                                          widget.orderDetails['service'] ??
+                                          'WASH ONLY',
+                                    ),
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      (widget.orderDetails['service_name'] ??
+                                              widget.orderDetails['service'] ??
+                                              'WASH ONLY')
+                                          .toUpperCase(),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                              ],
-                            ),
-                          )
-                        : Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: SingleChildScrollView(
-                              padding: const EdgeInsets.all(16),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Order',
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF1A0066),
-                                    ),
-                                  ),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        '#${widget.orderDetails['id'] ?? widget.orderDetails['orderId'] ?? '0123456891'}',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          color: Color(0xFF9747FF),
-                                        ),
-                                      ),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 12,
-                                          vertical: 4,
-                                        ),
-                                        decoration: BoxDecoration(
-                                          color: Colors.green[50],
-                                          borderRadius: BorderRadius.circular(12),
-                                        ),
-                                        child: Text(
-                                          'Complete',
-                                          style: TextStyle(
-                                            color: Colors.green[400],
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  // Service type
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: _getServiceColor(
-                                        widget.orderDetails['service_name'] ?? 
-                                        widget.orderDetails['service'] ?? 
-                                        'WASH ONLY'
-                                      ),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        (widget.orderDetails['service_name'] ?? 
-                                         widget.orderDetails['service'] ?? 
-                                         'WASH ONLY').toUpperCase(),
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
-                                  // Items list
-                                  if (_items.isNotEmpty) ...[
-                                    ..._items.map((item) => _buildOrderItem(
-                                          '${item['quantity']}x',
-                                          item['item_name'] ?? '',
-                                          '₱${item['price']}',
-                                        )),
-                                  ],
-                                  const SizedBox(height: 24),
-                                  // Pricing Details
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        'Subtotal',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Color(0xFF666666),
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Text(
-                                        '₱$subtotal',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        'Delivery Fee',
-                                        style: TextStyle(
-                                          fontSize: 16,
-                                          color: Color(0xFF666666),
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Text(
-                                        '₱$deliveryFee',
-                                        style: const TextStyle(
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 8),
-                                    child: Divider(),
-                                  ),
-                                  Row(
-                                    children: [
-                                      const Text(
-                                        'Total',
-                                        style: TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF1A0066),
-                                        ),
-                                      ),
-                                      const Spacer(),
-                                      Text(
-                                        '₱$total',
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                          color: Color(0xFF9747FF),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 24),
-                                  // Complete status
-                                  Container(
-                                    width: double.infinity,
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green[400],
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: const Center(
-                                      child: Text(
-                                        'Order Complete',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
+                                const SizedBox(height: 24),
+                                // Items list
+                                if (_items.isNotEmpty) ...[
+                                  ..._items.map(
+                                    (item) => _buildOrderItem(
+                                      '${item['quantity']}x',
+                                      item['item_name'] ?? '',
+                                      '₱${item['price']}',
                                     ),
                                   ),
                                 ],
-                              ),
+                                const SizedBox(height: 24),
+                                // Pricing Details
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'Subtotal',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Color(0xFF666666),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      '₱$subtotal',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'Delivery Fee',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Color(0xFF666666),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      '₱$deliveryFee',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 8),
+                                  child: Divider(),
+                                ),
+                                Row(
+                                  children: [
+                                    const Text(
+                                      'Total',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1A0066),
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    Text(
+                                      '₱$total',
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF9747FF),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 24),
+                                // Complete status
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green[400],
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  child: const Center(
+                                    child: Text(
+                                      'Order Complete',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                        ),
               ),
             ],
           ),

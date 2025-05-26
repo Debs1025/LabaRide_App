@@ -88,25 +88,26 @@ class _AddressesState extends State<Addresses> {
 
   String _formatAddress(Map<String, dynamic> address) {
     List<String> parts = [];
-    
+
     String zone = (address['zone']?.toString() ?? '1').trim();
     parts.add('Zone $zone');
-    
-    String street = (address['street']?.toString() ?? 'Magsaysay Avenue').trim();
+
+    String street =
+        (address['street']?.toString() ?? 'Magsaysay Avenue').trim();
     if (street.isNotEmpty) {
       parts.add(street);
     }
-    
+
     String barangay = (address['barangay']?.toString() ?? 'Peñafrancia').trim();
     if (barangay.isNotEmpty) {
       parts.add(barangay);
     }
-    
+
     String? building = address['building']?.toString();
     if (building != null && building.trim().isNotEmpty) {
       parts.add(building.trim());
     }
-    
+
     return parts.join(', ');
   }
 
@@ -114,33 +115,30 @@ class _AddressesState extends State<Addresses> {
     try {
       final response = await http.get(
         Uri.parse(
-          'https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.latitude}&lon=${coordinates.longitude}&addressdetails=1&accept-language=en'
+          'https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.latitude}&lon=${coordinates.longitude}&addressdetails=1&accept-language=en',
         ),
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'LabaRide App'
-        }
+        headers: {'Accept': 'application/json', 'User-Agent': 'LabaRide App'},
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final address = data['address'];
 
-        String street = address['road'] ?? 
-                       address['street'] ?? 
-                       address['footway'] ?? 
-                       address['pedestrian'] ??
-                       'Unknown Street';
-        
-        String barangay = address['suburb'] ?? 
-                         address['village'] ?? 
-                         address['subdistrict'] ?? 
-                         address['neighbourhood'] ??
-                         'Unknown Barangay';
+        String street =
+            address['road'] ??
+            address['street'] ??
+            address['footway'] ??
+            address['pedestrian'] ??
+            'Unknown Street';
 
-        String building = address['building'] ?? 
-                         address['house_name'] ?? 
-                         '';
+        String barangay =
+            address['suburb'] ??
+            address['village'] ??
+            address['subdistrict'] ??
+            address['neighbourhood'] ??
+            'Unknown Barangay';
+
+        String building = address['building'] ?? address['house_name'] ?? '';
 
         Map<String, dynamic> addressComponents = {
           'zone': '1',
@@ -163,40 +161,39 @@ class _AddressesState extends State<Addresses> {
   }
 
   Future<void> _useCurrentLocation() async {
-  if (isSelectingLocation) {
-    _saveSelectedLocation();
-    return;
-  }
-
-  try {
-    // Check location permission
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        _handleGeolocationError();
-        return;
-      }
+    if (isSelectingLocation) {
+      _saveSelectedLocation();
+      return;
     }
 
-    // Get current position
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high
-    );
+    try {
+      // Check location permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          _handleGeolocationError();
+          return;
+        }
+      }
 
-    setState(() {
-      selectedLatLng = LatLng(position.latitude, position.longitude);
-      isSelectingLocation = true;
-    });
-    
-    mapController.move(selectedLatLng!, 15.0);
-    await _getAddressFromCoordinates(selectedLatLng!);
-    
-  } catch (e) {
-    print('Error getting location: $e');
-    _handleGeolocationError();
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        selectedLatLng = LatLng(position.latitude, position.longitude);
+        isSelectingLocation = true;
+      });
+
+      mapController.move(selectedLatLng!, 15.0);
+      await _getAddressFromCoordinates(selectedLatLng!);
+    } catch (e) {
+      print('Error getting location: $e');
+      _handleGeolocationError();
+    }
   }
-}
 
   void _handleGeolocationError() {
     _showError('Could not get current location. Showing Naga City center.');
@@ -211,42 +208,34 @@ class _AddressesState extends State<Addresses> {
   void _showAddAddressDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          'Add New Address',
-          style: TextStyle(color: navyBlue),
-        ),
-        content: TextField(
-          controller: addressController,
-          decoration: InputDecoration(
-            hintText: 'Enter address',
-            focusedBorder: UnderlineInputBorder(
-              borderSide: BorderSide(color: navyBlue),
+      builder:
+          (context) => AlertDialog(
+            title: Text('Add New Address', style: TextStyle(color: navyBlue)),
+            content: TextField(
+              controller: addressController,
+              decoration: InputDecoration(
+                hintText: 'Enter address',
+                focusedBorder: UnderlineInputBorder(
+                  borderSide: BorderSide(color: navyBlue),
+                ),
+              ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel', style: TextStyle(color: Colors.grey)),
+              ),
+              TextButton(
+                onPressed: () {
+                  if (addressController.text.isNotEmpty) {
+                    // Add address handling logic here
+                    Navigator.pop(context);
+                  }
+                },
+                child: Text('Add', style: TextStyle(color: navyBlue)),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Cancel',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              if (addressController.text.isNotEmpty) {
-                // Add address handling logic here
-                Navigator.pop(context);
-              }
-            },
-            child: Text(
-              'Add',
-              style: TextStyle(color: navyBlue),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -259,17 +248,19 @@ class _AddressesState extends State<Addresses> {
     try {
       // Split the selected address into parts
       List<String> addressParts = selectedAddress!.split(', ');
-      
+
       // Create address data
       Map<String, dynamic> addressData = {
         'zone': addressParts[0].replaceAll('Zone ', ''),
         'street': addressParts.length > 1 ? addressParts[1] : '',
         'barangay': addressParts.length > 2 ? addressParts[2] : '',
-        'building': addressParts.length > 3 ? addressParts[3] : ''
+        'building': addressParts.length > 3 ? addressParts[3] : '',
       };
 
       final response = await http.put(
-        Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}'),
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}',
+        ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -282,9 +273,9 @@ class _AddressesState extends State<Addresses> {
           addresses = [addressData];
           isSelectingLocation = false;
         });
-        
+
         await _loadSavedAddresses();
-        
+
         if (widget.service != null) {
           Navigator.pop(context, selectedAddress);
         }
@@ -295,7 +286,7 @@ class _AddressesState extends State<Addresses> {
     } catch (e) {
       _showError('Failed to save location');
     }
-}
+  }
 
   void _handleMapTap(TapPosition tapPosition, LatLng point) async {
     if (!isSelectingLocation) return;
@@ -304,9 +295,9 @@ class _AddressesState extends State<Addresses> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -329,119 +320,121 @@ class _AddressesState extends State<Addresses> {
           ),
         ),
       ),
-      body: isLoading 
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Container(
-                  height: 250,
-                  margin: const EdgeInsets.all(16),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Stack(
-                      children: [
-                        FlutterMap(
-                          mapController: mapController,
-                          options: MapOptions(
-                            initialCenter: const LatLng(13.6217, 123.1948),
-                            initialZoom: 15.0,
-                            minZoom: 5.0,
-                            maxZoom: 18.0,
-                            onTap: isSelectingLocation ? _handleMapTap : null,
-                          ),
-                          children: [
-                            TileLayer(
-                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                              userAgentPackageName: 'com.example.app',
-                              tileProvider: CancellableNetworkTileProvider(),
-                            ),
-                            if (selectedLatLng != null)
-                              MarkerLayer(
-                                markers: [
-                                  Marker(
-                                    point: selectedLatLng!,
-                                    child: const Icon(
-                                      Icons.location_on,
-                                      color: Colors.red,
-                                      size: 40,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                          ],
-                        ),
-                        if (isSelectingLocation)
-                          Positioned(
-                            top: 16,
-                            left: 16,
-                            right: 16,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(8),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    blurRadius: 4,
-                                  ),
-                                ],
-                              ),
-                              child: const Text(
-                                'Tap on the map to select your location',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontWeight: FontWeight.w500),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (selectedAddress != null)
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.grey[100],
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
+      body:
+          isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                children: [
+                  Container(
+                    height: 250,
+                    margin: const EdgeInsets.all(16),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Stack(
                         children: [
-                          Icon(Icons.location_on, color: navyBlue),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              selectedAddress!,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
+                          FlutterMap(
+                            mapController: mapController,
+                            options: MapOptions(
+                              initialCenter: const LatLng(13.6217, 123.1948),
+                              initialZoom: 15.0,
+                              minZoom: 5.0,
+                              maxZoom: 18.0,
+                              onTap: isSelectingLocation ? _handleMapTap : null,
+                            ),
+                            children: [
+                              TileLayer(
+                                urlTemplate:
+                                    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                                userAgentPackageName: 'com.example.app',
+                                tileProvider: CancellableNetworkTileProvider(),
+                              ),
+                              if (selectedLatLng != null)
+                                MarkerLayer(
+                                  markers: [
+                                    Marker(
+                                      point: selectedLatLng!,
+                                      child: const Icon(
+                                        Icons.location_on,
+                                        color: Colors.red,
+                                        size: 40,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                          if (isSelectingLocation)
+                            Positioned(
+                              top: 16,
+                              left: 16,
+                              right: 16,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(8),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                                child: const Text(
+                                  'Tap on the map to select your location',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(fontWeight: FontWeight.w500),
+                                ),
                               ),
                             ),
-                          ),
                         ],
                       ),
                     ),
                   ),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: addresses.length,
-                    itemBuilder: (context, index) {
-                      final address = addresses[index];
-                      return ListTile(
-                        leading: Icon(Icons.home, color: navyBlue),
-                        title: Text(_formatAddress(address)),
-                        subtitle: const Text('Default Address'),
-                      );
-                    },
+                  if (selectedAddress != null)
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.grey[100],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.location_on, color: navyBlue),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                selectedAddress!,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: addresses.length,
+                      itemBuilder: (context, index) {
+                        final address = addresses[index];
+                        return ListTile(
+                          leading: Icon(Icons.home, color: navyBlue),
+                          title: Text(_formatAddress(address)),
+                          subtitle: const Text('Default Address'),
+                        );
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
       bottomNavigationBar: Padding(
         padding: const EdgeInsets.all(16),
         child: ElevatedButton(
@@ -455,10 +448,7 @@ class _AddressesState extends State<Addresses> {
           ),
           child: Text(
             isSelectingLocation ? 'Save Location' : 'Use Current Location',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
           ),
         ),
       ),

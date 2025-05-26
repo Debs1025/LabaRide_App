@@ -71,7 +71,9 @@ class _ExpandCompleteOrderState extends State<ExpandCompleteOrder> {
 
     try {
       final response = await http.get(
-        Uri.parse('${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}'),
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}',
+        ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

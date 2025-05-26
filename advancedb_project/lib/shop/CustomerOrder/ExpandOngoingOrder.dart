@@ -68,7 +68,9 @@ class _ExpandOngoingOrderState extends State<ExpandOngoingOrder> {
 
     try {
       final response = await http.get(
-        Uri.parse('${SupabaseConfig.apiUrl}/api/orders?shop_id=${widget.shopData['id']}&status=processing'),
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/api/orders?shop_id=${widget.shopData['id']}&status=processing',
+        ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

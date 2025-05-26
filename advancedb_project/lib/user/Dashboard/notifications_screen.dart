@@ -6,7 +6,11 @@ import '../../../supabase_config.dart';
 class NotificationsScreen extends StatefulWidget {
   final int userId;
   final String token;
-  const NotificationsScreen({super.key, required this.userId, required this.token});
+  const NotificationsScreen({
+    super.key,
+    required this.userId,
+    required this.token,
+  });
 
   @override
   State<NotificationsScreen> createState() => _NotificationsScreenState();
@@ -30,7 +34,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
     try {
       final response = await http.get(
-        Uri.parse('${SupabaseConfig.apiUrl}/api/notifications/${widget.userId}'),
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/api/notifications/${widget.userId}',
+        ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -104,26 +110,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             const SizedBox(height: 16),
             // Notifications List
             Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : error.isNotEmpty
+              child:
+                  isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : error.isNotEmpty
                       ? Center(child: Text(error))
                       : notifications.isEmpty
-                          ? const Center(child: Text('No notifications found.'))
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                              itemCount: notifications.length,
-                              itemBuilder: (context, index) {
-                                final n = notifications[index];
-                                return _buildNotificationItem(
-                                  name: n['from_name'] ?? 'Shop',
-                                  message: n['message'] ?? '',
-                                  time: _formatTime(n['created_at']),
-                                  notificationCount: '', // You can add unread count logic if needed
-                                  isUnread: n['is_read'] == 0,
-                                );
-                              },
-                            ),
+                      ? const Center(child: Text('No notifications found.'))
+                      : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        itemCount: notifications.length,
+                        itemBuilder: (context, index) {
+                          final n = notifications[index];
+                          return _buildNotificationItem(
+                            name: n['from_name'] ?? 'Shop',
+                            message: n['message'] ?? '',
+                            time: _formatTime(n['created_at']),
+                            notificationCount:
+                                '', // You can add unread count logic if needed
+                            isUnread: n['is_read'] == 0,
+                          );
+                        },
+                      ),
             ),
           ],
         ),

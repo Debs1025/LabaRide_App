@@ -8,11 +8,12 @@ class SupabaseService {
   // User methods
   static Future<bool> checkEmailExists(String email) async {
     try {
-      final response = await supabase
-          .from('users')
-          .select('email')
-          .eq('email', email)
-          .maybeSingle();
+      final response =
+          await supabase
+              .from('users')
+              .select('email')
+              .eq('email', email)
+              .maybeSingle();
       return response != null;
     } catch (e) {
       return false;
@@ -21,41 +22,38 @@ class SupabaseService {
 
   static Future<Map<String, dynamic>> getUserProfile(String userId) async {
     try {
-      return await supabase
-          .from('users')
-          .select()
-          .eq('id', userId)
-          .single();
+      return await supabase.from('users').select().eq('id', userId).single();
     } catch (e) {
       throw Exception('Failed to fetch user profile: ${e.toString()}');
     }
   }
 
-  static Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
+  static Future<void> updateUserProfile(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
     try {
-      await supabase
-          .from('users')
-          .update(data)
-          .eq('id', userId);
+      await supabase.from('users').update(data).eq('id', userId);
     } catch (e) {
       throw Exception('Failed to update profile: ${e.toString()}');
     }
   }
 
   // Shop methods
-  static Future<Map<String, dynamic>> createShop(Map<String, dynamic> shopData) async {
+  static Future<Map<String, dynamic>> createShop(
+    Map<String, dynamic> shopData,
+  ) async {
     try {
-      return await supabase
-          .from('shops')
-          .insert(shopData)
-          .select()
-          .single();
+      return await supabase.from('shops').insert(shopData).select().single();
     } catch (e) {
       throw Exception('Failed to create shop: ${e.toString()}');
     }
   }
 
-  static Future<Map<String, dynamic>> updateShop(String shopId, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> updateShop(
+    String shopId,
+    Map<String, dynamic> data,
+  ) async {
     try {
       return await supabase
           .from('shops')
@@ -69,7 +67,9 @@ class SupabaseService {
   }
 
   // Shop Services methods
-  static Future<Map<String, dynamic>> addShopService(Map<String, dynamic> serviceData) async {
+  static Future<Map<String, dynamic>> addShopService(
+    Map<String, dynamic> serviceData,
+  ) async {
     try {
       return await supabase
           .from('shop_services')
@@ -81,7 +81,10 @@ class SupabaseService {
     }
   }
 
-  static Future<Map<String, dynamic>> updateShopService(int serviceId, Map<String, dynamic> data) async {
+  static Future<Map<String, dynamic>> updateShopService(
+    int serviceId,
+    Map<String, dynamic> data,
+  ) async {
     try {
       return await supabase
           .from('shop_services')
@@ -95,7 +98,9 @@ class SupabaseService {
   }
 
   // Kilo Price methods
-  static Future<Map<String, dynamic>> addKiloPrice(Map<String, dynamic> priceData) async {
+  static Future<Map<String, dynamic>> addKiloPrice(
+    Map<String, dynamic> priceData,
+  ) async {
     try {
       return await supabase
           .from('kilo_prices')
@@ -108,7 +113,10 @@ class SupabaseService {
   }
 
   // Transaction methods
-  static Future<Map<String, dynamic>> updateTransactionStatus(String transactionId, String status) async {
+  static Future<Map<String, dynamic>> updateTransactionStatus(
+    String transactionId,
+    String status,
+  ) async {
     try {
       return await supabase
           .from('transactions')
@@ -121,7 +129,9 @@ class SupabaseService {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> getShopTransactions(String shopId) async {
+  static Future<List<Map<String, dynamic>>> getShopTransactions(
+    String shopId,
+  ) async {
     try {
       final response = await supabase
           .from('transactions')
@@ -135,7 +145,9 @@ class SupabaseService {
   }
 
   // Real-time subscriptions for users
-  static Stream<List<Map<String, dynamic>>> subscribeToUserTransactions(String userId) {
+  static Stream<List<Map<String, dynamic>>> subscribeToUserTransactions(
+    String userId,
+  ) {
     return supabase
         .from('transactions')
         .stream(primaryKey: ['id'])

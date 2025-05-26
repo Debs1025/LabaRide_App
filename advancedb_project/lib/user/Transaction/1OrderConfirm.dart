@@ -43,7 +43,8 @@ class _OrderConfirmScreenState extends State<OrderConfirmScreen> {
     noteController = TextEditingController(text: widget.notes);
   }
 
-  double get totalAmount => widget.subtotal + widget.deliveryFee - widget.voucherDiscount;
+  double get totalAmount =>
+      widget.subtotal + widget.deliveryFee - widget.voucherDiscount;
 
   @override
   Widget build(BuildContext context) {
@@ -95,18 +96,11 @@ class _OrderConfirmScreenState extends State<OrderConfirmScreen> {
           children: [
             Row(
               children: [
-                Image.asset(
-                  'assets/basket.png',
-                  height: 24,
-                  color: navyBlue,
-                ),
+                Image.asset('assets/basket.png', height: 24, color: navyBlue),
                 const SizedBox(width: 12),
                 const Text(
                   'Order Summary',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                 ),
               ],
             ),
@@ -139,8 +133,7 @@ class _OrderConfirmScreenState extends State<OrderConfirmScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildServicesHeader(),
-            if (widget.selectedItems.isNotEmpty)
-              _buildSelectedItemsList(),
+            if (widget.selectedItems.isNotEmpty) _buildSelectedItemsList(),
           ],
         ),
       ),
@@ -190,10 +183,11 @@ class _OrderConfirmScreenState extends State<OrderConfirmScreen> {
   Widget _buildSelectedItemsList() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: widget.selectedItems.entries
-          .where((entry) => entry.value > 0)
-          .map((entry) => _buildSelectedItemRow(entry))
-          .toList(),
+      children:
+          widget.selectedItems.entries
+              .where((entry) => entry.value > 0)
+              .map((entry) => _buildSelectedItemRow(entry))
+              .toList(),
     );
   }
 
@@ -205,10 +199,7 @@ class _OrderConfirmScreenState extends State<OrderConfirmScreen> {
         children: [
           Text(
             entry.key,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[800],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[800]),
           ),
           Text(
             '${entry.value}',
@@ -276,16 +267,10 @@ class _OrderConfirmScreenState extends State<OrderConfirmScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: TextStyle(color: Colors.grey[600]),
-        ),
+        Text(label, style: TextStyle(color: Colors.grey[600])),
         Text(
           '₱${amount.toStringAsFixed(2)}',
-          style: TextStyle(
-            fontWeight: FontWeight.w500,
-            color: navyBlue,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w500, color: navyBlue),
         ),
       ],
     );
@@ -295,10 +280,7 @@ class _OrderConfirmScreenState extends State<OrderConfirmScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          'Voucher',
-          style: TextStyle(color: Colors.grey[600]),
-        ),
+        Text('Voucher', style: TextStyle(color: Colors.grey[600])),
         Text(
           '-₱${widget.voucherDiscount.toStringAsFixed(2)}',
           style: const TextStyle(
@@ -316,17 +298,11 @@ class _OrderConfirmScreenState extends State<OrderConfirmScreen> {
       children: [
         Text(
           'Total',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: navyBlue,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w600, color: navyBlue),
         ),
         Text(
           '₱${totalAmount.toStringAsFixed(2)}',
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            color: navyBlue,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w600, color: navyBlue),
         ),
       ],
     );
@@ -361,18 +337,19 @@ class _OrderConfirmScreenState extends State<OrderConfirmScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => CheckoutScreen(
-          userId: widget.userId,
-          token: widget.token,
-          service: widget.service,
-          selectedItems: widget.selectedItems,
-          notes: noteController.text,
-          deliveryOption: widget.deliveryOption,
-          subtotal: widget.subtotal,
-          deliveryFee: widget.deliveryFee,
-          voucherDiscount: widget.voucherDiscount,
-          shopData: widget.shopData,
-        ),
+        builder:
+            (context) => CheckoutScreen(
+              userId: widget.userId,
+              token: widget.token,
+              service: widget.service,
+              selectedItems: widget.selectedItems,
+              notes: noteController.text,
+              deliveryOption: widget.deliveryOption,
+              subtotal: widget.subtotal,
+              deliveryFee: widget.deliveryFee,
+              voucherDiscount: widget.voucherDiscount,
+              shopData: widget.shopData,
+            ),
       ),
     );
   }

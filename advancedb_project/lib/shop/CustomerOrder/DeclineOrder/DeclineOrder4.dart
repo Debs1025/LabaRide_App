@@ -31,7 +31,7 @@ class _DeclineOrder4State extends State<DeclineOrder4> {
     'Steam Press': false,
     'Full Service': false,
   };
-  
+
   bool _isSubmitting = false;
   String _error = '';
 
@@ -43,14 +43,17 @@ class _DeclineOrder4State extends State<DeclineOrder4> {
 
     try {
       // Get selected services
-      final selectedServices = services.entries
-          .where((entry) => entry.value)
-          .map((entry) => entry.key)
-          .toList();
+      final selectedServices =
+          services.entries
+              .where((entry) => entry.value)
+              .map((entry) => entry.key)
+              .toList();
 
       // Make API call to decline order
       final response = await http.put(
-        Uri.parse('${SupabaseConfig.apiUrl}/update_transaction_status/${widget.orderDetails['id']}'),
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/update_transaction_status/${widget.orderDetails['id']}',
+        ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -67,11 +70,12 @@ class _DeclineOrder4State extends State<DeclineOrder4> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => OrderDeclined(
-                userId: widget.userId,
-                token: widget.token,
-                shopData: widget.shopData,
-              ),
+              builder:
+                  (context) => OrderDeclined(
+                    userId: widget.userId,
+                    token: widget.token,
+                    shopData: widget.shopData,
+                  ),
             ),
           );
         }
@@ -82,9 +86,9 @@ class _DeclineOrder4State extends State<DeclineOrder4> {
       setState(() {
         _error = e.toString();
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $_error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $_error')));
     } finally {
       if (mounted) {
         setState(() {
@@ -150,100 +154,99 @@ class _DeclineOrder4State extends State<DeclineOrder4> {
             const SizedBox(height: 8),
             const Text(
               'These services will be set to unavailable for the rest of the day.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Color(0xFF6B7280),
-              ),
+              style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
             ),
             if (_error.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Text(
                   _error,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 14,
-                  ),
+                  style: const TextStyle(color: Colors.red, fontSize: 14),
                 ),
               ),
             const SizedBox(height: 24),
             Expanded(
               child: ListView(
-                children: services.keys.map((service) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8.0),
-                    child: Row(
-                      children: [
-                        Checkbox(
-                          value: services[service],
-                          onChanged: (bool? value) {
-                            setState(() {
-                              services[service] = value ?? false;
-                            });
-                          },
-                        ),
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              vertical: 16,
-                              horizontal: 16,
+                children:
+                    services.keys.map((service) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: services[service],
+                              onChanged: (bool? value) {
+                                setState(() {
+                                  services[service] = value ?? false;
+                                });
+                              },
                             ),
-                            decoration: BoxDecoration(
-                              color: _getServiceColor(service),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              service.toUpperCase(),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                            Expanded(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 16,
+                                  horizontal: 16,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _getServiceColor(service),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Text(
+                                  service.toUpperCase(),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
                               ),
-                              textAlign: TextAlign.center,
                             ),
-                          ),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                }).toList(),
+                      );
+                    }).toList(),
               ),
             ),
             const SizedBox(height: 16),
             Center(
               child: ElevatedButton(
-                onPressed: services.containsValue(true) && !_isSubmitting
-                    ? _declineOrder
-                    : null,
+                onPressed:
+                    services.containsValue(true) && !_isSubmitting
+                        ? _declineOrder
+                        : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: services.containsValue(true)
-                      ? const Color(0xFF1A0066)
-                      : const Color(0xFFE5E7EB),
+                  backgroundColor:
+                      services.containsValue(true)
+                          ? const Color(0xFF1A0066)
+                          : const Color(0xFFE5E7EB),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   minimumSize: const Size(double.infinity, 50),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: _isSubmitting
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
+                child:
+                    _isSubmitting
+                        ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                        : Text(
+                          'Continue',
+                          style: TextStyle(
+                            color:
+                                services.containsValue(true)
+                                    ? Colors.white
+                                    : const Color(0xFF9CA3AF),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
-                      )
-                    : Text(
-                        'Continue',
-                        style: TextStyle(
-                          color: services.containsValue(true)
-                              ? Colors.white
-                              : const Color(0xFF9CA3AF),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
               ),
             ),
           ],

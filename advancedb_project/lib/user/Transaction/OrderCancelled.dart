@@ -24,10 +24,11 @@ class _OrderCancelledScreenState extends State<OrderCancelledScreen> {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => LaundryDashboardScreen(
-            userId: widget.userId,
-            token: widget.token,
-          ),
+          builder:
+              (context) => LaundryDashboardScreen(
+                userId: widget.userId,
+                token: widget.token,
+              ),
         ),
         (route) => false,
       );

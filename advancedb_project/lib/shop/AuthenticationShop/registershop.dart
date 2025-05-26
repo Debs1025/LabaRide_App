@@ -12,11 +12,7 @@ class RegisterShop extends StatefulWidget {
   final int userId;
   final String token;
 
-  const RegisterShop({
-    super.key,
-    required this.userId,
-    required this.token,
-  });
+  const RegisterShop({super.key, required this.userId, required this.token});
 
   @override
   State<RegisterShop> createState() => _RegisterShopState();
@@ -54,7 +50,7 @@ class _RegisterShopState extends State<RegisterShop> {
       'barangay': 'Peñafrancia',
       'building': '',
     };
-    
+
     setState(() {
       selectedAddress = _formatAddress(defaultAddress);
       _zoneController.text = defaultAddress['zone']!;
@@ -66,61 +62,61 @@ class _RegisterShopState extends State<RegisterShop> {
 
   String _formatAddress(Map<String, dynamic> address) {
     List<String> parts = [];
-    
+
     String zone = (address['zone']?.toString() ?? '1').trim();
     parts.add('Zone $zone');
-    
-    String street = (address['street']?.toString() ?? 'Magsaysay Avenue').trim();
+
+    String street =
+        (address['street']?.toString() ?? 'Magsaysay Avenue').trim();
     if (street.isNotEmpty) {
       parts.add(street);
     }
-    
+
     String barangay = (address['barangay']?.toString() ?? 'Peñafrancia').trim();
     if (barangay.isNotEmpty) {
       parts.add(barangay);
     }
-    
+
     String? building = address['building']?.toString();
     if (building != null && building.trim().isNotEmpty) {
       parts.add(building.trim());
     }
-    
+
     return parts.join(', ');
   }
 
   Future<void> _getAddressFromCoordinates(LatLng coordinates) async {
     try {
-      print('Getting address for coordinates: ${coordinates.latitude}, ${coordinates.longitude}');
-      
+      print(
+        'Getting address for coordinates: ${coordinates.latitude}, ${coordinates.longitude}',
+      );
+
       final response = await http.get(
         Uri.parse(
-          'https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.latitude}&lon=${coordinates.longitude}&addressdetails=1&accept-language=en'
+          'https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.latitude}&lon=${coordinates.longitude}&addressdetails=1&accept-language=en',
         ),
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'LabaRide App'
-        }
+        headers: {'Accept': 'application/json', 'User-Agent': 'LabaRide App'},
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final address = data['address'];
 
-        String street = address['road'] ?? 
-                       address['street'] ?? 
-                       address['footway'] ?? 
-                       address['pedestrian'] ??
-                       'Unknown Street';
-        
-        String barangay = address['suburb'] ?? 
-                         address['village'] ?? 
-                         address['subdistrict'] ?? 
-                         address['neighbourhood'] ??
-                         'Unknown Barangay';
+        String street =
+            address['road'] ??
+            address['street'] ??
+            address['footway'] ??
+            address['pedestrian'] ??
+            'Unknown Street';
 
-        String building = address['building'] ?? 
-                         address['house_name'] ?? 
-                         '';
+        String barangay =
+            address['suburb'] ??
+            address['village'] ??
+            address['subdistrict'] ??
+            address['neighbourhood'] ??
+            'Unknown Barangay';
+
+        String building = address['building'] ?? address['house_name'] ?? '';
 
         Map<String, dynamic> addressComponents = {
           'zone': '1',
@@ -147,36 +143,35 @@ class _RegisterShopState extends State<RegisterShop> {
     }
   }
 
- Future<void> _useCurrentLocation() async {
-  try {
-    // Check location permission
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
+  Future<void> _useCurrentLocation() async {
+    try {
+      // Check location permission
+      LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
-        _handleGeolocationError();
-        return;
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          _handleGeolocationError();
+          return;
+        }
       }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        selectedLatLng = LatLng(position.latitude, position.longitude);
+        isSelectingLocation = true;
+      });
+
+      mapController.move(selectedLatLng!, 15.0);
+      await _getAddressFromCoordinates(selectedLatLng!);
+    } catch (e) {
+      print('Error getting location: $e');
+      _handleGeolocationError();
     }
-
-    // Get current position
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high
-    );
-
-    setState(() {
-      selectedLatLng = LatLng(position.latitude, position.longitude);
-      isSelectingLocation = true;
-    });
-    
-    mapController.move(selectedLatLng!, 15.0);
-    await _getAddressFromCoordinates(selectedLatLng!);
-    
-  } catch (e) {
-    print('Error getting location: $e');
-    _handleGeolocationError();
   }
-}
 
   void _handleGeolocationError() {
     _showError('Could not get current location. Showing Naga City center.');
@@ -195,9 +190,9 @@ class _RegisterShopState extends State<RegisterShop> {
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   Widget _buildMapSection() {
@@ -223,12 +218,17 @@ class _RegisterShopState extends State<RegisterShop> {
                 color: Colors.white,
               ),
               label: Text(
-                isSelectingLocation ? 'Cancel Pinpoint' : 'Use Current Location',
+                isSelectingLocation
+                    ? 'Cancel Pinpoint'
+                    : 'Use Current Location',
                 style: const TextStyle(color: Colors.white),
               ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF375DFB),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
               ),
             ),
           ],
@@ -256,7 +256,8 @@ class _RegisterShopState extends State<RegisterShop> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.example.app',
                       tileProvider: CancellableNetworkTileProvider(),
                     ),
@@ -349,52 +350,50 @@ class _RegisterShopState extends State<RegisterShop> {
     super.dispose();
   }
 
-Future<void> _handleSubmit() async {
-  if (!_formKey.currentState!.validate()) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please fill in all required fields')),
-    );
-    return;
-  }
+  Future<void> _handleSubmit() async {
+    if (!_formKey.currentState!.validate()) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all required fields')),
+      );
+      return;
+    }
 
-  setState(() => _isLoading = true);
+    setState(() => _isLoading = true);
 
-  try {
-    // Use SupabaseService instead of direct http call
-    final shopData = {
-      'shop_name': _shopNameController.text.trim(),
-      'contact_number': _contactNumberController.text.trim(),
-      'zone': _zoneController.text.trim(),
-      'street': _streetController.text.trim(),
-      'barangay': _barangayController.text.trim(),
-      'building': _buildingController.text.trim(),
-      'opening_time': _openingTimeController.text.trim(),
-      'closing_time': _closingTimeController.text.trim(),
-      'latitude': selectedLatLng?.latitude,
-      'longitude': selectedLatLng?.longitude,
-      'user_id': widget.userId
-    };
+    try {
+      // Use SupabaseService instead of direct http call
+      final shopData = {
+        'shop_name': _shopNameController.text.trim(),
+        'contact_number': _contactNumberController.text.trim(),
+        'zone': _zoneController.text.trim(),
+        'street': _streetController.text.trim(),
+        'barangay': _barangayController.text.trim(),
+        'building': _buildingController.text.trim(),
+        'opening_time': _openingTimeController.text.trim(),
+        'closing_time': _closingTimeController.text.trim(),
+        'latitude': selectedLatLng?.latitude,
+        'longitude': selectedLatLng?.longitude,
+        'user_id': widget.userId,
+      };
 
-    await SupabaseService.createShop(shopData);
+      await SupabaseService.createShop(shopData);
 
-    if (!mounted) return;
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const SignUpCompleteScreen(),
-      ),
-    );
-  } catch (e) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: $e')),
-    );
-  } finally {
-    if (mounted) {
-      setState(() => _isLoading = false);
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const SignUpCompleteScreen()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $e')));
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
-}
 
   Widget _buildSectionTitle(String title) {
     return Padding(
@@ -411,7 +410,12 @@ Future<void> _handleSubmit() async {
     );
   }
 
-  Widget _buildTextField(String label, String hint, TextEditingController controller, {bool required = true}) {
+  Widget _buildTextField(
+    String label,
+    String hint,
+    TextEditingController controller, {
+    bool required = true,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -427,10 +431,7 @@ Future<void> _handleSubmit() async {
                 ),
               ),
               if (required)
-                const TextSpan(
-                  text: ' *',
-                  style: TextStyle(color: Colors.red),
-                ),
+                const TextSpan(text: ' *', style: TextStyle(color: Colors.red)),
             ],
           ),
         ),
@@ -471,7 +472,7 @@ Future<void> _handleSubmit() async {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF1A0066)),
-          onPressed: () => Navigator.pop(context),  
+          onPressed: () => Navigator.pop(context),
         ),
         title: Row(
           children: [
@@ -498,22 +499,51 @@ Future<void> _handleSubmit() async {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSectionTitle('Shop Information'),
-                _buildTextField('Shop Name', 'Enter shop name', _shopNameController),
-                _buildTextField('Contact Number', 'Enter contact number', _contactNumberController),
+                _buildTextField(
+                  'Shop Name',
+                  'Enter shop name',
+                  _shopNameController,
+                ),
+                _buildTextField(
+                  'Contact Number',
+                  'Enter contact number',
+                  _contactNumberController,
+                ),
                 const SizedBox(height: 24),
 
                 _buildSectionTitle('Address'),
                 _buildMapSection(),
                 const SizedBox(height: 16),
                 _buildTextField('Zone Name', 'Enter zone', _zoneController),
-                _buildTextField('Street Name', 'Enter street name', _streetController),
-                _buildTextField('Barangay Name', 'Enter barangay name', _barangayController),
-                _buildTextField('Building Name', 'Enter building name', _buildingController, required: false),
+                _buildTextField(
+                  'Street Name',
+                  'Enter street name',
+                  _streetController,
+                ),
+                _buildTextField(
+                  'Barangay Name',
+                  'Enter barangay name',
+                  _barangayController,
+                ),
+                _buildTextField(
+                  'Building Name',
+                  'Enter building name',
+                  _buildingController,
+                  required: false,
+                ),
                 const SizedBox(height: 24),
 
                 _buildSectionTitle('Business Hours'),
-                _buildTextField('Opening Time', 'Enter opening time (eg. 5:00am)', _openingTimeController),
-                _buildTextField('Closing Time', 'Enter closing time (eg. 11:00pm)', _closingTimeController),
+                _buildTextField(
+                  'Opening Time',
+                  'Enter opening time (eg. 5:00am)',
+                  _openingTimeController,
+                ),
+                _buildTextField(
+                  'Closing Time',
+                  'Enter closing time (eg. 11:00pm)',
+                  _closingTimeController,
+                ),
                 const SizedBox(height: 24),
 
                 SizedBox(
@@ -528,17 +558,20 @@ Future<void> _handleSubmit() async {
                       ),
                       elevation: 0,
                     ),
-                    child: _isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text(
-                            'Register Shop',
-                            style: TextStyle(
+                    child:
+                        _isLoading
+                            ? const CircularProgressIndicator(
                               color: Colors.white,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              fontFamily: 'Inter',
+                            )
+                            : const Text(
+                              'Register Shop',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Inter',
+                              ),
                             ),
-                          ),
                   ),
                 ),
               ],

@@ -41,7 +41,7 @@ class _SearchScreenState extends State<SearchScreen> {
     });
   }
 
- Future<void> _searchShops(String query) async {
+  Future<void> _searchShops(String query) async {
     if (query.isEmpty) {
       setState(() {
         _searchResults = [];
@@ -69,27 +69,34 @@ class _SearchScreenState extends State<SearchScreen> {
         final allShops = data is List ? data : data['shops'] as List;
 
         // Enhanced search filtering
-        final filteredShops = allShops.where((shop) {
-          final shopName = shop['shop_name']?.toString().toLowerCase() ?? '';
-          final location = shop['location']?.toString().toLowerCase() ?? '';
-          final searchQuery = query.toLowerCase();
-          
-          return shopName.contains(searchQuery) || 
-                 location.contains(searchQuery);
-        }).toList();
+        final filteredShops =
+            allShops.where((shop) {
+              final shopName =
+                  shop['shop_name']?.toString().toLowerCase() ?? '';
+              final location = shop['location']?.toString().toLowerCase() ?? '';
+              final searchQuery = query.toLowerCase();
+
+              return shopName.contains(searchQuery) ||
+                  location.contains(searchQuery);
+            }).toList();
 
         setState(() {
-          _searchResults = filteredShops.map((shop) => LaundryShop(
-            id: shop['id']?.toString() ?? '',
-            name: shop['shop_name'] ?? '',
-            image: shop['image'] ?? 'assets/default_shop.png',
-            rating: shop['rating']?.toDouble() ?? 0.0,
-            distance: shop['distance']?.toString() ?? 'N/A',
-            isOpen: shop['is_open'] ?? false,
-            location: shop['location'] ?? '',
-            status: shop['status'] ?? 'Unknown',
-            totalPrice: shop['total_price']?.toString() ?? 'N/A',
-          )).toList();
+          _searchResults =
+              filteredShops
+                  .map(
+                    (shop) => LaundryShop(
+                      id: shop['id']?.toString() ?? '',
+                      name: shop['shop_name'] ?? '',
+                      image: shop['image'] ?? 'assets/default_shop.png',
+                      rating: shop['rating']?.toDouble() ?? 0.0,
+                      distance: shop['distance']?.toString() ?? 'N/A',
+                      isOpen: shop['is_open'] ?? false,
+                      location: shop['location'] ?? '',
+                      status: shop['status'] ?? 'Unknown',
+                      totalPrice: shop['total_price']?.toString() ?? 'N/A',
+                    ),
+                  )
+                  .toList();
           _isLoading = false;
         });
 
@@ -102,9 +109,10 @@ class _SearchScreenState extends State<SearchScreen> {
       }
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString().contains('TimeoutException') 
-            ? 'Connection timed out. Please check your internet connection.'
-            : 'Error searching shops. Please try again.';
+        _errorMessage =
+            e.toString().contains('TimeoutException')
+                ? 'Connection timed out. Please check your internet connection.'
+                : 'Error searching shops. Please try again.';
         _isLoading = false;
         _searchResults = [];
       });
@@ -122,50 +130,51 @@ class _SearchScreenState extends State<SearchScreen> {
     }
   }
 
-Future<void> _handleShopTap(LaundryShop shop) async {
-  if (widget.isGuest) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const UnifiedLoginScreen(),
-      ),
-    );
-    return;
-  }
+  Future<void> _handleShopTap(LaundryShop shop) async {
+    if (widget.isGuest) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const UnifiedLoginScreen()),
+      );
+      return;
+    }
 
-  // Since shop.id is non-nullable, just check for empty
-  if (shop.id.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Invalid shop ID')),
-    );
-    return;
-  }
+    // Since shop.id is non-nullable, just check for empty
+    if (shop.id.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Invalid shop ID')));
+      return;
+    }
 
-  _fetchCompleteShopData(shop.id).then((fullShopData) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => OrderShopSystem(
-          userId: widget.userId,
-          token: widget.token,
-          shopData: fullShopData,
-          initialService: null,
-          initialItems: null,
-        ),
-      ),
-    ).then((result) {
-      // Refresh shop data if changes were made
-      if (result != null && result['refresh'] == true) {
-        _fetchCompleteShopData(shop.id); // Reload shop data
-      }
-    });
-  }).catchError((error) {
-    print('Navigation error: $error');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error loading shop details: $error')),
-    );
-  });
-}
+    _fetchCompleteShopData(shop.id)
+        .then((fullShopData) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => OrderShopSystem(
+                    userId: widget.userId,
+                    token: widget.token,
+                    shopData: fullShopData,
+                    initialService: null,
+                    initialItems: null,
+                  ),
+            ),
+          ).then((result) {
+            // Refresh shop data if changes were made
+            if (result != null && result['refresh'] == true) {
+              _fetchCompleteShopData(shop.id); // Reload shop data
+            }
+          });
+        })
+        .catchError((error) {
+          print('Navigation error: $error');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error loading shop details: $error')),
+          );
+        });
+  }
 
   Future<Map<String, dynamic>> _fetchCompleteShopData(String shopId) async {
     try {
@@ -230,20 +239,27 @@ Future<void> _handleShopTap(LaundryShop shop) async {
         'building': shopData['building'] ?? '',
         'opening_time': shopData['opening_time'] ?? '',
         'closing_time': shopData['closing_time'] ?? '',
-        'services': servicesResponse.statusCode == 200 
-            ? (jsonDecode(servicesResponse.body)['services'] as List).map((service) => {
-                'service_name': service['service_name'],
-                'description': service['description'] ?? '',
-                'price': service['price']?.toString() ?? '0',
-                'color': service['color']?.toString() ?? '0xFF1A0066',
-              }).toList()
-            : [],
-        'clothing_types': clothingResponse.statusCode == 200 
-            ? jsonDecode(clothingResponse.body)['types'] ?? []
-            : [],
-        'household_items': householdResponse.statusCode == 200 
-            ? jsonDecode(householdResponse.body)['items'] ?? []
-            : [],
+        'services':
+            servicesResponse.statusCode == 200
+                ? (jsonDecode(servicesResponse.body)['services'] as List)
+                    .map(
+                      (service) => {
+                        'service_name': service['service_name'],
+                        'description': service['description'] ?? '',
+                        'price': service['price']?.toString() ?? '0',
+                        'color': service['color']?.toString() ?? '0xFF1A0066',
+                      },
+                    )
+                    .toList()
+                : [],
+        'clothing_types':
+            clothingResponse.statusCode == 200
+                ? jsonDecode(clothingResponse.body)['types'] ?? []
+                : [],
+        'household_items':
+            householdResponse.statusCode == 200
+                ? jsonDecode(householdResponse.body)['items'] ?? []
+                : [],
       };
     } catch (e) {
       print('Error fetching complete shop data: $e');
@@ -254,9 +270,7 @@ Future<void> _handleShopTap(LaundryShop shop) async {
   Widget _buildShopCard(LaundryShop shop) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
         onTap: () => _handleShopTap(shop),
         contentPadding: const EdgeInsets.all(16),
@@ -272,10 +286,7 @@ Future<void> _handleShopTap(LaundryShop shop) async {
           padding: const EdgeInsets.only(top: 8.0),
           child: Text(
             shop.location,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-            ),
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
           ),
         ),
       ),
@@ -311,7 +322,10 @@ Future<void> _handleShopTap(LaundryShop shop) async {
                         hintStyle: const TextStyle(color: Colors.grey),
                         filled: true,
                         fillColor: Colors.white,
-                        prefixIcon: const Icon(Icons.search, color: Colors.grey),
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Colors.grey,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -322,7 +336,9 @@ Future<void> _handleShopTap(LaundryShop shop) async {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(color: Color(0xFF1A0066)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF1A0066),
+                          ),
                         ),
                       ),
                     ),
@@ -331,81 +347,85 @@ Future<void> _handleShopTap(LaundryShop shop) async {
               ),
             ),
             Expanded(
-              child: _isLoading
-                  ? const Center(
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF1A0066),
-                      ),
-                    )
-                  : _errorMessage.isNotEmpty
+              child:
+                  _isLoading
+                      ? const Center(
+                        child: CircularProgressIndicator(
+                          color: Color(0xFF1A0066),
+                        ),
+                      )
+                      : _errorMessage.isNotEmpty
                       ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.error_outline,
-                                color: Color(0xFF1A0066),
-                                size: 48,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.error_outline,
+                              color: Color(0xFF1A0066),
+                              size: 48,
+                            ),
+                            const SizedBox(height: 16),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 32,
                               ),
-                              const SizedBox(height: 16),
-                              Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 32),
-                                child: Text(
-                                  _errorMessage,
+                              child: Text(
+                                _errorMessage,
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 16,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed:
+                                  () => _searchShops(_searchController.text),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1A0066),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              child: const Text(
+                                'Retry',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                      : _searchResults.isEmpty
+                      ? _searchController.text.isEmpty
+                          ? _buildSearchHistory()
+                          : Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.search_off,
+                                  size: 48,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'No laundry shop matched',
                                   style: TextStyle(
-                                    color: Colors.grey[600],
+                                    color: Colors.grey,
                                     fontSize: 16,
                                   ),
-                                  textAlign: TextAlign.center,
                                 ),
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () => _searchShops(_searchController.text),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1A0066),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Retry',
-                                  style: TextStyle(color: Colors.white),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : _searchResults.isEmpty
-                          ? _searchController.text.isEmpty
-                              ? _buildSearchHistory()
-                              : Center(
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Icon(
-                                        Icons.search_off,
-                                        size: 48,
-                                        color: Colors.grey[400],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      const Text(
-                                        'No laundry shop matched',
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: _searchResults.length,
-                              itemBuilder: (context, index) {
-                                return _buildShopCard(_searchResults[index]);
-                              },
+                              ],
                             ),
+                          )
+                      : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _searchResults.length,
+                        itemBuilder: (context, index) {
+                          return _buildShopCard(_searchResults[index]);
+                        },
+                      ),
             ),
           ],
         ),
@@ -429,33 +449,31 @@ Future<void> _handleShopTap(LaundryShop shop) async {
           ),
           const SizedBox(height: 8),
           Expanded(
-            child: _searchHistory.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.history,
-                          size: 48,
-                          color: Colors.grey[400],
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'No search history yet',
-                          style: TextStyle(
-                            color: Colors.grey,
-                            fontSize: 14,
+            child:
+                _searchHistory.isEmpty
+                    ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.history,
+                            size: 48,
+                            color: Colors.grey[400],
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+                          const Text(
+                            'No search history yet',
+                            style: TextStyle(color: Colors.grey, fontSize: 14),
+                          ),
+                        ],
+                      ),
+                    )
+                    : ListView.builder(
+                      itemCount: _searchHistory.length,
+                      itemBuilder: (context, index) {
+                        return _buildSearchHistoryItem(_searchHistory[index]);
+                      },
                     ),
-                  )
-                : ListView.builder(
-                    itemCount: _searchHistory.length,
-                    itemBuilder: (context, index) {
-                      return _buildSearchHistoryItem(_searchHistory[index]);
-                    },
-                  ),
           ),
         ],
       ),
@@ -480,11 +498,7 @@ Future<void> _handleShopTap(LaundryShop shop) async {
           ),
           child: Row(
             children: [
-              const Icon(
-                Icons.history,
-                color: Color(0xFF1A0066),
-                size: 20,
-              ),
+              const Icon(Icons.history, color: Color(0xFF1A0066), size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -497,11 +511,7 @@ Future<void> _handleShopTap(LaundryShop shop) async {
                 ),
               ),
               IconButton(
-                icon: const Icon(
-                  Icons.close,
-                  color: Colors.grey,
-                  size: 20,
-                ),
+                icon: const Icon(Icons.close, color: Colors.grey, size: 20),
                 onPressed: () {
                   setState(() {
                     _searchHistory.remove(query);
@@ -514,6 +524,7 @@ Future<void> _handleShopTap(LaundryShop shop) async {
       ),
     );
   }
+
   @override
   void dispose() {
     _searchController.dispose();

@@ -10,48 +10,44 @@ class ConfirmDeleteDialog extends StatelessWidget {
   final int shopId;
 
   const ConfirmDeleteDialog({
-    super.key, 
+    super.key,
     required this.userId,
     required this.token,
     required this.shopId,
   });
 
   Future<bool> _deleteShop() async {
-  try {
-    final response = await http.delete(
-      Uri.parse('${SupabaseConfig.apiUrl}/delete_shop/$shopId'),
-      headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      // Also update user's is_shop_owner status
-      await http.put(
-        Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/$userId'),
+    try {
+      final response = await http.delete(
+        Uri.parse('${SupabaseConfig.apiUrl}/delete_shop/$shopId'),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
         },
-        body: jsonEncode({
-          'is_shop_owner': false
-        }),
       );
-      return true;
+
+      if (response.statusCode == 200) {
+        // Also update user's is_shop_owner status
+        await http.put(
+          Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/$userId'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'is_shop_owner': false}),
+        );
+        return true;
+      }
+      return false;
+    } catch (e) {
+      return false;
     }
-    return false;
-  } catch (e) {
-    return false;
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       child: Container(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -70,10 +66,7 @@ class ConfirmDeleteDialog extends StatelessWidget {
             Text(
               'All data and binded accounts\nwill be removed from the application',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
             const SizedBox(height: 24),
             Row(

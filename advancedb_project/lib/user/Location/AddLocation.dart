@@ -5,13 +5,13 @@ import '../OrderingSystem/ordershopsystem.dart';
 class AddLocation extends StatefulWidget {
   final int userId;
   final String token;
-  final Service? service;  
+  final Service? service;
 
   const AddLocation({
     super.key,
     required this.userId,
     required this.token,
-    this.service,  
+    this.service,
   });
 
   @override
@@ -22,7 +22,10 @@ class _AddLocationState extends State<AddLocation> {
   String selectedLocation = 'Zone 3, San Jose California, USA';
   final List<Map<String, String>> otherLocations = [
     {'name': 'Ateneo De Naga', 'address': 'Ateneo Ave, Naga City'},
-    {'name': 'Universidad De Sta. Isabel', 'address': 'Elias Angeles St, Naga City'},
+    {
+      'name': 'Universidad De Sta. Isabel',
+      'address': 'Elias Angeles St, Naga City',
+    },
   ];
 
   @override
@@ -127,7 +130,9 @@ class _AddLocationState extends State<AddLocation> {
               const SizedBox(height: 16),
               _buildSectionTitle('Other Locations'),
               const SizedBox(height: 8),
-              ...otherLocations.map((location) => _buildLocationTile(location['name']!)),
+              ...otherLocations.map(
+                (location) => _buildLocationTile(location['name']!),
+              ),
             ],
           ),
         ),
@@ -157,10 +162,7 @@ class _AddLocationState extends State<AddLocation> {
       ),
       title: Text(
         location,
-        style: const TextStyle(
-          fontSize: 16,
-          color: Colors.black,
-        ),
+        style: const TextStyle(fontSize: 16, color: Colors.black),
       ),
       trailing: IconButton(
         icon: const Icon(Icons.more_vert, color: Colors.black),
@@ -176,27 +178,30 @@ class _AddLocationState extends State<AddLocation> {
     );
   }
 
-Widget _buildCurrentLocationButton() {
-  return Padding(
-    padding: const EdgeInsets.all(16.0),
-    child: ElevatedButton.icon(
-      onPressed: () {
-        if (widget.service != null) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CurrentLocation(
-                address: selectedLocation,
-                userId: widget.userId,
-                token: widget.token,
-                service: widget.service!,  //can be null since service is only needed for transaction
+  Widget _buildCurrentLocationButton() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: ElevatedButton.icon(
+        onPressed: () {
+          if (widget.service != null) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => CurrentLocation(
+                      address: selectedLocation,
+                      userId: widget.userId,
+                      token: widget.token,
+                      service:
+                          widget
+                              .service!, //can be null since service is only needed for transaction
+                    ),
               ),
-            ),
-          );
-        } else {
-          Navigator.pop(context, selectedLocation);
-        }
-      },
+            );
+          } else {
+            Navigator.pop(context, selectedLocation);
+          }
+        },
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text(
           'Use Current Location',

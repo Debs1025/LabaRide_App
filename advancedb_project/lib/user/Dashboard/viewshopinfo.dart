@@ -131,10 +131,7 @@ class ShopDetailsOverlay extends StatelessWidget {
                 const SizedBox(width: 8),
                 Text(
                   shopDetails['contact_number'] ?? 'N/A',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.grey[600],
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                 ),
               ],
             ),
@@ -155,8 +152,8 @@ class ShopDetailsOverlay extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    shopDetails['address'] ?? 
-                    'J5GP+QR4, Elias Angeles St., Corner Paz St., Barangay Sta. Cruz, Naga City',
+                    shopDetails['address'] ??
+                        'J5GP+QR4, Elias Angeles St., Corner Paz St., Barangay Sta. Cruz, Naga City',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey[600],
@@ -180,54 +177,50 @@ class ShopDetailsOverlay extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: _buildServiceTags(
-                shopDetails['services'] ?? [
-                  'Wash Only',
-                  'Dry Clean',
-                  'Steam Press',
-                  'Full Service',
-                ],
+                shopDetails['services'] ??
+                    ['Wash Only', 'Dry Clean', 'Steam Press', 'Full Service'],
               ),
             ),
             const Spacer(),
-              Center(
-                child: ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => OrderShopSystem(
-                          userId: userId,
-                          token: token,
-                          shopData: shopDetails,
-                        ),
-                      ),
-                    );
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A0066),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
+            Center(
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder:
+                          (context) => OrderShopSystem(
+                            userId: userId,
+                            token: token,
+                            shopData: shopDetails,
+                          ),
                     ),
-                    elevation: 0,
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1A0066),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  minimumSize: const Size(double.infinity, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
                   ),
-                  child: const Text(
-                    'Open Shop',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  elevation: 0,
+                ),
+                child: const Text(
+                  'Open Shop',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
-    }
-  
+      ),
+    );
+  }
 
   Widget _buildBusinessHours(String day, String hours) {
     return RichText(
@@ -255,20 +248,24 @@ class ShopDetailsOverlay extends StatelessWidget {
   }
 
   List<Widget> _buildServiceTags(List<dynamic> services) {
-    return services.map((service) => Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1A0066).withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        service.toString(),
-        style: const TextStyle(
-          color: Color(0xFF1A0066),
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
-      ),
-    )).toList();
+    return services
+        .map(
+          (service) => Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: const Color(0xFF1A0066).withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Text(
+              service.toString(),
+              style: const TextStyle(
+                color: Color(0xFF1A0066),
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        )
+        .toList();
   }
 }

@@ -109,13 +109,13 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
     }
 
     try {
-    final response = await http.get(
-      Uri.parse('${SupabaseConfig.apiUrl}/user/${widget.userId}'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${widget.token}',
-      },
-    );
+      final response = await http.get(
+        Uri.parse('${SupabaseConfig.apiUrl}/user/${widget.userId}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);

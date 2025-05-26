@@ -27,11 +27,11 @@ class _ShopDetailsState extends State<ShopDetails> {
   late final TextEditingController _businessHoursController;
   late final TextEditingController _contactController;
   late final TextEditingController _shopIdController;
-  
+
   bool _isShopNameEditing = false;
   bool _isBusinessHoursEditing = false;
   bool _isContactEditing = false;
-  
+
   // Added for map functionality
   LatLng? shopLatLng;
   bool isUpdatingLocation = false;
@@ -41,31 +41,42 @@ class _ShopDetailsState extends State<ShopDetails> {
   void initState() {
     super.initState();
     _shopIdController = TextEditingController(
-      text: widget.shopData['id']?.toString() ?? ''
+      text: widget.shopData['id']?.toString() ?? '',
     );
     _shopNameController = TextEditingController(
-      text: widget.shopData['shop_name'] ?? ''
+      text: widget.shopData['shop_name'] ?? '',
     );
     _businessHoursController = TextEditingController(
-      text: '${widget.shopData['opening_time'] ?? ''} - ${widget.shopData['closing_time'] ?? ''}'
+      text:
+          '${widget.shopData['opening_time'] ?? ''} - ${widget.shopData['closing_time'] ?? ''}',
     );
     _contactController = TextEditingController(
-      text: widget.shopData['contact_number'] ?? widget.shopData['user']?['contact_number'] ?? ''
+      text:
+          widget.shopData['contact_number'] ??
+          widget.shopData['user']?['contact_number'] ??
+          '',
     );
     // Initialize map location
-    shopLatLng = (widget.shopData['latitude'] != null && widget.shopData['longitude'] != null)
-        ? LatLng(
-            double.parse(widget.shopData['latitude'].toString()),
-            double.parse(widget.shopData['longitude'].toString())
-          )
-        : null;
+    shopLatLng =
+        (widget.shopData['latitude'] != null &&
+                widget.shopData['longitude'] != null)
+            ? LatLng(
+              double.parse(widget.shopData['latitude'].toString()),
+              double.parse(widget.shopData['longitude'].toString()),
+            )
+            : null;
     shopAddress = widget.shopData['address'];
   }
 
   Future<void> _updateShopLocation(LatLng latlng) async {
     try {
-      setState(() { isUpdatingLocation = true; });
-      List<Placemark> placemarks = await placemarkFromCoordinates(latlng.latitude, latlng.longitude);
+      setState(() {
+        isUpdatingLocation = true;
+      });
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        latlng.latitude,
+        latlng.longitude,
+      );
       String address = 'Unknown location';
       if (placemarks.isNotEmpty) {
         final placemark = placemarks.first;
@@ -76,7 +87,7 @@ class _ShopDetailsState extends State<ShopDetails> {
           placemark.locality,
           placemark.subAdministrativeArea,
           placemark.administrativeArea,
-          placemark.country
+          placemark.country,
         ].where((e) => e != null && e.isNotEmpty).join(', ');
       }
       await _saveShopLocationToBackend(latlng, address);
@@ -85,20 +96,24 @@ class _ShopDetailsState extends State<ShopDetails> {
         shopAddress = address;
         isUpdatingLocation = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Shop location updated!')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Shop location updated!')));
     } catch (e) {
-      setState(() { isUpdatingLocation = false; });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update location: $e')),
-      );
+      setState(() {
+        isUpdatingLocation = false;
+      });
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to update location: $e')));
     }
   }
 
   Future<void> _saveShopLocationToBackend(LatLng latlng, String address) async {
     final response = await http.put(
-      Uri.parse('${SupabaseConfig.apiUrl}/update_shop_location/${widget.shopData['id']}'),
+      Uri.parse(
+        '${SupabaseConfig.apiUrl}/update_shop_location/${widget.shopData['id']}',
+      ),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -117,7 +132,7 @@ class _ShopDetailsState extends State<ShopDetails> {
   Future<void> _saveField(String field, String value) async {
     try {
       final updateData = <String, dynamic>{};
-      
+
       if (field == 'Shop Name') {
         updateData['shop_name'] = value;
       } else if (field == 'Contact') {
@@ -129,11 +144,13 @@ class _ShopDetailsState extends State<ShopDetails> {
           updateData['closing_time'] = times[1].trim();
         }
       }
-      
+
       if (updateData.isEmpty) return;
 
       final response = await http.put(
-        Uri.parse('${SupabaseConfig.apiUrl}/update_shop/${widget.shopData['id']}'),
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/update_shop/${widget.shopData['id']}',
+        ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -152,13 +169,19 @@ class _ShopDetailsState extends State<ShopDetails> {
         throw Exception('Failed to save changes');
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save changes: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to save changes: $e')));
     }
   }
 
-  Widget _buildEditableField(String label, TextEditingController controller, bool isEditing, Function() onEditPress, {bool isEditable = true}) {
+  Widget _buildEditableField(
+    String label,
+    TextEditingController controller,
+    bool isEditing,
+    Function() onEditPress, {
+    bool isEditable = true,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -181,30 +204,31 @@ class _ShopDetailsState extends State<ShopDetails> {
           child: Row(
             children: [
               Expanded(
-                child: isEditing
-                    ? TextField(
-                        controller: controller,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
+                child:
+                    isEditing
+                        ? TextField(
+                          controller: controller,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            isDense: true,
+                            contentPadding: EdgeInsets.zero,
+                          ),
+                          onSubmitted: (value) {
+                            _saveField(label, value);
+                            onEditPress();
+                          },
+                        )
+                        : Text(
+                          controller.text,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.black87,
+                          ),
                         ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        onSubmitted: (value) {
-                          _saveField(label, value);
-                          onEditPress();
-                        },
-                      )
-                    : Text(
-                        controller.text,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                        ),
-                      ),
               ),
               if (isEditable)
                 GestureDetector(
@@ -215,7 +239,9 @@ class _ShopDetailsState extends State<ShopDetails> {
                       BlendMode.srcIn,
                     ),
                     child: Image.asset(
-                      isEditing ? 'assets/Admin/Save.png' : 'assets/Admin/Edit.png',
+                      isEditing
+                          ? 'assets/Admin/Save.png'
+                          : 'assets/Admin/Edit.png',
                       width: 20,
                       height: 20,
                     ),
@@ -284,7 +310,8 @@ class _ShopDetailsState extends State<ShopDetails> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.example.labaride',
                     ),
                     if (shopLatLng != null)
@@ -292,7 +319,11 @@ class _ShopDetailsState extends State<ShopDetails> {
                         markers: [
                           Marker(
                             point: shopLatLng!,
-                            child: const Icon(Icons.location_on, color: Colors.red, size: 40),
+                            child: const Icon(
+                              Icons.location_on,
+                              color: Colors.red,
+                              size: 40,
+                            ),
                           ),
                         ],
                       ),
@@ -333,7 +364,9 @@ class _ShopDetailsState extends State<ShopDetails> {
               'Business Hours',
               _businessHoursController,
               _isBusinessHoursEditing,
-              () => setState(() => _isBusinessHoursEditing = !_isBusinessHoursEditing),
+              () => setState(
+                () => _isBusinessHoursEditing = !_isBusinessHoursEditing,
+              ),
             ),
             const SizedBox(height: 16),
             _buildEditableField(

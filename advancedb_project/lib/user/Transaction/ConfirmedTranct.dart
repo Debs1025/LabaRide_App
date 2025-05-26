@@ -15,7 +15,7 @@ class OrderDetailsScreen extends StatefulWidget {
     super.key,
     required this.userId,
     required this.token,
-    required this.transactionId, 
+    required this.transactionId,
     this.transactionData,
   });
 
@@ -64,7 +64,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('${SupabaseConfig.apiUrl}/transactions/${widget.transactionId}'),  // Updated URL
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/transactions/${widget.transactionId}',
+        ), // Updated URL
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
@@ -77,7 +79,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       if (response.statusCode == 200) {
         final responseData = json.decode(response.body);
         print('Decoded Response: $responseData');
-        
+
         setState(() {
           orderData = responseData['data'];
           print('Setting orderData from API: $orderData');
@@ -102,9 +104,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (orderData == null) {
@@ -124,12 +124,13 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => LaundryDashboardScreen(
-                  userId: widget.userId,
-                  token: widget.token,
-                  initialMessage: 'Your laundry is currently being washed',
-                  transactionId: widget.transactionId,
-                ),
+                builder:
+                    (context) => LaundryDashboardScreen(
+                      userId: widget.userId,
+                      token: widget.token,
+                      initialMessage: 'Your laundry is currently being washed',
+                      transactionId: widget.transactionId,
+                    ),
               ),
             );
           },
@@ -174,10 +175,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
         const SizedBox(height: 8),
         Text(
           'Order #${widget.transactionId ?? orderData!['id']}',
-          style: const TextStyle(
-            fontSize: 16,
-            color: Colors.grey,
-          ),
+          style: const TextStyle(fontSize: 16, color: Colors.grey),
         ),
       ],
     );
@@ -209,55 +207,66 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     );
   }
 
-Widget _buildItemsList() {
-  // Handle case where items might be null or not properly formatted
-  List<dynamic> items = [];
-  try {
-    if (orderData!['items'] != null) {
-      items = json.decode(orderData!['items'].toString()) as List<dynamic>;
+  Widget _buildItemsList() {
+    // Handle case where items might be null or not properly formatted
+    List<dynamic> items = [];
+    try {
+      if (orderData!['items'] != null) {
+        items = json.decode(orderData!['items'].toString()) as List<dynamic>;
+      }
+    } catch (e) {
+      print('Error parsing items: $e');
+      // If parsing fails, try to use items directly if it's already a List
+      if (orderData!['items'] is List) {
+        items = orderData!['items'];
+      }
     }
-  } catch (e) {
-    print('Error parsing items: $e');
-    // If parsing fails, try to use items directly if it's already a List
-    if (orderData!['items'] is List) {
-      items = orderData!['items'];
-    }
-  }
-  
-  return Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'Items',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: navyBlue,
-        ),
-      ),
-      const SizedBox(height: 8),
-      if (items.isEmpty)
-        const Text('No items found')
-      else
-        ...items.map((item) => Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('${item['name'] ?? item['item_name'] ?? 'Unknown'} x${item['quantity'] ?? 0}'),
-              Text('₱${((double.tryParse(item['quantity']?.toString() ?? '0') ?? 0) * 100).toStringAsFixed(2)}'),
-            ],
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Items',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: navyBlue,
           ),
-        )).toList(),
-    ],
-  );
-}
+        ),
+        const SizedBox(height: 8),
+        if (items.isEmpty)
+          const Text('No items found')
+        else
+          ...items
+              .map(
+                (item) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${item['name'] ?? item['item_name'] ?? 'Unknown'} x${item['quantity'] ?? 0}',
+                      ),
+                      Text(
+                        '₱${((double.tryParse(item['quantity']?.toString() ?? '0') ?? 0) * 100).toStringAsFixed(2)}',
+                      ),
+                    ],
+                  ),
+                ),
+              )
+              .toList(),
+      ],
+    );
+  }
 
   Widget _buildPriceDetails() {
     final subtotal = double.tryParse(orderData!['subtotal'].toString()) ?? 0.0;
-    final deliveryFee = double.tryParse(orderData!['delivery_fee'].toString()) ?? 0.0;
-    final voucherDiscount = double.tryParse(orderData!['voucher_discount'].toString()) ?? 0.0;
-    final totalAmount = double.tryParse(orderData!['total_amount'].toString()) ?? 0.0;
+    final deliveryFee =
+        double.tryParse(orderData!['delivery_fee'].toString()) ?? 0.0;
+    final voucherDiscount =
+        double.tryParse(orderData!['voucher_discount'].toString()) ?? 0.0;
+    final totalAmount =
+        double.tryParse(orderData!['total_amount'].toString()) ?? 0.0;
 
     return Column(
       children: [
@@ -271,7 +280,9 @@ Widget _buildItemsList() {
     );
   }
 
-  Widget _buildPriceRow(String label, double amount, {
+  Widget _buildPriceRow(
+    String label,
+    double amount, {
     bool isTotal = false,
     bool isDiscount = false,
   }) {
@@ -288,7 +299,9 @@ Widget _buildItemsList() {
             ),
           ),
           Text(
-            isDiscount ? '-₱${amount.toStringAsFixed(2)}' : '₱${amount.toStringAsFixed(2)}',
+            isDiscount
+                ? '-₱${amount.toStringAsFixed(2)}'
+                : '₱${amount.toStringAsFixed(2)}',
             style: TextStyle(
               color: isDiscount ? Colors.green : null,
               fontWeight: isTotal ? FontWeight.bold : FontWeight.normal,
@@ -307,11 +320,12 @@ Widget _buildItemsList() {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => ConfirmCancelScreen(
-                userId: widget.userId,
-                token: widget.token,
-                transactionId: widget.transactionId!,
-              ),
+              builder:
+                  (context) => ConfirmCancelScreen(
+                    userId: widget.userId,
+                    token: widget.token,
+                    transactionId: widget.transactionId!,
+                  ),
             ),
           );
         },

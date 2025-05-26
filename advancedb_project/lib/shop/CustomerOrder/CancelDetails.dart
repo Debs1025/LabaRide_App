@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'ExpandCancelledOrder.dart';
 
 class CancelDetails extends StatelessWidget {
-  final Map<String, dynamic> orderDetails; 
+  final Map<String, dynamic> orderDetails;
   final int userId;
   final String token;
   final Map<String, dynamic> shopData;
@@ -70,11 +70,12 @@ class CancelDetails extends StatelessWidget {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ExpandCancelledOrder(
-                            userId: userId,
-                            token: token,
-                            shopData: shopData,
-                          ),
+                          builder:
+                              (context) => ExpandCancelledOrder(
+                                userId: userId,
+                                token: token,
+                                shopData: shopData,
+                              ),
                         ),
                       );
                     },
@@ -160,12 +161,15 @@ class CancelDetails extends StatelessWidget {
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(vertical: 12),
                             decoration: BoxDecoration(
-                              color: _getServiceColor(orderDetails['service'] ?? 'WASH ONLY'),
+                              color: _getServiceColor(
+                                orderDetails['service'] ?? 'WASH ONLY',
+                              ),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Center(
                               child: Text(
-                                orderDetails['service']?.toUpperCase() ?? 'WASH ONLY',
+                                orderDetails['service']?.toUpperCase() ??
+                                    'WASH ONLY',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -185,11 +189,13 @@ class CancelDetails extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          ...clothesList.map((item) => _buildOrderItem(
-                                '${item['quantity']}x',
-                                item['item']!,
-                                '₱${item['price']}',
-                              )),
+                          ...clothesList.map(
+                            (item) => _buildOrderItem(
+                              '${item['quantity']}x',
+                              item['item']!,
+                              '₱${item['price']}',
+                            ),
+                          ),
                           const SizedBox(height: 16),
                           // Household items
                           const Text(
@@ -201,11 +207,13 @@ class CancelDetails extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          ...householdList.map((item) => _buildOrderItem(
-                                '${item['quantity']}x',
-                                item['item']!,
-                                '₱${item['price']}',
-                              )),
+                          ...householdList.map(
+                            (item) => _buildOrderItem(
+                              '${item['quantity']}x',
+                              item['item']!,
+                              '₱${item['price']}',
+                            ),
+                          ),
                           const SizedBox(height: 24),
                           // Pricing Details
                           Column(
@@ -325,20 +333,11 @@ class CancelDetails extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            item,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
+          Text(item, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           const Spacer(),
           Text(
             price,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ],
       ),

@@ -30,11 +30,7 @@ class _AccountDeleteScreenState extends State<AccountDelete> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Account Deleted Icon
-            Image.asset(
-              'assets/AccountInfo/Logo.png', 
-              width: 120,
-              height: 100, 
-            ),
+            Image.asset('assets/AccountInfo/Logo.png', width: 120, height: 100),
             const SizedBox(height: 24),
             // Account Deleted Text
             const Text(

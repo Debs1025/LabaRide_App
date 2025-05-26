@@ -7,7 +7,6 @@ import 'AccountDelete.dart';
 import 'package:intl/intl.dart';
 import '../../../supabase_config.dart';
 
-
 class EditProfileScreen extends StatefulWidget {
   final int userId;
   final String token;
@@ -32,7 +31,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _birthdateController;
   late String _selectedGender;
   bool _isLoading = false;
-  
+
   late Map<String, String> userDetails;
 
   @override
@@ -41,7 +40,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _nameController = TextEditingController(text: widget.userData['name']);
     _emailController = TextEditingController(text: widget.userData['email']);
     _phoneController = TextEditingController(text: widget.userData['phone']);
-    
+
     String birthdate = widget.userData['birthdate'] ?? '';
     if (birthdate.isNotEmpty) {
       try {
@@ -53,7 +52,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         birthdate = '';
       }
     }
-    
+
     _birthdateController = TextEditingController(text: birthdate);
     _selectedGender = widget.userData['gender'] ?? 'Male';
 
@@ -66,78 +65,82 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       'Zone': widget.userData['zone'] ?? '',
       'Street': widget.userData['street'] ?? '',
       'Barangay': widget.userData['barangay'] ?? '',
-      'Building': widget.userData['building'] ?? ''
+      'Building': widget.userData['building'] ?? '',
     };
   }
 
   Future<void> _updateProfile() async {
-  if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return;
 
-  setState(() => _isLoading = true);
+    setState(() => _isLoading = true);
 
-  try {
-    String? backendFormattedDate;
-    if (_birthdateController.text.isNotEmpty) {
-      try {
-        final date = DateFormat('MM/dd/yyyy').parse(_birthdateController.text);
-        backendFormattedDate = DateFormat('yyyy-MM-dd').format(date);
-      } catch (e) {
-        print('Error formatting date: $e');
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Invalid date format')),
-          );
+    try {
+      String? backendFormattedDate;
+      if (_birthdateController.text.isNotEmpty) {
+        try {
+          final date = DateFormat(
+            'MM/dd/yyyy',
+          ).parse(_birthdateController.text);
+          backendFormattedDate = DateFormat('yyyy-MM-dd').format(date);
+        } catch (e) {
+          print('Error formatting date: $e');
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Invalid date format')),
+            );
+          }
+          return;
         }
-        return;
       }
-    }
 
-    final response = await http.put(
-      Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${widget.token}',
-      },
-      body: jsonEncode({
-        'name': _nameController.text,
-        'email': _emailController.text,
-        'phone': _phoneController.text,
-        'birthdate': backendFormattedDate,
-        'gender': _selectedGender,
-        'zone': userDetails['Zone'],
-        'street': userDetails['Street'],
-        'barangay': userDetails['Barangay'],
-        'building': userDetails['Building']
-      }),
-    );
+      final response = await http.put(
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+        body: jsonEncode({
+          'name': _nameController.text,
+          'email': _emailController.text,
+          'phone': _phoneController.text,
+          'birthdate': backendFormattedDate,
+          'gender': _selectedGender,
+          'zone': userDetails['Zone'],
+          'street': userDetails['Street'],
+          'barangay': userDetails['Barangay'],
+          'building': userDetails['Building'],
+        }),
+      );
 
-    if (response.statusCode == 200) {
+      if (response.statusCode == 200) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile updated successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context, true);
+      } else {
+        final errorResponse = jsonDecode(response.body);
+        throw Exception(errorResponse['message'] ?? 'Failed to update profile');
+      }
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Profile updated successfully'),
-          backgroundColor: Colors.green,
+        SnackBar(
+          content: Text('Error updating profile: ${e.toString()}'),
+          backgroundColor: Colors.red,
         ),
       );
-      Navigator.pop(context, true);
-    } else {
-      final errorResponse = jsonDecode(response.body);
-      throw Exception(errorResponse['message'] ?? 'Failed to update profile');
-    }
-  } catch (e) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error updating profile: ${e.toString()}'),
-        backgroundColor: Colors.red,
-      ),
-    );
-  } finally {
-    if (mounted) {
-      setState(() => _isLoading = false);
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
-}
 
   Future<void> _deleteAccount() async {
     setState(() => _isLoading = true);
@@ -156,9 +159,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (response.statusCode == 200) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(
-            builder: (context) => const AccountDeleteScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => const AccountDeleteScreen()),
           (route) => false,
         );
       } else {
@@ -184,12 +185,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-    Future<void> _selectDate(BuildContext context) async {
+  Future<void> _selectDate(BuildContext context) async {
     DateTime initialDate;
     try {
-      initialDate = _birthdateController.text.isNotEmpty 
-        ? DateFormat('MM/dd/yyyy').parse(_birthdateController.text)
-        : DateTime.now();
+      initialDate =
+          _birthdateController.text.isNotEmpty
+              ? DateFormat('MM/dd/yyyy').parse(_birthdateController.text)
+              : DateTime.now();
     } catch (e) {
       print('Error parsing current date: $e');
       initialDate = DateTime.now();
@@ -268,18 +270,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 showDivider: true,
               ),
 
-              ...userDetails.entries.map((entry) => 
-                entry.key == 'Birthdate' 
-                ? _buildEditField(
-                    entry.key, 
-                    entry.value,
-                    onTap: () => _selectDate(context)
-                  )
-                : _buildEditField(entry.key, entry.value)
+              ...userDetails.entries.map(
+                (entry) =>
+                    entry.key == 'Birthdate'
+                        ? _buildEditField(
+                          entry.key,
+                          entry.value,
+                          onTap: () => _selectDate(context),
+                        )
+                        : _buildEditField(entry.key, entry.value),
               ),
 
               const SizedBox(height: 24),
-              
+
               const Text(
                 'Binded Accounts',
                 style: TextStyle(
@@ -289,34 +292,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               _buildBindedAccount(
                 'assets/google.png',
                 'Google Chrome',
                 'Binded',
               ),
-              
-              _buildBindedAccount(
-                'assets/facebook.png',
-                'Facebook',
-                'Binded',
-              ),
-              
+
+              _buildBindedAccount('assets/facebook.png', 'Facebook', 'Binded'),
+
               const SizedBox(height: 32),
-              
+
               Center(
                 child: TextButton(
                   onPressed: () {
                     Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChangePasswordScreen(
-                        userId: widget.userId,
-                        token: widget.token,
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => ChangePasswordScreen(
+                              userId: widget.userId,
+                              token: widget.token,
+                            ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
                   child: const Text(
                     'Change Password',
                     style: TextStyle(
@@ -327,20 +327,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ),
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               Center(
                 child: TextButton(
                   onPressed: () {
                     showDialog(
                       context: context,
-                      builder: (context) => ConfirmDeleteDialog(
-                        onConfirmDelete: () {
-                          Navigator.pop(context);
-                          _deleteAccount();
-                        },
-                      ),
+                      builder:
+                          (context) => ConfirmDeleteDialog(
+                            onConfirmDelete: () {
+                              Navigator.pop(context);
+                              _deleteAccount();
+                            },
+                          ),
                     );
                   },
                   child: const Text(
@@ -368,23 +369,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  child:
+                      _isLoading
+                          ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
+                          : const Text(
+                            'Save Changes',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
                           ),
-                        )
-                      : const Text(
-                          'Save Changes',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
                 ),
               ),
             ],
@@ -398,9 +402,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
       ),
       child: Row(
         children: [
@@ -410,18 +412,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               children: [
                 Text(
                   label,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(
-                    color: Colors.black87,
-                    fontSize: 16,
-                  ),
+                  style: const TextStyle(color: Colors.black87, fontSize: 16),
                 ),
               ],
             ),
@@ -486,9 +482,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 12),
       decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
       ),
       child: Row(
         children: [
@@ -496,10 +490,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           const SizedBox(width: 12),
           Text(
             name,
-            style: const TextStyle(
-              color: Colors.black87,
-              fontSize: 16,
-            ),
+            style: const TextStyle(color: Colors.black87, fontSize: 16),
           ),
           const Spacer(),
           Text(
@@ -515,95 +506,101 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-void _showEditDialog(String field, String currentValue) {
-  final TextEditingController controller = TextEditingController(text: currentValue);
-  
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text(
-        'Edit $field',
-        style: const TextStyle(color: Color(0xFF000080)),
-      ),
-      content: field == 'Gender' 
-        ? DropdownButtonFormField<String>(
-            value: _selectedGender,
-            decoration: InputDecoration(
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
+  void _showEditDialog(String field, String currentValue) {
+    final TextEditingController controller = TextEditingController(
+      text: currentValue,
+    );
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text(
+              'Edit $field',
+              style: const TextStyle(color: Color(0xFF000080)),
             ),
-            items: ['Male', 'Female', 'Other'].map((String value) {
-              return DropdownMenuItem<String>(
-                value: value,
-                child: Text(value),
-              );
-            }).toList(),
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                setState(() {
-                  _selectedGender = newValue;
-                  userDetails['Gender'] = newValue;
-                });
-                Navigator.pop(context);
-              }
-            },
-          )
-        : TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              hintText: 'Enter new ${field.toLowerCase()}',
-              focusedBorder: const UnderlineInputBorder(
-                borderSide: BorderSide(color: Color(0xFF000080)),
-              ),
-              enabledBorder: UnderlineInputBorder(
-                borderSide: BorderSide(color: Colors.grey[300]!),
-              ),
-            ),
+            content:
+                field == 'Gender'
+                    ? DropdownButtonFormField<String>(
+                      value: _selectedGender,
+                      decoration: InputDecoration(
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                      ),
+                      items:
+                          ['Male', 'Female', 'Other'].map((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedGender = newValue;
+                            userDetails['Gender'] = newValue;
+                          });
+                          Navigator.pop(context);
+                        }
+                      },
+                    )
+                    : TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        hintText: 'Enter new ${field.toLowerCase()}',
+                        focusedBorder: const UnderlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF000080)),
+                        ),
+                        enabledBorder: UnderlineInputBorder(
+                          borderSide: BorderSide(color: Colors.grey[300]!),
+                        ),
+                      ),
+                    ),
+            actions:
+                field == 'Gender'
+                    ? []
+                    : [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text(
+                          'Cancel',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          if (controller.text.isNotEmpty) {
+                            setState(() {
+                              userDetails[field] = controller.text;
+                              switch (field) {
+                                case 'Name':
+                                  _nameController.text = controller.text;
+                                  break;
+                                case 'Email':
+                                  _emailController.text = controller.text;
+                                  break;
+                                case 'Phone':
+                                  _phoneController.text = controller.text;
+                                  break;
+                                case 'Birthdate':
+                                  _birthdateController.text = controller.text;
+                                  break;
+                              }
+                            });
+                            _updateProfile(); // Call update after editing
+                            Navigator.pop(context);
+                          }
+                        },
+                        child: const Text(
+                          'Save',
+                          style: TextStyle(color: Color(0xFF000080)),
+                        ),
+                      ),
+                    ],
           ),
-      actions: field == 'Gender' 
-        ? []
-        : [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                if (controller.text.isNotEmpty) {
-                  setState(() {
-                    userDetails[field] = controller.text;
-                    switch (field) {
-                      case 'Name':
-                        _nameController.text = controller.text;
-                        break;
-                      case 'Email':
-                        _emailController.text = controller.text;
-                        break;
-                      case 'Phone':
-                        _phoneController.text = controller.text;
-                        break;
-                      case 'Birthdate':
-                        _birthdateController.text = controller.text;
-                        break;
-                    }
-                  });
-                  _updateProfile(); // Call update after editing
-                  Navigator.pop(context);
-                }
-              },
-              child: const Text(
-                'Save',
-                style: TextStyle(color: Color(0xFF000080)),
-              ),
-            ),
-          ],
-    ),
-  );
-}
+    );
+  }
 
   @override
   void dispose() {

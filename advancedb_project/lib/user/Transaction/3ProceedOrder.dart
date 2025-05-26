@@ -43,7 +43,7 @@ class _OrderCompleteScreenState extends State<OrderCompleteScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              
+
               Text(
                 'Order Complete',
                 style: TextStyle(
@@ -53,7 +53,7 @@ class _OrderCompleteScreenState extends State<OrderCompleteScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               Text(
                 'Thank you for your order!\nYou can track the status in the "transaction" section',
                 textAlign: TextAlign.center,
@@ -64,23 +64,24 @@ class _OrderCompleteScreenState extends State<OrderCompleteScreen> {
                 ),
               ),
               const SizedBox(height: 48),
-              
+
               SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => OrderDetailsScreen(
-                                userId: widget.userId,
-                                token: widget.token,
-                                transactionId: widget.transactionId,
-                                transactionData: widget.transactionData,
-                              ),
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => OrderDetailsScreen(
+                              userId: widget.userId,
+                              token: widget.token,
+                              transactionId: widget.transactionId,
+                              transactionData: widget.transactionData,
                             ),
-                          );
-                        },
+                      ),
+                    );
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: navyBlue,
                     padding: const EdgeInsets.symmetric(vertical: 16.0),

@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class IndividualTransact extends StatelessWidget {
   final Map<String, String> transactionData;
 
-  const IndividualTransact({
-    super.key,
-    required this.transactionData,
-  });
+  const IndividualTransact({super.key, required this.transactionData});
 
   @override
   Widget build(BuildContext context) {
@@ -37,13 +34,25 @@ class IndividualTransact extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildSectionTitle('Customer Information'),
-                _buildDetailItem('Customer ID', transactionData['customerId'] ?? 'N/A'),
-                _buildDetailItem('Recipient Name', transactionData['recipientName'] ?? 'N/A'),
-                
+                _buildDetailItem(
+                  'Customer ID',
+                  transactionData['customerId'] ?? 'N/A',
+                ),
+                _buildDetailItem(
+                  'Recipient Name',
+                  transactionData['recipientName'] ?? 'N/A',
+                ),
+
                 const SizedBox(height: 24),
                 _buildSectionTitle('Status Information'),
-                _buildDetailItem('Status', transactionData['statusType'] ?? 'N/A'),
-                _buildDetailItem('Order Status', transactionData['orderStatus'] ?? 'N/A'),
+                _buildDetailItem(
+                  'Status',
+                  transactionData['statusType'] ?? 'N/A',
+                ),
+                _buildDetailItem(
+                  'Order Status',
+                  transactionData['orderStatus'] ?? 'N/A',
+                ),
 
                 const SizedBox(height: 24),
                 _buildSectionTitle('Order Details'),
@@ -51,9 +60,18 @@ class IndividualTransact extends StatelessWidget {
 
                 const SizedBox(height: 24),
                 _buildSectionTitle('Payment Information'),
-                _buildDetailItem('Payment Type', transactionData['paymentType'] ?? 'N/A'),
-                _buildDetailItem('Total Amount', transactionData['totalAmount'] ?? 'N/A'),
-                _buildDetailItem('Payment Status', transactionData['paymentStatus'] ?? 'N/A'),
+                _buildDetailItem(
+                  'Payment Type',
+                  transactionData['paymentType'] ?? 'N/A',
+                ),
+                _buildDetailItem(
+                  'Total Amount',
+                  transactionData['totalAmount'] ?? 'N/A',
+                ),
+                _buildDetailItem(
+                  'Payment Status',
+                  transactionData['paymentStatus'] ?? 'N/A',
+                ),
               ],
             ),
           ),
@@ -63,12 +81,17 @@ class IndividualTransact extends StatelessWidget {
   }
 
   Widget _buildOrderDetailsCard() {
-    final double totalAmount = double.tryParse(transactionData['totalAmount']?.replaceAll('₱', '') ?? '0') ?? 0.0;
+    final double totalAmount =
+        double.tryParse(
+          transactionData['totalAmount']?.replaceAll('₱', '') ?? '0',
+        ) ??
+        0.0;
     final double servicePrice = 100.00;
     final double shippingFee = 50.00;
     final double shippingDiscount = -10.00;
     // Calculate laundries subtotal by subtracting shipping and discounts from total
-    final double laundriesSubtotal = totalAmount - shippingFee - shippingDiscount;
+    final double laundriesSubtotal =
+        totalAmount - shippingFee - shippingDiscount;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -102,19 +125,14 @@ class IndividualTransact extends StatelessWidget {
                     ),
                     Text(
                       'Standard laundering, folding.',
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(color: Colors.grey[600]),
                     ),
                   ],
                 ),
               ),
               Text(
                 '₱${servicePrice.toStringAsFixed(2)}',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -132,13 +150,23 @@ class IndividualTransact extends StatelessWidget {
           const SizedBox(height: 20),
           Divider(color: Colors.grey.shade200),
           const SizedBox(height: 12),
-          _buildPriceRow('Laundries Subtotal', '₱${laundriesSubtotal.toStringAsFixed(2)}'),
+          _buildPriceRow(
+            'Laundries Subtotal',
+            '₱${laundriesSubtotal.toStringAsFixed(2)}',
+          ),
           _buildPriceRow('Shipping Fee', '₱${shippingFee.toStringAsFixed(2)}'),
-          _buildPriceRow('Shipping Discount Subtotal', '₱${shippingDiscount.toStringAsFixed(2)}'),
+          _buildPriceRow(
+            'Shipping Discount Subtotal',
+            '₱${shippingDiscount.toStringAsFixed(2)}',
+          ),
           const SizedBox(height: 12),
           Divider(color: Colors.grey.shade200),
           const SizedBox(height: 12),
-          _buildPriceRow('Order Total:', transactionData['totalAmount'] ?? 'N/A', isTotal: true),
+          _buildPriceRow(
+            'Order Total:',
+            transactionData['totalAmount'] ?? 'N/A',
+            isTotal: true,
+          ),
         ],
       ),
     );
@@ -174,12 +202,7 @@ class IndividualTransact extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            item,
-            style: TextStyle(
-              color: Colors.grey[600],
-            ),
-          ),
+          Text(item, style: TextStyle(color: Colors.grey[600])),
         ],
       ),
     );
@@ -244,10 +267,7 @@ class IndividualTransact extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
             ),
           ),
         ],

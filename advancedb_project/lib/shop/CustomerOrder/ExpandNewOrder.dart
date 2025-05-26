@@ -9,14 +9,11 @@ import 'CustomerOrder.dart';
 import 'AcceptingOrder.dart';
 import '../../supabase_config.dart';
 
-
 class ExpandNewOrder extends StatefulWidget {
   final int userId;
   final String token;
   final Map<String, dynamic> shopData;
   final VoidCallback? onOrderAccepted; // <-- Add this
-
-  
 
   const ExpandNewOrder({
     super.key,
@@ -32,7 +29,8 @@ class ExpandNewOrder extends StatefulWidget {
 
 class _ExpandNewOrderState extends State<ExpandNewOrder> {
   final TextEditingController _searchController = TextEditingController();
-  final Map<int, TextEditingController> _priceControllers = {}; // <-- for each order
+  final Map<int, TextEditingController> _priceControllers =
+      {}; // <-- for each order
   bool _isLoading = false;
   String _error = '';
   List<Map<String, dynamic>> _newOrders = [];
@@ -78,14 +76,16 @@ class _ExpandNewOrderState extends State<ExpandNewOrder> {
       _error = '';
     });
 
-   try {
-    final response = await http.get(
-      Uri.parse('${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}',
+        ),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+      );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -117,62 +117,63 @@ class _ExpandNewOrderState extends State<ExpandNewOrder> {
     }
   }
 
-Future<void> _declineOrder(int orderId) async {
-  try {
-    final response = await http.put(
-      Uri.parse('${SupabaseConfig.apiUrl}/api/orders/$orderId/decline'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Order declined successfully!')),
+  Future<void> _declineOrder(int orderId) async {
+    try {
+      final response = await http.put(
+        Uri.parse('${SupabaseConfig.apiUrl}/api/orders/$orderId/decline'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
       );
-      _fetchNewOrders();
-      if (widget.onOrderAccepted != null) {
-        widget.onOrderAccepted!(); // <-- Insert this here!
+
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Order declined successfully!')),
+        );
+        _fetchNewOrders();
+        if (widget.onOrderAccepted != null) {
+          widget.onOrderAccepted!(); // <-- Insert this here!
+        }
+        Navigator.pop(context); // Optionally close the screen after decline
+      } else {
+        throw Exception('Failed to decline order');
       }
-      Navigator.pop(context); // Optionally close the screen after decline
-    } else {
-      throw Exception('Failed to decline order');
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     }
-  } catch (e) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
   }
-}
 
   Future<void> _setOrderPrice(int orderId, String price) async {
-  try {
-    final response = await http.put(
-      Uri.parse('http://localhost:5000/api/orders/$orderId/set_price'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({'price_per_kilo': price}),
-    );
-    if (response.statusCode == 200) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Price set successfully!')),
+    try {
+      final response = await http.put(
+        Uri.parse('http://localhost:5000/api/orders/$orderId/set_price'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({'price_per_kilo': price}),
       );
-      _fetchNewOrders();
-      if (widget.onOrderAccepted != null) {
-        widget.onOrderAccepted!(); // <-- Notify parent to refresh ongoing orders
+      if (response.statusCode == 200) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Price set successfully!')),
+        );
+        _fetchNewOrders();
+        if (widget.onOrderAccepted != null) {
+          widget
+              .onOrderAccepted!(); // <-- Notify parent to refresh ongoing orders
+        }
+      } else {
+        throw Exception('Failed to set price');
       }
-    } else {
-      throw Exception('Failed to set price');
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Error: ${e.toString()}')),
-    );
   }
-}
 
   String _formatDate(String? dateTime) {
     if (dateTime == null) return '';
@@ -376,7 +377,8 @@ Future<void> _declineOrder(int orderId) async {
                             color: Colors.green,
                           ),
                           onPressed: () {
-                            final price = _priceControllers[orderId]?.text ?? '';
+                            final price =
+                                _priceControllers[orderId]?.text ?? '';
                             if (price.isNotEmpty) {
                               _setOrderPrice(orderId, price);
                             }

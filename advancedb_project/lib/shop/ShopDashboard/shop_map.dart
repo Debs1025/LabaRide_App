@@ -10,11 +10,7 @@ class ShopMap extends StatefulWidget {
   final String token;
   final Map<String, dynamic> shopData;
 
-  const ShopMap({
-    super.key,
-    required this.token,
-    required this.shopData,
-  });
+  const ShopMap({super.key, required this.token, required this.shopData});
 
   @override
   State<ShopMap> createState() => _ShopMapState();
@@ -30,31 +26,37 @@ class _ShopMapState extends State<ShopMap> {
     super.initState();
     _getCurrentLocation();
   }
+
   void _showShopDetails(Map<String, dynamic> shop) {
-  showDialog(
-    context: context,
-    builder: (context) => AlertDialog(
-      title: Text(shop['shop_name'] ?? 'Shop Details'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Address: ${shop['building'] ?? ''} ${shop['street'] ?? ''}, ${shop['barangay'] ?? ''}'),
-          const SizedBox(height: 8),
-          Text('Contact: ${shop['contact_number'] ?? 'N/A'}'),
-          const SizedBox(height: 8),
-          Text('Hours: ${shop['opening_time'] ?? ''} - ${shop['closing_time'] ?? ''}'),
-        ],
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Close'),
-        ),
-      ],
-    ),
-  );
-}
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: Text(shop['shop_name'] ?? 'Shop Details'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Address: ${shop['building'] ?? ''} ${shop['street'] ?? ''}, ${shop['barangay'] ?? ''}',
+                ),
+                const SizedBox(height: 8),
+                Text('Contact: ${shop['contact_number'] ?? 'N/A'}'),
+                const SizedBox(height: 8),
+                Text(
+                  'Hours: ${shop['opening_time'] ?? ''} - ${shop['closing_time'] ?? ''}',
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+    );
+  }
 
   Future<void> _getCurrentLocation() async {
     try {
@@ -80,11 +82,7 @@ class _ShopMapState extends State<ShopMap> {
       markers.add(
         Marker(
           point: LatLng(position.latitude, position.longitude),
-          child: const Icon(
-            Icons.location_on,
-            color: Colors.blue,
-            size: 40,
-          ),
+          child: const Icon(Icons.location_on, color: Colors.blue, size: 40),
         ),
       );
 
@@ -95,51 +93,53 @@ class _ShopMapState extends State<ShopMap> {
     }
   }
 
-Future<void> _fetchNearbyShops(Position position) async {
-  try {
-    final response = await http.get(
-      Uri.parse('${SupabaseConfig.apiUrl}/nearby_shops?lat=${position.latitude}&lng=${position.longitude}'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-    );
+  Future<void> _fetchNearbyShops(Position position) async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/nearby_shops?lat=${position.latitude}&lng=${position.longitude}',
+        ),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final shops = List<Map<String, dynamic>>.from(data['shops']);
-      
-      setState(() {
-        // Keep current location marker
-        markers = [markers.first];
-        
-        // Add shop markers
-        for (var shop in shops) {
-          if (shop['latitude'] != null && shop['longitude'] != null) {
-            markers.add(
-              Marker(
-                point: LatLng(
-                  double.parse(shop['latitude'].toString()),
-                  double.parse(shop['longitude'].toString())
-                ),
-                child: GestureDetector(
-                  onTap: () => _showShopDetails(shop),
-                  child: const Icon(
-                    Icons.local_laundry_service,
-                    color: Colors.purple,
-                    size: 40,
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final shops = List<Map<String, dynamic>>.from(data['shops']);
+
+        setState(() {
+          // Keep current location marker
+          markers = [markers.first];
+
+          // Add shop markers
+          for (var shop in shops) {
+            if (shop['latitude'] != null && shop['longitude'] != null) {
+              markers.add(
+                Marker(
+                  point: LatLng(
+                    double.parse(shop['latitude'].toString()),
+                    double.parse(shop['longitude'].toString()),
+                  ),
+                  child: GestureDetector(
+                    onTap: () => _showShopDetails(shop),
+                    child: const Icon(
+                      Icons.local_laundry_service,
+                      color: Colors.purple,
+                      size: 40,
+                    ),
                   ),
                 ),
-              ),
-            );
+              );
+            }
           }
-        }
-      });
+        });
+      }
+    } catch (e) {
+      print('Error fetching nearby shops: $e');
     }
-  } catch (e) {
-    print('Error fetching nearby shops: $e');
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -158,26 +158,28 @@ Future<void> _fetchNearbyShops(Position position) async {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: currentPosition == null
-            ? const Center(child: CircularProgressIndicator())
-            : FlutterMap(
-                mapController: mapController,
-                options: MapOptions(
-                  initialCenter: LatLng(
-                    currentPosition!.latitude,
-                    currentPosition!.longitude,
+        child:
+            currentPosition == null
+                ? const Center(child: CircularProgressIndicator())
+                : FlutterMap(
+                  mapController: mapController,
+                  options: MapOptions(
+                    initialCenter: LatLng(
+                      currentPosition!.latitude,
+                      currentPosition!.longitude,
+                    ),
+                    initialZoom: 14,
                   ),
-                  initialZoom: 14,
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.example.labaride',
+                    ),
+                    MarkerLayer(markers: markers),
+                  ],
                 ),
-                children: [
-                  TileLayer(
-                    urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.example.labaride',
-                  ),
-                  MarkerLayer(markers: markers),
-                ],
-              ),
       ),
     );
   }
-} 
+}

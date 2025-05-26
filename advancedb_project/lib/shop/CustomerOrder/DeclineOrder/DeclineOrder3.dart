@@ -43,7 +43,10 @@ class DeclineOrder3 extends StatelessWidget {
         children: [
           // Top Section: Text at the Top
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40.0, vertical: 20.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 40.0,
+              vertical: 20.0,
+            ),
             child: const Text(
               'Make sure your shop is set to busy on your device.',
               textAlign: TextAlign.center,
@@ -55,7 +58,7 @@ class DeclineOrder3 extends StatelessWidget {
             ),
           ),
 
-   const Spacer(),
+          const Spacer(),
 
           // Bottom Section: Widened Button
           Padding(
@@ -65,18 +68,22 @@ class DeclineOrder3 extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => OrderDeclined(
-                      userId: userId,
-                      token: token,
-                      shopData: shopData,
-                    ),
+                    builder:
+                        (context) => OrderDeclined(
+                          userId: userId,
+                          token: token,
+                          shopData: shopData,
+                        ),
                   ),
                 );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 160, 35, 26),
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                minimumSize: const Size(double.infinity, 50), // Full-width button
+                minimumSize: const Size(
+                  double.infinity,
+                  50,
+                ), // Full-width button
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),

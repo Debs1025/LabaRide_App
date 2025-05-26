@@ -10,7 +10,7 @@ class ConfirmCancelScreen extends StatefulWidget {
     super.key,
     required this.userId,
     required this.token,
-    required this.transactionId, 
+    required this.transactionId,
   });
 
   @override
@@ -54,10 +54,7 @@ class _ConfirmCancelScreenState extends State<ConfirmCancelScreen> {
               children: [
                 Text(
                   'Order number:',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -75,10 +72,7 @@ class _ConfirmCancelScreenState extends State<ConfirmCancelScreen> {
               children: [
                 Text(
                   'Shop name:',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -94,10 +88,7 @@ class _ConfirmCancelScreenState extends State<ConfirmCancelScreen> {
             const SizedBox(height: 16),
             Text(
               'You can cancel an order before it is accepted',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
             const SizedBox(height: 24),
             Text(
@@ -145,10 +136,7 @@ class _ConfirmCancelScreenState extends State<ConfirmCancelScreen> {
             Expanded(
               child: Text(
                 text,
-                style: TextStyle(
-                  color: navyBlue,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: navyBlue, fontSize: 14),
               ),
             ),
           ],
@@ -192,16 +180,18 @@ class _ConfirmCancelScreenState extends State<ConfirmCancelScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                      onPressed: () {
+                    onPressed: () {
                       Navigator.pop(context); // Close dialog
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => ConfirmCancelScreen2( // Changed from ConfirmCancelScreen
-                            userId: widget.userId,
-                            token: widget.token,
-                            transactionId: widget.transactionId!,
-                          ),
+                          builder:
+                              (context) => ConfirmCancelScreen2(
+                                // Changed from ConfirmCancelScreen
+                                userId: widget.userId,
+                                token: widget.token,
+                                transactionId: widget.transactionId!,
+                              ),
                         ),
                       );
                     },
@@ -223,10 +213,7 @@ class _ConfirmCancelScreenState extends State<ConfirmCancelScreen> {
                     style: OutlinedButton.styleFrom(
                       backgroundColor: Colors.white,
                       elevation: 0,
-                      side: BorderSide(
-                        color: navyBlue,
-                        width: 1,
-                      ),
+                      side: BorderSide(color: navyBlue, width: 1),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

@@ -40,70 +40,82 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     fetchTransactions();
   }
 
-Future<void> fetchTransactions() async {
-  setState(() {
-    isLoading = true;
-    error = null;
-  });
-
-  try {
-    if (widget.shopData.isEmpty || widget.shopData['id'] == null) {
-      throw Exception('No shop data available');
-    }
-
-    final response = await http.get(
-      Uri.parse('${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}'), // Already correct
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${widget.token}',
-      },
-    );
-
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      
-      if (data is Map<String, dynamic> && data.containsKey('transactions')) {
-        final transactions = List<Map<String, dynamic>>.from(data['transactions']).map((transaction) {
-          return {
-            'id': transaction['id'],
-            'transaction_id': transaction['id'],
-            'user_name': transaction['customer_name'] ?? transaction['user_name'] ?? 'N/A',
-            'service_name': transaction['service_name']?.toString() ?? 'N/A',
-            'delivery_type': transaction['delivery_type']?.toString() ?? 'N/A',
-            'status': transaction['status']?.toString() ?? 'N/A',
-            'payment_method': transaction['payment_method']?.toString() ?? 'N/A',
-            'total_amount': transaction['total_amount']?.toString() ?? '0',
-            'created_at': transaction['created_at']?.toString() ?? 'N/A',
-          };
-        }).toList();
-
-        setState(() {
-          transactionsData = transactions;
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          transactionsData = [];
-          isLoading = false;
-        });
-      }
-    } else {
-      throw Exception('Failed to load transactions: ${response.statusCode}');
-    }
-  } catch (e) {
-    print('Error in fetchTransactions: $e');
+  Future<void> fetchTransactions() async {
     setState(() {
-      error = e.toString();
-      isLoading = false;
+      isLoading = true;
+      error = null;
     });
-    if (mounted) {
-      _showErrorSnackBar('Error fetching transactions: $e');
+
+    try {
+      if (widget.shopData.isEmpty || widget.shopData['id'] == null) {
+        throw Exception('No shop data available');
+      }
+
+      final response = await http.get(
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}',
+        ), // Already correct
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      );
+
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        if (data is Map<String, dynamic> && data.containsKey('transactions')) {
+          final transactions =
+              List<Map<String, dynamic>>.from(data['transactions']).map((
+                transaction,
+              ) {
+                return {
+                  'id': transaction['id'],
+                  'transaction_id': transaction['id'],
+                  'user_name':
+                      transaction['customer_name'] ??
+                      transaction['user_name'] ??
+                      'N/A',
+                  'service_name':
+                      transaction['service_name']?.toString() ?? 'N/A',
+                  'delivery_type':
+                      transaction['delivery_type']?.toString() ?? 'N/A',
+                  'status': transaction['status']?.toString() ?? 'N/A',
+                  'payment_method':
+                      transaction['payment_method']?.toString() ?? 'N/A',
+                  'total_amount':
+                      transaction['total_amount']?.toString() ?? '0',
+                  'created_at': transaction['created_at']?.toString() ?? 'N/A',
+                };
+              }).toList();
+
+          setState(() {
+            transactionsData = transactions;
+            isLoading = false;
+          });
+        } else {
+          setState(() {
+            transactionsData = [];
+            isLoading = false;
+          });
+        }
+      } else {
+        throw Exception('Failed to load transactions: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error in fetchTransactions: $e');
+      setState(() {
+        error = e.toString();
+        isLoading = false;
+      });
+      if (mounted) {
+        _showErrorSnackBar('Error fetching transactions: $e');
+      }
     }
   }
-}
 
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
@@ -118,19 +130,22 @@ Future<void> fetchTransactions() async {
 
   Future<void> _deleteSelectedTransactions() async {
     try {
-    final selectedTransactionIds = selectedItems.entries
-        .where((entry) => entry.value)
-        .map((entry) => entry.key)
-        .toList();
+      final selectedTransactionIds =
+          selectedItems.entries
+              .where((entry) => entry.value)
+              .map((entry) => entry.key)
+              .toList();
 
-    for (final id in selectedTransactionIds) {
-      final response = await http.delete(
-        Uri.parse('${SupabaseConfig.apiUrl}/transactions/$id'), // Already correct
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
-      );
+      for (final id in selectedTransactionIds) {
+        final response = await http.delete(
+          Uri.parse(
+            '${SupabaseConfig.apiUrl}/transactions/$id',
+          ), // Already correct
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${widget.token}',
+          },
+        );
 
         if (response.statusCode != 200) {
           throw Exception('Failed to delete transaction $id');
@@ -139,7 +154,8 @@ Future<void> fetchTransactions() async {
 
       setState(() {
         transactionsData.removeWhere(
-          (transaction) => selectedTransactionIds.contains(transaction['transaction_id'])
+          (transaction) =>
+              selectedTransactionIds.contains(transaction['transaction_id']),
         );
         selectedItems.clear();
         isItemSelected = false;
@@ -164,18 +180,19 @@ Future<void> fetchTransactions() async {
       return transactionsData;
     }
     return transactionsData.where((transaction) {
-      return transaction['status']?.toString().toLowerCase() == 
-             selectedFilter.toLowerCase();
+      return transaction['status']?.toString().toLowerCase() ==
+          selectedFilter.toLowerCase();
     }).toList();
   }
 
   Future<void> _viewSelectedTransaction() async {
-    final selectedTransactionId = selectedItems.entries
-        .firstWhere(
-          (entry) => entry.value,
-          orElse: () => const MapEntry(0, false),
-        )
-        .key;
+    final selectedTransactionId =
+        selectedItems.entries
+            .firstWhere(
+              (entry) => entry.value,
+              orElse: () => const MapEntry(0, false),
+            )
+            .key;
 
     if (selectedTransactionId == 0) {
       _showErrorSnackBar('Please select a transaction to view.');
@@ -202,9 +219,10 @@ Future<void> fetchTransactions() async {
       await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => IndividualTransact(
-            transactionData: stringifiedTransactionData,
-          ),
+          builder:
+              (context) => IndividualTransact(
+                transactionData: stringifiedTransactionData,
+              ),
         ),
       );
     } catch (e) {
@@ -221,35 +239,39 @@ Future<void> fetchTransactions() async {
         children: [
           _buildHeader(),
           Expanded(
-            child: isLoading
-                ? const Center(child: CircularProgressIndicator(color: Colors.white))
-                : error != null
+            child:
+                isLoading
+                    ? const Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                    : error != null
                     ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              'Error: $error',
-                              style: const TextStyle(color: Colors.white),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 16),
-                            ElevatedButton(
-                              onPressed: fetchTransactions,
-                              child: const Text('Retry'),
-                            ),
-                          ],
-                        ),
-                      )
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            'Error: $error',
+                            style: const TextStyle(color: Colors.white),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: fetchTransactions,
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    )
                     : _buildDataTableSection(),
           ),
         ],
       ),
       bottomNavigationBar:
-          isItemSelected ? _buildSelectionActionBar() : _buildDefaultNavigationBar(),
+          isItemSelected
+              ? _buildSelectionActionBar()
+              : _buildDefaultNavigationBar(),
     );
   }
-
 
   Widget _buildDataTableSection() {
     final filteredData = getFilteredTransactions();
@@ -329,7 +351,7 @@ Future<void> fetchTransactions() async {
                 ),
                 const SizedBox(width: 8),
                 _buildFilterChip(
-                  'In Progress', 
+                  'In Progress',
                   'assets/OrderScreenIcon/Active.png',
                 ),
                 const SizedBox(width: 8),
@@ -374,7 +396,8 @@ Future<void> fetchTransactions() async {
   }
 
   Widget _buildSelectionActionBar() {
-    final selectedCount = selectedItems.values.where((isSelected) => isSelected).length;
+    final selectedCount =
+        selectedItems.values.where((isSelected) => isSelected).length;
 
     return Container(
       height: 80,
@@ -407,19 +430,20 @@ Future<void> fetchTransactions() async {
           TextButton(
             onPressed: isDeleting ? null : _deleteSelectedTransactions,
             style: TextButton.styleFrom(backgroundColor: Colors.transparent),
-            child: isDeleting
-                ? const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+            child:
+                isDeleting
+                    ? const SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+                      ),
+                    )
+                    : const Text(
+                      'Delete',
+                      style: TextStyle(color: Colors.red, fontSize: 16),
                     ),
-                  )
-                : const Text(
-                    'Delete',
-                    style: TextStyle(color: Colors.red, fontSize: 16),
-                  ),
           ),
         ],
       ),
@@ -427,71 +451,76 @@ Future<void> fetchTransactions() async {
   }
 
   Widget _buildDefaultNavigationBar() {
-  return BottomNavigationBar(
-    currentIndex: 1, 
-    type: BottomNavigationBarType.fixed,
-    selectedItemColor: navyBlue,
-    unselectedItemColor: Colors.grey,
-     onTap: (index) {
-      switch (index) {
-        case 0:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => DashboardScreen(
-                userId: widget.userId,
-                token: widget.token,
-                shopData: widget.shopData,
+    return BottomNavigationBar(
+      currentIndex: 1,
+      type: BottomNavigationBarType.fixed,
+      selectedItemColor: navyBlue,
+      unselectedItemColor: Colors.grey,
+      onTap: (index) {
+        switch (index) {
+          case 0:
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => DashboardScreen(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                    ),
               ),
-            ),
-          );
-          break;
-        case 1:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => TransactionsScreen(
-                userId: widget.userId,
-                token: widget.token,
-                shopData: widget.shopData,
+            );
+            break;
+          case 1:
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => TransactionsScreen(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                    ),
               ),
-            ),
-          );
-          break;
-        case 2:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ServiceScreen1(
-                userId: widget.userId,
-                token: widget.token,
-                shopData: widget.shopData,
+            );
+            break;
+          case 2:
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => ServiceScreen1(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                    ),
               ),
-            ),
-          );
-          break;
+            );
+            break;
           case 3:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => CustomerOrders(
-                userId: widget.userId,
-                token: widget.token,
-                shopData: widget.shopData,
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder:
+                    (context) => CustomerOrders(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                    ),
               ),
-            ),
-          );
-          break;
+            );
+            break;
           case 4:
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => ProfileScreenAdmin(
-                  userId: widget.userId,
-                  token: widget.token,
-                  shopData: widget.shopData,
-                  onSwitchToUser: () => Navigator.pop(context),
-                ),
+                builder:
+                    (context) => ProfileScreenAdmin(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                      onSwitchToUser: () => Navigator.pop(context),
+                    ),
               ),
             );
             break;

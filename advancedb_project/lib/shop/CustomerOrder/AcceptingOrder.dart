@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'DeclineOrder/DeclineOrder1.dart';
 
 class AcceptingOrder extends StatelessWidget {
-  final Map<String, dynamic> orderDetails;  // Kept as dynamic for flexibility
+  final Map<String, dynamic> orderDetails; // Kept as dynamic for flexibility
   final int userId;
   final String token;
   final Map<String, dynamic> shopData;
@@ -34,7 +34,7 @@ class AcceptingOrder extends StatelessWidget {
   Widget build(BuildContext context) {
     // Convert dynamic values to String where needed
     String serviceType = (orderDetails['service'] ?? 'WASH ONLY').toString();
-    
+
     final List<Map<String, String>> clothesList = [
       {'quantity': '5', 'item': 'Shirts', 'price': '50'},
       {'quantity': '3', 'item': 'Pants', 'price': '36'},
@@ -111,7 +111,8 @@ class AcceptingOrder extends StatelessWidget {
                             userId: userId,
                             token: token,
                             shopData: shopData,
-                            orderDetails: orderDetails,  // Keep passing orderDetails
+                            orderDetails:
+                                orderDetails, // Keep passing orderDetails
                           );
                         },
                       );
@@ -187,11 +188,13 @@ class AcceptingOrder extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        ...clothesList.map((item) => _buildOrderItem(
-                              '${item['quantity']}x',
-                              '${item['item']}',
-                              '₱${item['price']}',
-                            )),
+                        ...clothesList.map(
+                          (item) => _buildOrderItem(
+                            '${item['quantity']}x',
+                            '${item['item']}',
+                            '₱${item['price']}',
+                          ),
+                        ),
                         const SizedBox(height: 16),
                         // Household items
                         const Text(
@@ -203,11 +206,13 @@ class AcceptingOrder extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        ...householdList.map((item) => _buildOrderItem(
-                              '${item['quantity']}x',
-                              '${item['item']}',
-                              '₱${item['price']}',
-                            )),
+                        ...householdList.map(
+                          (item) => _buildOrderItem(
+                            '${item['quantity']}x',
+                            '${item['item']}',
+                            '₱${item['price']}',
+                          ),
+                        ),
                         const SizedBox(height: 24),
                         // Total section
                         _buildPriceRow('Subtotal', '₱$subtotal'),
@@ -265,20 +270,11 @@ class AcceptingOrder extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            item,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
+          Text(item, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           const Spacer(),
           Text(
             price,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ],
       ),

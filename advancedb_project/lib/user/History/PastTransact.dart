@@ -10,11 +10,7 @@ class PastTransact extends StatefulWidget {
   final int userId;
   final String token;
 
-  const PastTransact({
-    super.key,
-    required this.userId,
-    required this.token,
-  });
+  const PastTransact({super.key, required this.userId, required this.token});
 
   @override
   State<PastTransact> createState() => _PastTransactState();
@@ -32,44 +28,49 @@ class _PastTransactState extends State<PastTransact> {
   }
 
   Future<void> _fetchPastOrders() async {
-  setState(() {
-    _isLoading = true;
-    _error = '';
-  });
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
 
-  try {
-    final response = await http.get(
-      Uri.parse('${SupabaseConfig.apiUrl}/user_transactions/${widget.userId}'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/user_transactions/${widget.userId}',
+        ),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final allTransactions = List<Map<String, dynamic>>.from(data['data'] ?? []);
-      
-      // Filter completed or cancelled orders
-      final pastOrders = allTransactions.where((order) {
-        final status = order['status']?.toString().toLowerCase() ?? '';
-        return status == 'completed' || status == 'cancelled';
-      }).toList();
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final allTransactions = List<Map<String, dynamic>>.from(
+          data['data'] ?? [],
+        );
 
+        // Filter completed or cancelled orders
+        final pastOrders =
+            allTransactions.where((order) {
+              final status = order['status']?.toString().toLowerCase() ?? '';
+              return status == 'completed' || status == 'cancelled';
+            }).toList();
+
+        setState(() {
+          _pastOrders = pastOrders;
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load past orders');
+      }
+    } catch (e) {
       setState(() {
-        _pastOrders = pastOrders;
+        _error = e.toString();
         _isLoading = false;
       });
-    } else {
-      throw Exception('Failed to load past orders');
     }
-  } catch (e) {
-    setState(() {
-      _error = e.toString();
-      _isLoading = false;
-    });
   }
-}
 
   String _formatDateTime(String dateTime) {
     try {
@@ -99,15 +100,17 @@ class _PastTransactState extends State<PastTransact> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF1A0066)),
-          onPressed: () => Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ProfileScreen(
-                userId: widget.userId,
-                token: widget.token,
+          onPressed:
+              () => Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder:
+                      (context) => ProfileScreen(
+                        userId: widget.userId,
+                        token: widget.token,
+                      ),
+                ),
               ),
-            ),
-          ),
         ),
         title: const Text(
           'History',
@@ -125,9 +128,7 @@ class _PastTransactState extends State<PastTransact> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border(
-                bottom: BorderSide(color: Colors.grey[200]!),
-              ),
+              border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
             ),
             child: Row(
               children: [
@@ -136,10 +137,11 @@ class _PastTransactState extends State<PastTransact> {
                     Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ActiveTransact(
-                          userId: widget.userId,
-                          token: widget.token,
-                        ),
+                        builder:
+                            (context) => ActiveTransact(
+                              userId: widget.userId,
+                              token: widget.token,
+                            ),
                       ),
                     );
                   },
@@ -187,57 +189,64 @@ class _PastTransactState extends State<PastTransact> {
 
           // Updated Orders List
           Expanded(
-            child: _isLoading 
-                ? const Center(child: CircularProgressIndicator())
-                : _error.isNotEmpty
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error.isNotEmpty
                     ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(_error),
-                            ElevatedButton(
-                              onPressed: _fetchPastOrders,
-                              child: const Text('Retry'),
-                            ),
-                          ],
-                        ),
-                      )
-                    : _pastOrders.isEmpty
-                        ? Center(
-                            child: Text(
-                              'No past orders',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 16,
-                              ),
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _fetchPastOrders,
-                            child: SingleChildScrollView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  children: _pastOrders.map((order) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 16.0),
-                                      child: _buildOrderCard(
-                                        context,
-                                        date: _formatDateTime(order['created_at'] ?? ''),
-                                        orderId: '#${order['id'] ?? ''}',
-                                        location: order['shop_name'] ?? 'Unknown Location',
-                                        amount: '₱${order['total_amount'] ?? '0.00'}',
-                                        deliveryFee: '₱${order['delivery_fee'] ?? '0.00'}',
-                                        status: order['status'] ?? 'Completed',
-                                        orderDetails: order,
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(_error),
+                          ElevatedButton(
+                            onPressed: _fetchPastOrders,
+                            child: const Text('Retry'),
                           ),
+                        ],
+                      ),
+                    )
+                    : _pastOrders.isEmpty
+                    ? Center(
+                      child: Text(
+                        'No past orders',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                      ),
+                    )
+                    : RefreshIndicator(
+                      onRefresh: _fetchPastOrders,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            children:
+                                _pastOrders.map((order) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: 16.0,
+                                    ),
+                                    child: _buildOrderCard(
+                                      context,
+                                      date: _formatDateTime(
+                                        order['created_at'] ?? '',
+                                      ),
+                                      orderId: '#${order['id'] ?? ''}',
+                                      location:
+                                          order['shop_name'] ??
+                                          'Unknown Location',
+                                      amount:
+                                          '₱${order['total_amount'] ?? '0.00'}',
+                                      deliveryFee:
+                                          '₱${order['delivery_fee'] ?? '0.00'}',
+                                      status: order['status'] ?? 'Completed',
+                                      orderDetails: order,
+                                    ),
+                                  );
+                                }).toList(),
+                          ),
+                        ),
+                      ),
+                    ),
           ),
         ],
       ),
@@ -274,10 +283,7 @@ class _PastTransactState extends State<PastTransact> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Text(
               date,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ),
           Padding(
@@ -318,10 +324,7 @@ class _PastTransactState extends State<PastTransact> {
                 const SizedBox(height: 8),
                 Text(
                   location,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -375,9 +378,9 @@ class _PastTransactState extends State<PastTransact> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => DetailTransact(
-                              orderDetails: orderDetails,
-                            ),
+                            builder:
+                                (context) =>
+                                    DetailTransact(orderDetails: orderDetails),
                           ),
                         );
                       },

@@ -93,29 +93,37 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
         final shopsList = data is List ? data : data['shops'] as List;
 
         setState(() {
-          allShops = shopsList.map((shop) {
-            final shopUserId = shop['user_id'] is int
-                ? shop['user_id']
-                : int.tryParse(shop['user_id']?.toString() ?? '');
-            return LaundryShop(
-              id: shop['id']?.toString() ?? '',
-              name: shop['shop_name'] ?? '',
-              image: shop['image'] ?? 'assets/default_shop.png',
-              rating: 0.0,
-              distance: shop['distance']?.toString() ?? 'N/A',
-              isOpen: shop['is_open'] ?? false,
-              location: buildShopAddress(shop),
-              status: shop['status'] ?? 'Unknown',
-              totalPrice: shop['total_price']?.toString() ?? 'N/A',
-              userId: shopUserId,
-              isOwnedByCurrentUser: shopUserId == widget.userId,
-              latitude: shop['latitude'] != null ? double.tryParse(shop['latitude'].toString()) : null,
-              longitude: shop['longitude'] != null ? double.tryParse(shop['longitude'].toString()) : null,
-              street: shop['street'] ?? '',
-              barangay: shop['barangay'] ?? '',
-              building: shop['building'] ?? '',
-            );
-          }).toList();
+          allShops =
+              shopsList.map((shop) {
+                final shopUserId =
+                    shop['user_id'] is int
+                        ? shop['user_id']
+                        : int.tryParse(shop['user_id']?.toString() ?? '');
+                return LaundryShop(
+                  id: shop['id']?.toString() ?? '',
+                  name: shop['shop_name'] ?? '',
+                  image: shop['image'] ?? 'assets/default_shop.png',
+                  rating: 0.0,
+                  distance: shop['distance']?.toString() ?? 'N/A',
+                  isOpen: shop['is_open'] ?? false,
+                  location: buildShopAddress(shop),
+                  status: shop['status'] ?? 'Unknown',
+                  totalPrice: shop['total_price']?.toString() ?? 'N/A',
+                  userId: shopUserId,
+                  isOwnedByCurrentUser: shopUserId == widget.userId,
+                  latitude:
+                      shop['latitude'] != null
+                          ? double.tryParse(shop['latitude'].toString())
+                          : null,
+                  longitude:
+                      shop['longitude'] != null
+                          ? double.tryParse(shop['longitude'].toString())
+                          : null,
+                  street: shop['street'] ?? '',
+                  barangay: shop['barangay'] ?? '',
+                  building: shop['building'] ?? '',
+                );
+              }).toList();
           _isLoading = false;
         });
       } else {
@@ -147,29 +155,28 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
       final shopData = jsonDecode(shopResponse.body);
 
       final servicesResponse = await http.get(
-      Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/services'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-    );
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/services'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+      );
 
       final clothingResponse = await http.get(
-      Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/clothing'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-    );
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/clothing'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+      );
 
-
-    final householdResponse = await http.get(
-      Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/household'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-    );
+      final householdResponse = await http.get(
+        Uri.parse('${SupabaseConfig.apiUrl}/shop/$shopId/household'),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+      );
 
       return {
         'id': shopId,
@@ -188,20 +195,27 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
         'building': shopData['building'] ?? '',
         'opening_time': shopData['opening_time'] ?? '',
         'closing_time': shopData['closing_time'] ?? '',
-        'services': servicesResponse.statusCode == 200 
-            ? (jsonDecode(servicesResponse.body)['services'] as List).map((service) => {
-                'service_name': service['service_name'],
-                'description': service['description'] ?? '',
-                'price': service['price']?.toString() ?? '0',
-                'color': service['color']?.toString() ?? '0xFF1A0066',
-              }).toList()
-            : [],
-        'clothing_types': clothingResponse.statusCode == 200 
-            ? jsonDecode(clothingResponse.body)['types'] ?? []
-            : [],
-        'household_items': householdResponse.statusCode == 200 
-            ? jsonDecode(householdResponse.body)['items'] ?? []
-            : [],
+        'services':
+            servicesResponse.statusCode == 200
+                ? (jsonDecode(servicesResponse.body)['services'] as List)
+                    .map(
+                      (service) => {
+                        'service_name': service['service_name'],
+                        'description': service['description'] ?? '',
+                        'price': service['price']?.toString() ?? '0',
+                        'color': service['color']?.toString() ?? '0xFF1A0066',
+                      },
+                    )
+                    .toList()
+                : [],
+        'clothing_types':
+            clothingResponse.statusCode == 200
+                ? jsonDecode(clothingResponse.body)['types'] ?? []
+                : [],
+        'household_items':
+            householdResponse.statusCode == 200
+                ? jsonDecode(householdResponse.body)['items'] ?? []
+                : [],
       };
     } catch (e) {
       print('Error fetching complete shop data: $e');
@@ -214,43 +228,52 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
       return;
     }
 
-    _fetchCompleteShopData(shop.id).then((fullShopData) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => OrderShopSystem(
-            userId: widget.userId,
-            token: widget.token,
-            shopData: fullShopData,
-            initialService: null,
-            initialItems: null,
-          ),
-        ),
-      );
-    }).catchError((error) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading shop details: $error')),
-      );
-    });
+    _fetchCompleteShopData(shop.id)
+        .then((fullShopData) {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => OrderShopSystem(
+                    userId: widget.userId,
+                    token: widget.token,
+                    shopData: fullShopData,
+                    initialService: null,
+                    initialItems: null,
+                  ),
+            ),
+          );
+        })
+        .catchError((error) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error loading shop details: $error')),
+          );
+        });
   }
 
   void _navigateToMap() {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => MapScreen(
-          userId: widget.userId,
-          token: widget.token,
-          shops: allShops.map((shop) => {
-            'id': shop.id,
-            'shop_name': shop.name,
-            'latitude': shop.latitude,
-            'longitude': shop.longitude,
-            'street': shop.street,
-            'barangay': shop.barangay,
-            'building': shop.building,
-          }).toList(),
-        ),
+        builder:
+            (context) => MapScreen(
+              userId: widget.userId,
+              token: widget.token,
+              shops:
+                  allShops
+                      .map(
+                        (shop) => {
+                          'id': shop.id,
+                          'shop_name': shop.name,
+                          'latitude': shop.latitude,
+                          'longitude': shop.longitude,
+                          'street': shop.street,
+                          'barangay': shop.barangay,
+                          'building': shop.building,
+                        },
+                      )
+                      .toList(),
+            ),
       ),
     );
   }
@@ -276,82 +299,84 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
           ),
         ],
       ),
-      body: _isLoading 
-        ? const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1A0066)),
-            ),
-          )
-        : _errorMessage.isNotEmpty
-          ? Center(
-              child: Text(_errorMessage),
-            )
-          : RefreshIndicator(
-              onRefresh: _fetchAllShops,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: allShops.length,
-                itemBuilder: (context, index) {
-                  final shop = allShops[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: InkWell(
-                      onTap: () => _navigateToShop(shop),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Text(
-                                  shop.name,
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1A0066),
-                                  ),
-                                ),
-                                if (shop.isOwnedByCurrentUser)
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 8),
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: Colors.green[100],
-                                      borderRadius: BorderRadius.circular(8),
+      body:
+          _isLoading
+              ? const Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1A0066)),
+                ),
+              )
+              : _errorMessage.isNotEmpty
+              ? Center(child: Text(_errorMessage))
+              : RefreshIndicator(
+                onRefresh: _fetchAllShops,
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: allShops.length,
+                  itemBuilder: (context, index) {
+                    final shop = allShops[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: InkWell(
+                        onTap: () => _navigateToShop(shop),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Text(
+                                    shop.name,
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1A0066),
                                     ),
-                                    child: const Text(
-                                      'Your Shop',
-                                      style: TextStyle(
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 12,
+                                  ),
+                                  if (shop.isOwnedByCurrentUser)
+                                    Container(
+                                      margin: const EdgeInsets.only(left: 8),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.green[100],
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: const Text(
+                                        'Your Shop',
+                                        style: TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              shop.location,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.grey[600],
+                                ],
                               ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ],
+                              const SizedBox(height: 8),
+                              Text(
+                                shop.location,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey[600],
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
     );
   }
 }
@@ -363,6 +388,7 @@ String buildShopAddress(dynamic shop) {
   List<String> parts = [];
   if (street.isNotEmpty) parts.add(street);
   if (barangay.isNotEmpty) parts.add(barangay);
-  if (building.isNotEmpty && building.toLowerCase() != 'none') parts.add(building);
+  if (building.isNotEmpty && building.toLowerCase() != 'none')
+    parts.add(building);
   return parts.isNotEmpty ? parts.join(', ') : 'Unknown Location';
 }

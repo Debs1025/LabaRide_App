@@ -8,14 +8,14 @@ class AdminAccountInfo extends StatefulWidget {
   final int userId;
   final String token;
   final Map<String, dynamic> userData;
-  final Map<String, dynamic> shopData;  
+  final Map<String, dynamic> shopData;
 
   const AdminAccountInfo({
     super.key,
     required this.userId,
     required this.token,
     required this.userData,
-    required this.shopData,  
+    required this.shopData,
   });
 
   @override
@@ -26,16 +26,23 @@ class _AccountInfoState extends State<AdminAccountInfo> {
   late final Map<String, TextEditingController> _controllers;
   late final Map<String, bool> _isEditing;
 
- @override
+  @override
   void initState() {
     super.initState();
     print('DEBUG: Received user data: ${widget.userData}');
-    
+
     _controllers = {
-      'ID': TextEditingController(text: widget.userData['id']?.toString() ?? ''),
+      'ID': TextEditingController(
+        text: widget.userData['id']?.toString() ?? '',
+      ),
       'Name': TextEditingController(text: widget.userData['name'] ?? ''),
-      'Contact Number': TextEditingController(text: widget.userData['contact_number'] ?? widget.userData['phone'] ?? ''),
-      'Email Address': TextEditingController(text: widget.userData['email'] ?? ''),
+      'Contact Number': TextEditingController(
+        text:
+            widget.userData['contact_number'] ?? widget.userData['phone'] ?? '',
+      ),
+      'Email Address': TextEditingController(
+        text: widget.userData['email'] ?? '',
+      ),
     };
 
     // Initialize editing state
@@ -45,33 +52,35 @@ class _AccountInfoState extends State<AdminAccountInfo> {
     );
   }
 
-Future<void> _saveField(String field) async {
-  try {
-    final response = await http.put(
-      Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-      body: jsonEncode({
-        field.toLowerCase().replaceAll(' ', '_'): _controllers[field]?.text
-      }),
-    );
-    
-    if (response.statusCode == 200) {
-      setState(() => _isEditing[field] = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Changes saved successfully')),
+  Future<void> _saveField(String field) async {
+    try {
+      final response = await http.put(
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}',
+        ),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          field.toLowerCase().replaceAll(' ', '_'): _controllers[field]?.text,
+        }),
       );
-    } else {
-      throw Exception('Failed to save changes');
+
+      if (response.statusCode == 200) {
+        setState(() => _isEditing[field] = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Changes saved successfully')),
+        );
+      } else {
+        throw Exception('Failed to save changes');
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to save changes: $e')));
     }
-  } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to save changes: $e')),
-    );
   }
-}
 
   Widget _buildTextField(String label, {bool isEditable = true}) {
     return Column(
@@ -125,11 +134,13 @@ Future<void> _saveField(String field) async {
                     padding: const EdgeInsets.only(right: 8),
                     child: ColorFiltered(
                       colorFilter: ColorFilter.mode(
-                        _isEditing[label]! ? const Color(0xFF1A0066) : Colors.grey,
+                        _isEditing[label]!
+                            ? const Color(0xFF1A0066)
+                            : Colors.grey,
                         BlendMode.srcIn,
                       ),
                       child: Image.asset(
-                        _isEditing[label]! 
+                        _isEditing[label]!
                             ? 'assets/AccountInfo/Save.png'
                             : 'assets/AccountInfo/Edit.png',
                         width: 24,
@@ -255,8 +266,12 @@ Future<void> _saveField(String field) async {
                     ],
                   ),
                   const SizedBox(height: 16),
-                  _buildDocumentItem('Philippine Department of Trade and Industry (DTI)'),
-                  _buildDocumentItem('Securities and Exchange Commission (SEC)'),
+                  _buildDocumentItem(
+                    'Philippine Department of Trade and Industry (DTI)',
+                  ),
+                  _buildDocumentItem(
+                    'Securities and Exchange Commission (SEC)',
+                  ),
                   _buildDocumentItem('TIN ID'),
                   _buildDocumentItem("Mayor's Permit"),
                 ],
@@ -268,11 +283,12 @@ Future<void> _saveField(String field) async {
                 onPressed: () {
                   showDialog(
                     context: context,
-                    builder: (context) => ConfirmDeleteDialog(
-                      userId: widget.userId,
-                      token: widget.token,
-                      shopId: widget.shopData['id'],
-                    ),
+                    builder:
+                        (context) => ConfirmDeleteDialog(
+                          userId: widget.userId,
+                          token: widget.token,
+                          shopId: widget.shopData['id'],
+                        ),
                   );
                 },
                 child: const Text(

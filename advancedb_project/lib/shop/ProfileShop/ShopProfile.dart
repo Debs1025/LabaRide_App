@@ -58,10 +58,7 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
                   const SizedBox(height: 8),
                   Text(
                     widget.shopData['contact_number'] ?? 'Contact Number',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                    ),
+                    style: const TextStyle(fontSize: 16, color: Colors.white),
                   ),
                   const SizedBox(height: 24),
                   // Profile Section with curved top
@@ -90,23 +87,32 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
                       _buildMenuItem(
                         'Account Information',
                         'assets/ProfileScreen/Profile.png',
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AdminAccountInfo(
-                              userId: widget.userId,
-                              token: widget.token,
-                              userData: {
-                                'id': widget.shopData['user']?['id'],
-                                'name': widget.shopData['user']?['name'],
-                                'username': widget.shopData['user']?['username'],
-                                'contact_number': widget.shopData['user']?['contact_number'] ?? widget.shopData['user']?['phone'],
-                                'email': widget.shopData['user']?['email'],
-                              },
-                              shopData: widget.shopData,  // Add this
+                        onTap:
+                            () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder:
+                                    (context) => AdminAccountInfo(
+                                      userId: widget.userId,
+                                      token: widget.token,
+                                      userData: {
+                                        'id': widget.shopData['user']?['id'],
+                                        'name':
+                                            widget.shopData['user']?['name'],
+                                        'username':
+                                            widget
+                                                .shopData['user']?['username'],
+                                        'contact_number':
+                                            widget
+                                                .shopData['user']?['contact_number'] ??
+                                            widget.shopData['user']?['phone'],
+                                        'email':
+                                            widget.shopData['user']?['email'],
+                                      },
+                                      shopData: widget.shopData, // Add this
+                                    ),
+                              ),
                             ),
-                          ),
-                        ),
                       ),
                       _buildMenuItem(
                         'Shop Details',
@@ -115,11 +121,12 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
                           final updatedShopData = await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ShopDetails(
-                                userId: widget.userId,
-                                token: widget.token,
-                                shopData: widget.shopData,
-                              ),
+                              builder:
+                                  (context) => ShopDetails(
+                                    userId: widget.userId,
+                                    token: widget.token,
+                                    shopData: widget.shopData,
+                                  ),
                             ),
                           );
                           if (updatedShopData != null) {
@@ -150,125 +157,110 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
   }
 
   Widget _buildProfileInfo(BuildContext context) {
-  return Padding(
-    padding: const EdgeInsets.all(20),
-    child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        // Left column with shop and user info
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Left column with shop and user info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  widget.shopData['shop_name'] ?? 'Your Shop',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: navyBlue,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '#${widget.shopData['id'] ?? ''}',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  widget.shopData['user']?['name'] ?? 'Shop Owner',
+                  style: const TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+                Text(
+                  widget.shopData['user']?['email'] ?? 'Email',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Contact: ${widget.shopData['contact_number'] ?? 'N/A'}',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+          // Right column with rating and time
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                widget.shopData['shop_name'] ?? 'Your Shop',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: navyBlue,
-                ),
-              ),
+              _buildRating(widget.shopData['rating']?.toString() ?? '0.0'),
               const SizedBox(height: 4),
-              Text(
-                '#${widget.shopData['id'] ?? ''}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+              _buildShopDetail(
+                Icons.access_time,
+                '${widget.shopData['opening_time'] ?? '9:00 AM'} - ${widget.shopData['closing_time'] ?? '6:00 PM'}',
+                context,
               ),
-              const SizedBox(height: 8),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserModeButton() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: GestureDetector(
+        onTap: () {
+          // Remove the callback and directly navigate
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => ProfileScreen(
+                    userId: widget.userId,
+                    token: widget.token,
+                    isGuest: false,
+                  ),
+            ),
+            (route) => false, // This clears the navigation stack
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF375DFB),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: Colors.grey.shade200),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(Icons.person_outline, color: Colors.white, size: 24),
+              SizedBox(width: 12),
               Text(
-                widget.shopData['user']?['name'] ?? 'Shop Owner',
-                style: const TextStyle(
+                'Switch to User Mode',
+                style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey,
-                ),
-              ),
-              Text(
-                widget.shopData['user']?['email'] ?? 'Email',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Contact: ${widget.shopData['contact_number'] ?? 'N/A'}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
                 ),
               ),
             ],
           ),
         ),
-        // Right column with rating and time
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            _buildRating(widget.shopData['rating']?.toString() ?? '0.0'),
-            const SizedBox(height: 4),
-            _buildShopDetail(
-              Icons.access_time,
-              '${widget.shopData['opening_time'] ?? '9:00 AM'} - ${widget.shopData['closing_time'] ?? '6:00 PM'}',
-              context,
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
-}
-
- Widget _buildUserModeButton() {
-  return Container(
-    width: double.infinity,
-    margin: const EdgeInsets.symmetric(vertical: 8),
-    child: GestureDetector(
-      onTap: () {
-        // Remove the callback and directly navigate
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProfileScreen(
-              userId: widget.userId,
-              token: widget.token,
-              isGuest: false,
-            ),
-          ),
-          (route) => false, // This clears the navigation stack
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFF375DFB),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icon(
-              Icons.person_outline,
-              color: Colors.white,
-              size: 24,
-            ),
-            SizedBox(width: 12),
-            Text(
-              'Switch to User Mode',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   Widget _buildMenuItem(
     String title,
@@ -303,11 +295,7 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
             ),
             const Spacer(),
             if (!isLogout)
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.grey[400],
-              ),
+              Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey[400]),
           ],
         ),
       ),
@@ -320,13 +308,7 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
       children: [
         Icon(icon, size: 14, color: Colors.grey[600]),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text(text, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
       ],
     );
   }
@@ -335,11 +317,7 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Icon(
-          Icons.star,
-          size: 16,
-          color: Colors.amber,
-        ),
+        const Icon(Icons.star, size: 16, color: Colors.amber),
         const SizedBox(width: 4),
         Text(
           rating,
@@ -363,9 +341,7 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
     if (confirmed == true && context.mounted) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(
-          builder: (context) => const UnifiedLoginScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const UnifiedLoginScreen()),
         (route) => false,
       );
     }
@@ -383,11 +359,12 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => DashboardScreen(
-                  userId: widget.userId,
-                  token: widget.token,
-                  shopData: widget.shopData,
-                ),
+                builder:
+                    (context) => DashboardScreen(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                    ),
               ),
             );
             break;
@@ -395,11 +372,12 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => TransactionsScreen(
-                  userId: widget.userId,
-                  token: widget.token,
-                  shopData: widget.shopData,
-                ),
+                builder:
+                    (context) => TransactionsScreen(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                    ),
               ),
             );
             break;
@@ -407,11 +385,12 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ServiceScreen1(
-                  userId: widget.userId,
-                  token: widget.token,
-                  shopData: widget.shopData,
-                ),
+                builder:
+                    (context) => ServiceScreen1(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                    ),
               ),
             );
             break;
@@ -419,11 +398,12 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => CustomerOrders(
-                  userId: widget.userId,
-                  token: widget.token,
-                  shopData: widget.shopData,
-                ),
+                builder:
+                    (context) => CustomerOrders(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                    ),
               ),
             );
             break;
@@ -437,72 +417,72 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
   }
 
   List<BottomNavigationBarItem> _buildNavigationItems() {
-  return [
-    BottomNavigationBarItem(
-      icon: Image.asset(
-        'assets/OrderScreenIcon/Home.png',
-        height: 24,
-        color: Colors.grey,
+    return [
+      BottomNavigationBarItem(
+        icon: Image.asset(
+          'assets/OrderScreenIcon/Home.png',
+          height: 24,
+          color: Colors.grey,
+        ),
+        activeIcon: Image.asset(
+          'assets/OrderScreenIcon/Home.png',
+          height: 24,
+          color: navyBlue,
+        ),
+        label: 'Home',
       ),
-      activeIcon: Image.asset(
-        'assets/OrderScreenIcon/Home.png',
-        height: 24,
-        color: navyBlue,
+      BottomNavigationBarItem(
+        icon: Image.asset(
+          'assets/OrderScreenIcon/Orders.png',
+          height: 24,
+          color: Colors.grey,
+        ),
+        activeIcon: Image.asset(
+          'assets/OrderScreenIcon/Orders.png',
+          height: 24,
+          color: navyBlue,
+        ),
+        label: 'Orders',
       ),
-      label: 'Home',
-    ),
-    BottomNavigationBarItem(
-      icon: Image.asset(
-        'assets/OrderScreenIcon/Orders.png',
-        height: 24,
-        color: Colors.grey,
+      BottomNavigationBarItem(
+        icon: Image.asset(
+          'assets/OrderScreenIcon/Services.png',
+          height: 24,
+          color: Colors.grey,
+        ),
+        activeIcon: Image.asset(
+          'assets/OrderScreenIcon/Services.png',
+          height: 24,
+          color: navyBlue,
+        ),
+        label: 'Services',
       ),
-      activeIcon: Image.asset(
-        'assets/OrderScreenIcon/Orders.png',
-        height: 24,
-        color: navyBlue,
+      BottomNavigationBarItem(
+        icon: Image.asset(
+          'assets/OrderScreenIcon/Customers.png',
+          height: 24,
+          color: Colors.grey,
+        ),
+        activeIcon: Image.asset(
+          'assets/OrderScreenIcon/Customers.png',
+          height: 24,
+          color: navyBlue,
+        ),
+        label: 'Customers',
       ),
-      label: 'Orders',
-    ),
-    BottomNavigationBarItem(
-      icon: Image.asset(
-        'assets/OrderScreenIcon/Services.png',
-        height: 24,
-        color: Colors.grey,
+      BottomNavigationBarItem(
+        icon: Image.asset(
+          'assets/OrderScreenIcon/Profile.png',
+          height: 24,
+          color: Colors.grey,
+        ),
+        activeIcon: Image.asset(
+          'assets/OrderScreenIcon/Profile.png',
+          height: 24,
+          color: navyBlue,
+        ),
+        label: 'Profile',
       ),
-      activeIcon: Image.asset(
-        'assets/OrderScreenIcon/Services.png',
-        height: 24,
-        color: navyBlue,
-      ),
-      label: 'Services',
-    ),
-    BottomNavigationBarItem(
-      icon: Image.asset(
-        'assets/OrderScreenIcon/Customers.png',
-        height: 24,
-        color: Colors.grey,
-      ),
-      activeIcon: Image.asset(
-        'assets/OrderScreenIcon/Customers.png',
-        height: 24,
-        color: navyBlue,
-      ),
-      label: 'Customers',
-    ),
-    BottomNavigationBarItem(
-      icon: Image.asset(
-        'assets/OrderScreenIcon/Profile.png',
-        height: 24,
-        color: Colors.grey,
-      ),
-      activeIcon: Image.asset(
-        'assets/OrderScreenIcon/Profile.png',
-        height: 24,
-        color: navyBlue,
-      ),
-      label: 'Profile',
-    ),
-  ];
- }
+    ];
+  }
 }

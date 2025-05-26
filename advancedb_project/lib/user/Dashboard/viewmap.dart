@@ -11,7 +11,8 @@ import '../../../supabase_config.dart';
 class MapScreen extends StatefulWidget {
   final int userId;
   final String token;
-  final List<Map<String, dynamic>>? shops; // Accept shops as an optional parameter
+  final List<Map<String, dynamic>>?
+  shops; // Accept shops as an optional parameter
 
   const MapScreen({
     super.key,
@@ -34,39 +35,41 @@ class _MapScreenState extends State<MapScreen> {
   static const LatLng nagaCityCenter = LatLng(13.6248, 123.1875);
   static const double nagaCityRadius = 11.0;
 
-@override
-void initState() {
-  super.initState();
-  _getCurrentLocation();
-  if (widget.shops != null) {
-    print('Shops passed to map:');
-    for (var shop in widget.shops!) {
-      print(shop);
+  @override
+  void initState() {
+    super.initState();
+    _getCurrentLocation();
+    if (widget.shops != null) {
+      print('Shops passed to map:');
+      for (var shop in widget.shops!) {
+        print(shop);
+      }
+      _addShopMarkers(widget.shops!);
+    } else {
+      // Fetch all shops if none were passed
+      _fetchAllShopsWithCoordinates();
     }
-    _addShopMarkers(widget.shops!);
-  } else {
-    // Fetch all shops if none were passed
-    _fetchAllShopsWithCoordinates();
   }
-}
 
-@override
-void didChangeDependencies() {
-  super.didChangeDependencies();
-  if (widget.shops != null) {
-    markers.clear();
-    _addShopMarkers(widget.shops!);
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (widget.shops != null) {
+      markers.clear();
+      _addShopMarkers(widget.shops!);
+    }
   }
-}
 
   void _addShopMarkers(List<Map<String, dynamic>> shops) {
     setState(() {
       for (var shop in shops) {
         if (shop['latitude'] != null && shop['longitude'] != null) {
-          markers.add(_createShopMarker({
-            ...shop,
-            'name': shop['shop_name'] ?? shop['name'] ?? '',
-          }));
+          markers.add(
+            _createShopMarker({
+              ...shop,
+              'name': shop['shop_name'] ?? shop['name'] ?? '',
+            }),
+          );
         }
       }
     });
@@ -90,7 +93,7 @@ void didChangeDependencies() {
       }
 
       Position position = await Geolocator.getCurrentPosition();
-      
+
       if (_isWithinNagaCity(position)) {
         setState(() {
           currentPosition = position;
@@ -99,18 +102,20 @@ void didChangeDependencies() {
         await _fetchNearbyShops(position);
       } else {
         _showError('You are outside Naga City. Showing Naga City center.');
-        await _fetchNearbyShops(Position(
-          latitude: nagaCityCenter.latitude,
-          longitude: nagaCityCenter.longitude,
-          timestamp: DateTime.now(),
-          accuracy: 0,
-          altitude: 0,
-          heading: 0,
-          speed: 0,
-          speedAccuracy: 0,
-          altitudeAccuracy: 0,
-          headingAccuracy: 0,
-        ));
+        await _fetchNearbyShops(
+          Position(
+            latitude: nagaCityCenter.latitude,
+            longitude: nagaCityCenter.longitude,
+            timestamp: DateTime.now(),
+            accuracy: 0,
+            altitude: 0,
+            heading: 0,
+            speed: 0,
+            speedAccuracy: 0,
+            altitudeAccuracy: 0,
+            headingAccuracy: 0,
+          ),
+        );
       }
 
       setState(() => isLoading = false);
@@ -153,11 +158,7 @@ void didChangeDependencies() {
   Marker _createCurrentLocationMarker(Position position) {
     return Marker(
       point: LatLng(position.latitude, position.longitude),
-      child: const Icon(
-        Icons.location_on,
-        color: Colors.blue,
-        size: 40,
-      ),
+      child: const Icon(Icons.location_on, color: Colors.blue, size: 40),
     );
   }
 
@@ -174,7 +175,9 @@ void didChangeDependencies() {
   Future<void> _fetchNearbyShops(Position position) async {
     try {
       final response = await http.get(
-        Uri.parse('${SupabaseConfig.apiUrl}/nearby_shops?lat=${position.latitude}&lng=${position.longitude}'),
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/nearby_shops?lat=${position.latitude}&lng=${position.longitude}',
+        ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -184,7 +187,7 @@ void didChangeDependencies() {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final shops = List<Map<String, dynamic>>.from(data['shops']);
-        
+
         setState(() {
           for (var shop in shops) {
             markers.add(_createShopMarker(shop));
@@ -199,60 +202,60 @@ void didChangeDependencies() {
     }
   }
 
- Marker _createShopMarker(Map<String, dynamic> shop) {
-  return Marker(
-    point: LatLng(shop['latitude'], shop['longitude']),
-    width: 60,
-    height: 80,
-    child: GestureDetector(
-      onTap: () => _showShopDetails(shop),
-      child: Column(
-        children: [
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.purple.withOpacity(0.8),
-                  blurRadius: 24,
-                  spreadRadius: 8,
-                ),
-              ],
-            ),
-            child: Image.asset(
-              'assets/laundryiconmap.png',
-              width: 25,
-              height: 30,
-            ),
-          ),
-          Container(
-            margin: const EdgeInsets.only(top: 2),
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(8),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.purple.withOpacity(0.2),
-                  blurRadius: 4,
-                  spreadRadius: 1,
-                ),
-              ],
-            ),
-            child: Text(
-              shop['name'] ?? shop['shop_name'] ?? '',
-              style: const TextStyle(
-                fontSize: 13,
-                color: Colors.purple,
-                fontWeight: FontWeight.bold,
+  Marker _createShopMarker(Map<String, dynamic> shop) {
+    return Marker(
+      point: LatLng(shop['latitude'], shop['longitude']),
+      width: 60,
+      height: 80,
+      child: GestureDetector(
+        onTap: () => _showShopDetails(shop),
+        child: Column(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.purple.withOpacity(0.8),
+                    blurRadius: 24,
+                    spreadRadius: 8,
+                  ),
+                ],
+              ),
+              child: Image.asset(
+                'assets/laundryiconmap.png',
+                width: 25,
+                height: 30,
               ),
             ),
-          ),
-        ],
+            Container(
+              margin: const EdgeInsets.only(top: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.9),
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.purple.withOpacity(0.2),
+                    blurRadius: 4,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: Text(
+                shop['name'] ?? shop['shop_name'] ?? '',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Colors.purple,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   void _showError(String message) {
     if (mounted) {
@@ -287,7 +290,8 @@ void didChangeDependencies() {
         initialZoom: 14.0,
         minZoom: 13.0,
         maxZoom: 18.0,
-        onTap: (_, __) => Navigator.of(context).popUntil((route) => route.isFirst),
+        onTap:
+            (_, __) => Navigator.of(context).popUntil((route) => route.isFirst),
         onMapReady: _addCityBoundaryMarker,
       ),
       children: [
@@ -327,10 +331,7 @@ void didChangeDependencies() {
       child: FloatingActionButton(
         onPressed: _handleLocationPress,
         backgroundColor: Colors.white,
-        child: const Icon(
-          Icons.my_location,
-          color: Color(0xFF1A0066),
-        ),
+        child: const Icon(Icons.my_location, color: Color(0xFF1A0066)),
       ),
     );
   }
@@ -370,20 +371,14 @@ void didChangeDependencies() {
       children: [
         const Padding(
           padding: EdgeInsets.symmetric(horizontal: 8.0),
-          child: Icon(
-            Icons.location_on,
-            color: Color(0xFF1A0066),
-          ),
+          child: Icon(Icons.location_on, color: Color(0xFF1A0066)),
         ),
         Expanded(
           child: TextField(
             controller: _searchController,
             decoration: const InputDecoration(
               hintText: 'Type laundry shop name',
-              hintStyle: TextStyle(
-                color: Color(0xFF9CA3AF),
-                fontSize: 14,
-              ),
+              hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
               border: InputBorder.none,
             ),
             onSubmitted: _handleSearch,
@@ -394,85 +389,87 @@ void didChangeDependencies() {
   }
 
   void _handleSearch(String value) {
-  if (value.isEmpty) {
+    if (value.isEmpty) {
+      setState(() {
+        markers.clear();
+        if (currentPosition != null) {
+          markers.add(_createCurrentLocationMarker(currentPosition!));
+        }
+        // Restore all shop markers
+        if (widget.shops != null) {
+          for (var shop in widget.shops!) {
+            if (shop['latitude'] != null && shop['longitude'] != null) {
+              markers.add(_createShopMarker(shop));
+            }
+          }
+        }
+      });
+      return;
+    }
+
     setState(() {
       markers.clear();
       if (currentPosition != null) {
         markers.add(_createCurrentLocationMarker(currentPosition!));
       }
-      // Restore all shop markers
+      // Only add matching shops with improved search
       if (widget.shops != null) {
         for (var shop in widget.shops!) {
-          if (shop['latitude'] != null && shop['longitude'] != null) {
+          final shopName = shop['shop_name']?.toString().toLowerCase() ?? '';
+          final street = shop['street']?.toString().toLowerCase() ?? '';
+          final barangay = shop['barangay']?.toString().toLowerCase() ?? '';
+          final building = shop['building']?.toString().toLowerCase() ?? '';
+
+          final matches =
+              shopName.contains(value.toLowerCase()) ||
+              street.contains(value.toLowerCase()) ||
+              barangay.contains(value.toLowerCase()) ||
+              building.contains(value.toLowerCase());
+
+          if (matches &&
+              shop['latitude'] != null &&
+              shop['longitude'] != null) {
             markers.add(_createShopMarker(shop));
           }
         }
       }
     });
-    return;
-  }
 
-  setState(() {
-    markers.clear();
-    if (currentPosition != null) {
-      markers.add(_createCurrentLocationMarker(currentPosition!));
+    if (markers.length <= 1) {
+      // Only current location marker
+      _showError('No shops found matching "$value"');
     }
-    // Only add matching shops with improved search
-    if (widget.shops != null) {
-      for (var shop in widget.shops!) {
-        final shopName = shop['shop_name']?.toString().toLowerCase() ?? '';
-        final street = shop['street']?.toString().toLowerCase() ?? '';
-        final barangay = shop['barangay']?.toString().toLowerCase() ?? '';
-        final building = shop['building']?.toString().toLowerCase() ?? '';
-        
-        final matches = shopName.contains(value.toLowerCase()) ||
-                       street.contains(value.toLowerCase()) ||
-                       barangay.contains(value.toLowerCase()) ||
-                       building.contains(value.toLowerCase());
-        
-        if (matches && shop['latitude'] != null && shop['longitude'] != null) {
-          markers.add(_createShopMarker(shop));
-        }
-      }
-    }
-  });
-
-  if (markers.length <= 1) { // Only current location marker
-    _showError('No shops found matching "$value"');
   }
-}
 
   Future<void> _handleLocationPress() async {
-  try {
-    Position position = await Geolocator.getCurrentPosition();
-    if (_isWithinNagaCity(position)) {
-      mapController.move(
-        LatLng(position.latitude, position.longitude),
-        14.0,
-      );
-      setState(() {
-        currentPosition = position;
-      });
-    } else {
-      mapController.move(nagaCityCenter, 14.0);
-      _showError('Showing Naga City center');
+    try {
+      Position position = await Geolocator.getCurrentPosition();
+      if (_isWithinNagaCity(position)) {
+        mapController.move(LatLng(position.latitude, position.longitude), 14.0);
+        setState(() {
+          currentPosition = position;
+        });
+      } else {
+        mapController.move(nagaCityCenter, 14.0);
+        _showError('Showing Naga City center');
+      }
+    } catch (e) {
+      print('Error getting location: $e');
+      _showError('Failed to get current location');
     }
-  } catch (e) {
-    print('Error getting location: $e');
-    _showError('Failed to get current location');
   }
-}
 
   void _showShopDetails(Map<String, dynamic> shop) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => ShopDetailsOverlay(
-        userId: widget.userId,
-        token: widget.token,
-        shopDetails: shop,
-      ),
+      builder:
+          (context) => ShopDetailsOverlay(
+            userId: widget.userId,
+            token: widget.token,
+            shopDetails: shop,
+          ),
     );
   }
 

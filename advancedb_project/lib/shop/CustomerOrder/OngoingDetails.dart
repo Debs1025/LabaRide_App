@@ -50,7 +50,9 @@ class _OngoingDetailsState extends State<OngoingDetails> {
 
     try {
       final response = await http.put(
-        Uri.parse('${SupabaseConfig.apiUrl}/api/orders/${widget.orderDetails['id']}/status'),
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/api/orders/${widget.orderDetails['id']}/status',
+        ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -71,9 +73,9 @@ class _OngoingDetailsState extends State<OngoingDetails> {
       }
     } catch (e) {
       setState(() => _error = e.toString());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $_error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error: $_error')));
     } finally {
       setState(() => _isLoading = false);
     }
@@ -107,10 +109,12 @@ class _OngoingDetailsState extends State<OngoingDetails> {
   @override
   Widget build(BuildContext context) {
     // Parse order items from details or use defaults
-    final List<Map<String, String>> clothesList = 
-        _parseItems(widget.orderDetails['clothes'] ?? '[]');
-    final List<Map<String, String>> householdList = 
-        _parseItems(widget.orderDetails['household'] ?? '[]');
+    final List<Map<String, String>> clothesList = _parseItems(
+      widget.orderDetails['clothes'] ?? '[]',
+    );
+    final List<Map<String, String>> householdList = _parseItems(
+      widget.orderDetails['household'] ?? '[]',
+    );
 
     // Calculate totals
     int subtotal = 0;
@@ -127,326 +131,391 @@ class _OngoingDetailsState extends State<OngoingDetails> {
     return Scaffold(
       backgroundColor: const Color(0xFF48006A),
       body: SafeArea(
-        child: _isLoading
-            ? const Center(child: CircularProgressIndicator(color: Colors.white))
-            : Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    // Header
-                    Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(8),
+        child:
+            _isLoading
+                ? const Center(
+                  child: CircularProgressIndicator(color: Colors.white),
+                )
+                : Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      // Header
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => Navigator.pop(context),
+                            child: Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                                size: 24,
+                              ),
                             ),
-                            child: const Icon(
-                              Icons.arrow_back,
+                          ),
+                          const SizedBox(width: 16),
+                          Text(
+                            '#${widget.orderDetails['id'] ?? ''}',
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
                               color: Colors.white,
-                              size: 24,
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Text(
-                          '#${widget.orderDetails['id'] ?? ''}',
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                        ],
+                      ),
+                      const SizedBox(height: 24),
+                      // Order Card
+                      Expanded(
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    // Order Card
-                    Expanded(
-                      child: Card(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          children: [
-                            Expanded(
-                              child: SingleChildScrollView(
-                                child: Padding(
-                                  padding: const EdgeInsets.all(16),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      // Order details and status
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              const Text(
-                                                'Order',
+                          child: Column(
+                            children: [
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Order details and status
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Order',
+                                                  style: TextStyle(
+                                                    fontSize: 24,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Color(0xFF1A0066),
+                                                  ),
+                                                ),
+                                                Text(
+                                                  '#${widget.orderDetails['id'] ?? ''}',
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    color: Color(0xFF9747FF),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 4,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    currentStatus == 'Complete'
+                                                        ? Colors.green[50]
+                                                        : Colors.pink[50],
+                                                borderRadius:
+                                                    BorderRadius.circular(12),
+                                              ),
+                                              child: Text(
+                                                currentStatus,
                                                 style: TextStyle(
-                                                  fontSize: 24,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Color(0xFF1A0066),
+                                                  color:
+                                                      currentStatus ==
+                                                              'Complete'
+                                                          ? Colors.green[400]
+                                                          : Colors.pink[400],
+                                                  fontSize: 12,
+                                                  fontWeight: FontWeight.w500,
                                                 ),
                                               ),
-                                              Text(
-                                                '#${widget.orderDetails['id'] ?? ''}',
-                                                style: const TextStyle(
-                                                  fontSize: 16,
-                                                  color: Color(0xFF9747FF),
-                                                ),
-                                              ),
-                                            ],
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 16),
+                                        // Service type
+                                        Container(
+                                          width: double.infinity,
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 12,
                                           ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 12,
-                                              vertical: 4,
+                                          decoration: BoxDecoration(
+                                            color: _getServiceColor(
+                                              widget.orderDetails['service_name'] ??
+                                                  'WASH ONLY',
                                             ),
-                                            decoration: BoxDecoration(
-                                              color: currentStatus == 'Complete'
-                                                  ? Colors.green[50]
-                                                  : Colors.pink[50],
-                                              borderRadius: BorderRadius.circular(12),
+                                            borderRadius: BorderRadius.circular(
+                                              16,
                                             ),
+                                          ),
+                                          child: Center(
                                             child: Text(
-                                              currentStatus,
-                                              style: TextStyle(
-                                                color: currentStatus == 'Complete'
-                                                    ? Colors.green[400]
-                                                    : Colors.pink[400],
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w500,
+                                              widget.orderDetails['service_name']
+                                                      ?.toUpperCase() ??
+                                                  'WASH ONLY',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 16,
                                               ),
                                             ),
                                           ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 16),
-                                      // Service type
-                                      Container(
-                                        width: double.infinity,
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                        decoration: BoxDecoration(
-                                          color: _getServiceColor(
-                                              widget.orderDetails['service_name'] ?? 'WASH ONLY'),
-                                          borderRadius: BorderRadius.circular(16),
                                         ),
-                                        child: Center(
-                                          child: Text(
-                                            widget.orderDetails['service_name']?.toUpperCase() ?? 'WASH ONLY',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 24),
-                                      // Customer details
-                                      _buildDetailsSection('Customer Details', [
-                                        {'label': 'Name', 'value': widget.orderDetails['user_name'] ?? 'N/A'},
-                                        {'label': 'Address', 'value': widget.orderDetails['address'] ?? 'N/A'},
-                                        {'label': 'Phone', 'value': widget.orderDetails['phone'] ?? 'N/A'},
-                                      ]),
-                                      const SizedBox(height: 24),
-                                      // Types of clothes
-                                      if (clothesList.isNotEmpty) ...[
-                                        const Text(
-                                          'Types of clothes:',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF1A0066),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        ...clothesList.map((item) => _buildOrderItem(
-                                              '${item['quantity']}x',
-                                              item['item']!,
-                                              '₱${item['price']}',
-                                            )),
-                                      ],
-                                      const SizedBox(height: 16),
-                                      // Household items
-                                      if (householdList.isNotEmpty) ...[
-                                        const Text(
-                                          'Household items:',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                            color: Color(0xFF1A0066),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        ...householdList.map((item) => _buildOrderItem(
-                                              '${item['quantity']}x',
-                                              item['item']!,
-                                              '₱${item['price']}',
-                                            )),
-                                      ],
-                                      const SizedBox(height: 24),
-                                      // Payment details
-                                      Row(
-                                        children: [
+                                        const SizedBox(height: 24),
+                                        // Customer details
+                                        _buildDetailsSection('Customer Details', [
+                                          {
+                                            'label': 'Name',
+                                            'value':
+                                                widget
+                                                    .orderDetails['user_name'] ??
+                                                'N/A',
+                                          },
+                                          {
+                                            'label': 'Address',
+                                            'value':
+                                                widget
+                                                    .orderDetails['address'] ??
+                                                'N/A',
+                                          },
+                                          {
+                                            'label': 'Phone',
+                                            'value':
+                                                widget.orderDetails['phone'] ??
+                                                'N/A',
+                                          },
+                                        ]),
+                                        const SizedBox(height: 24),
+                                        // Types of clothes
+                                        if (clothesList.isNotEmpty) ...[
                                           const Text(
-                                            'Subtotal',
+                                            'Types of clothes:',
                                             style: TextStyle(
                                               fontSize: 16,
-                                              color: Color(0xFF666666),
-                                            ),
-                                          ),
-                                          const Spacer(),
-                                          Text(
-                                            '₱$subtotal',
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Row(
-                                        children: [
-                                          const Text(
-                                            'Delivery Fee',
-                                            style: TextStyle(
-                                              fontSize: 16,
-                                              color: Color(0xFF666666),
-                                            ),
-                                          ),
-                                          const Spacer(),
-                                          Text(
-                                            '₱${deliveryFee.toInt()}',
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.w500,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                      const Padding(
-                                        padding: EdgeInsets.symmetric(vertical: 8),
-                                        child: Divider(),
-                                      ),
-                                      Row(
-                                        children: [
-                                          const Text(
-                                            'Total',
-                                            style: TextStyle(
-                                              fontSize: 18,
                                               fontWeight: FontWeight.bold,
                                               color: Color(0xFF1A0066),
                                             ),
                                           ),
-                                          const Spacer(),
-                                          Text(
-                                            '₱${total.toInt()}',
-                                            style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold,
-                                              color: Color(0xFF9747FF),
+                                          const SizedBox(height: 8),
+                                          ...clothesList.map(
+                                            (item) => _buildOrderItem(
+                                              '${item['quantity']}x',
+                                              item['item']!,
+                                              '₱${item['price']}',
                                             ),
                                           ),
                                         ],
-                                      ),
-                                    ],
+                                        const SizedBox(height: 16),
+                                        // Household items
+                                        if (householdList.isNotEmpty) ...[
+                                          const Text(
+                                            'Household items:',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF1A0066),
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          ...householdList.map(
+                                            (item) => _buildOrderItem(
+                                              '${item['quantity']}x',
+                                              item['item']!,
+                                              '₱${item['price']}',
+                                            ),
+                                          ),
+                                        ],
+                                        const SizedBox(height: 24),
+                                        // Payment details
+                                        Row(
+                                          children: [
+                                            const Text(
+                                              'Subtotal',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Color(0xFF666666),
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            Text(
+                                              '₱$subtotal',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            const Text(
+                                              'Delivery Fee',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Color(0xFF666666),
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            Text(
+                                              '₱${deliveryFee.toInt()}',
+                                              style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const Padding(
+                                          padding: EdgeInsets.symmetric(
+                                            vertical: 8,
+                                          ),
+                                          child: Divider(),
+                                        ),
+                                        Row(
+                                          children: [
+                                            const Text(
+                                              'Total',
+                                              style: TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF1A0066),
+                                              ),
+                                            ),
+                                            const Spacer(),
+                                            Text(
+                                              '₱${total.toInt()}',
+                                              style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: Color(0xFF9747FF),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                            // Progress Section
-                            Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: double.infinity,
-                                  decoration: const BoxDecoration(
-                                    color: Color(0xFF00B140),
-                                    borderRadius: BorderRadius.vertical(
-                                      bottom: Radius.circular(16),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      InkWell(
-                                        onTap: () {
-                                          setState(() {
-                                            isExpanded = !isExpanded;
-                                          });
-                                        },
-                                        child: Padding(
-                                          padding: const EdgeInsets.all(16),
-                                          child: Row(
-                                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Text(
-                                                currentStatus,
-                                                style: const TextStyle(
-                                                  color: Colors.white,
-                                                  fontSize: 16,
-                                                  fontWeight: FontWeight.w500,
-                                                ),
-                                              ),
-                                              Icon(
-                                                isExpanded
-                                                    ? Icons.keyboard_arrow_up
-                                                    : Icons.keyboard_arrow_down,
-                                                color: Colors.white,
-                                              ),
-                                            ],
-                                          ),
-                                        ),
+                              // Progress Section
+                              Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    width: double.infinity,
+                                    decoration: const BoxDecoration(
+                                      color: Color(0xFF00B140),
+                                      borderRadius: BorderRadius.vertical(
+                                        bottom: Radius.circular(16),
                                       ),
-                                      if (isExpanded)
-                                        Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.all(16),
-                                          decoration: const BoxDecoration(
-                                            color: Color(0xFF006E1C),
-                                            borderRadius: BorderRadius.vertical(
-                                              bottom: Radius.circular(16),
-                                            ),
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: statusOptions.map((status) => InkWell(
-                                              onTap: () => _updateOrderStatus(status),
-                                              child: Padding(
-                                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                                child: Text(
-                                                  status,
-                                                  style: TextStyle(
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        InkWell(
+                                          onTap: () {
+                                            setState(() {
+                                              isExpanded = !isExpanded;
+                                            });
+                                          },
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(16),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Text(
+                                                  currentStatus,
+                                                  style: const TextStyle(
                                                     color: Colors.white,
                                                     fontSize: 16,
-                                                    fontWeight: currentStatus == status
-                                                        ? FontWeight.bold
-                                                        : FontWeight.w500,
+                                                    fontWeight: FontWeight.w500,
                                                   ),
                                                 ),
-                                              ),
-                                            )).toList(),
+                                                Icon(
+                                                  isExpanded
+                                                      ? Icons.keyboard_arrow_up
+                                                      : Icons
+                                                          .keyboard_arrow_down,
+                                                  color: Colors.white,
+                                                ),
+                                              ],
+                                            ),
                                           ),
                                         ),
-                                    ],
+                                        if (isExpanded)
+                                          Container(
+                                            width: double.infinity,
+                                            padding: const EdgeInsets.all(16),
+                                            decoration: const BoxDecoration(
+                                              color: Color(0xFF006E1C),
+                                              borderRadius:
+                                                  BorderRadius.vertical(
+                                                    bottom: Radius.circular(16),
+                                                  ),
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children:
+                                                  statusOptions
+                                                      .map(
+                                                        (status) => InkWell(
+                                                          onTap:
+                                                              () =>
+                                                                  _updateOrderStatus(
+                                                                    status,
+                                                                  ),
+                                                          child: Padding(
+                                                            padding:
+                                                                const EdgeInsets.symmetric(
+                                                                  vertical: 8,
+                                                                ),
+                                                            child: Text(
+                                                              status,
+                                                              style: TextStyle(
+                                                                color:
+                                                                    Colors
+                                                                        .white,
+                                                                fontSize: 16,
+                                                                fontWeight:
+                                                                    currentStatus ==
+                                                                            status
+                                                                        ? FontWeight
+                                                                            .bold
+                                                                        : FontWeight
+                                                                            .w500,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      )
+                                                      .toList(),
+                                            ),
+                                          ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            ),
-                          ],
+                                ],
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
       ),
     );
   }
@@ -464,27 +533,26 @@ class _OngoingDetailsState extends State<OngoingDetails> {
           ),
         ),
         const SizedBox(height: 8),
-        ...details.map((detail) => Padding(
-          padding: const EdgeInsets.only(bottom: 4),
-          child: Row(
-            children: [
-              Text(
-                '${detail['label']}: ',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey[600],
+        ...details.map(
+          (detail) => Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: Row(
+              children: [
+                Text(
+                  '${detail['label']}: ',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                 ),
-              ),
-              Text(
-                detail['value']!,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
+                Text(
+                  detail['value']!,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        )),
+        ),
       ],
     );
   }
@@ -503,20 +571,11 @@ class _OngoingDetailsState extends State<OngoingDetails> {
             ),
           ),
           const SizedBox(width: 8),
-          Text(
-            item,
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[600],
-            ),
-          ),
+          Text(item, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
           const Spacer(),
           Text(
             price,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
+            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
           ),
         ],
       ),

@@ -15,7 +15,9 @@ class TransactionService {
       }
 
       final response = await http.post(
-        Uri.parse('${SupabaseConfig.apiUrl}/create_transaction/$userId'),  // Updated URL
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/create_transaction/$userId',
+        ), // Updated URL
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -29,7 +31,9 @@ class TransactionService {
         print('Transaction created successfully: $responseData'); // Debug log
         return responseData;
       } else {
-        final error = jsonDecode(response.body)['message'] ?? 'Failed to create transaction';
+        final error =
+            jsonDecode(response.body)['message'] ??
+            'Failed to create transaction';
         print('Transaction creation failed: $error'); // Debug log
         throw Exception(error);
       }

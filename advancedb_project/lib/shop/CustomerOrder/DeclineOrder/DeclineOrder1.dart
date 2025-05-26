@@ -9,7 +9,7 @@ class DeclineOrderDialog extends StatelessWidget {
   final Map<String, dynamic> orderDetails;
 
   const DeclineOrderDialog({
-    super.key, 
+    super.key,
     required this.onReasonSelected,
     required this.userId,
     required this.token,
@@ -75,13 +75,14 @@ class DeclineOrderDialog extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DeclineOrder4(
-                      reason: 'Shop closed',
-                      userId: userId,
-                      token: token,
-                      shopData: shopData,
-                      orderDetails: orderDetails,
-                    ),
+                    builder:
+                        (context) => DeclineOrder4(
+                          reason: 'Shop closed',
+                          userId: userId,
+                          token: token,
+                          shopData: shopData,
+                          orderDetails: orderDetails,
+                        ),
                   ),
                 );
               },
@@ -97,13 +98,14 @@ class DeclineOrderDialog extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DeclineOrder4(
-                      reason: 'Too busy',
-                      userId: userId,
-                      token: token,
-                      shopData: shopData,
-                      orderDetails: orderDetails,
-                    ),
+                    builder:
+                        (context) => DeclineOrder4(
+                          reason: 'Too busy',
+                          userId: userId,
+                          token: token,
+                          shopData: shopData,
+                          orderDetails: orderDetails,
+                        ),
                   ),
                 );
               },
@@ -119,13 +121,14 @@ class DeclineOrderDialog extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DeclineOrder4(
-                      reason: 'Service currently unavailable',
-                      userId: userId,
-                      token: token,
-                      shopData: shopData,
-                      orderDetails: orderDetails,
-                    ),
+                    builder:
+                        (context) => DeclineOrder4(
+                          reason: 'Service currently unavailable',
+                          userId: userId,
+                          token: token,
+                          shopData: shopData,
+                          orderDetails: orderDetails,
+                        ),
                   ),
                 );
               },
@@ -141,13 +144,14 @@ class DeclineOrderDialog extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => DeclineOrder4(
-                      reason: 'Other',
-                      userId: userId,
-                      token: token,
-                      shopData: shopData,
-                      orderDetails: orderDetails,
-                    ),
+                    builder:
+                        (context) => DeclineOrder4(
+                          reason: 'Other',
+                          userId: userId,
+                          token: token,
+                          shopData: shopData,
+                          orderDetails: orderDetails,
+                        ),
                   ),
                 );
               },

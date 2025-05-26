@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../CustomerOrder.dart'; 
+import '../CustomerOrder.dart';
 
 class OrderDeclined extends StatelessWidget {
   final int userId;
@@ -20,11 +20,12 @@ class OrderDeclined extends StatelessWidget {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => CustomerOrders(
-              userId: userId,
-              token: token,
-              shopData: shopData,
-            ),
+            builder:
+                (context) => CustomerOrders(
+                  userId: userId,
+                  token: token,
+                  shopData: shopData,
+                ),
           ),
         );
       },

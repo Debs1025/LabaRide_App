@@ -4,17 +4,12 @@ class ConfirmDeleteDialog extends StatelessWidget {
   final VoidCallback onConfirmDelete;
   final Color navyBlue = const Color(0xFF000080);
 
-  const ConfirmDeleteDialog({
-    super.key,
-    required this.onConfirmDelete,
-  });
+  const ConfirmDeleteDialog({super.key, required this.onConfirmDelete});
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -33,10 +28,7 @@ class ConfirmDeleteDialog extends StatelessWidget {
             Text(
               'All data and binded accounts will be removed from the application',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
             const SizedBox(height: 24),
             Row(

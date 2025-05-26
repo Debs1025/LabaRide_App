@@ -4,80 +4,83 @@ import 'dart:convert';
 import 'OrderCancelled.dart';
 import '../../../supabase_config.dart';
 
-class ConfirmCancelScreen2 extends StatefulWidget { 
+class ConfirmCancelScreen2 extends StatefulWidget {
   final String transactionId;
   final String token;
   final int userId;
 
-  const ConfirmCancelScreen2({ 
-    super.key, 
+  const ConfirmCancelScreen2({
+    super.key,
     required this.transactionId,
     required this.token,
     required this.userId,
   });
 
   @override
-  _ConfirmCancelScreen2State createState() => _ConfirmCancelScreen2State(); 
+  _ConfirmCancelScreen2State createState() => _ConfirmCancelScreen2State();
 }
 
-class _ConfirmCancelScreen2State extends State<ConfirmCancelScreen2> { 
+class _ConfirmCancelScreen2State extends State<ConfirmCancelScreen2> {
   String? selectedReason;
   final Color navyBlue = const Color(0xFF1A0066);
   bool isLoading = false;
 
   Future<void> _deleteTransaction() async {
-  setState(() => isLoading = true);
-  
-  try {
-    print('Cancelling transaction: ${widget.transactionId}');
-    print('Selected reason: $selectedReason');
-    
-    final response = await http.put(
-      Uri.parse('${SupabaseConfig.apiUrl}/cancel_transaction/${widget.transactionId}'),  // Updated URL
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${widget.token}',
-      },
-      body: jsonEncode({
-        'reason': selectedReason,
-        'notes': 'Cancelled by user: $selectedReason',
-      }),
-    );
+    setState(() => isLoading = true);
 
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
+    try {
+      print('Cancelling transaction: ${widget.transactionId}');
+      print('Selected reason: $selectedReason');
 
-    if (!mounted) return;
+      final response = await http.put(
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/cancel_transaction/${widget.transactionId}',
+        ), // Updated URL
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+        body: jsonEncode({
+          'reason': selectedReason,
+          'notes': 'Cancelled by user: $selectedReason',
+        }),
+      );
 
-    if (response.statusCode == 200) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => OrderCancelledScreen(
-            userId: widget.userId,
-            token: widget.token,
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${response.body}');
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder:
+                (context) => OrderCancelledScreen(
+                  userId: widget.userId,
+                  token: widget.token,
+                ),
           ),
+        );
+      } else {
+        final errorData = jsonDecode(response.body);
+        throw Exception(errorData['message'] ?? 'Failed to cancel order');
+      }
+    } catch (e) {
+      print('Error in _deleteTransaction: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error cancelling order: $e'),
+          backgroundColor: Colors.red,
         ),
       );
-    } else {
-      final errorData = jsonDecode(response.body);
-      throw Exception(errorData['message'] ?? 'Failed to cancel order');
-    }
-  } catch (e) {
-    print('Error in _deleteTransaction: $e');
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Error cancelling order: $e'),
-        backgroundColor: Colors.red,
-      ),
-    );
-  } finally {
-    if (mounted) {
-      setState(() => isLoading = false);
+    } finally {
+      if (mounted) {
+        setState(() => isLoading = false);
+      }
     }
   }
-}
 
   void _showConfirmationDialog() {
     showDialog(
@@ -184,10 +187,7 @@ class _ConfirmCancelScreen2State extends State<ConfirmCancelScreen2> {
             Expanded(
               child: Text(
                 text,
-                style: TextStyle(
-                  color: navyBlue,
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: navyBlue, fontSize: 14),
               ),
             ),
           ],
@@ -199,9 +199,7 @@ class _ConfirmCancelScreen2State extends State<ConfirmCancelScreen2> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
@@ -235,10 +233,7 @@ class _ConfirmCancelScreen2State extends State<ConfirmCancelScreen2> {
               children: [
                 Text(
                   'Order number:',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -256,10 +251,7 @@ class _ConfirmCancelScreen2State extends State<ConfirmCancelScreen2> {
               children: [
                 Text(
                   'Shop name:',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -275,10 +267,7 @@ class _ConfirmCancelScreen2State extends State<ConfirmCancelScreen2> {
             const SizedBox(height: 16),
             Text(
               'You can cancel an order before it\nis accepted',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
             const SizedBox(height: 24),
             Text(
@@ -305,7 +294,8 @@ class _ConfirmCancelScreen2State extends State<ConfirmCancelScreen2> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: selectedReason != null ? _showConfirmationDialog : null,
+                onPressed:
+                    selectedReason != null ? _showConfirmationDialog : null,
                 child: const Text(
                   'Confirm',
                   style: TextStyle(

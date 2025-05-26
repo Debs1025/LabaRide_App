@@ -42,10 +42,7 @@ class LaundryFullDetails extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               "Shop ID: ${shopData['id'] ?? 'N/A'}",
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
             const SizedBox(height: 24),
             Row(
@@ -65,9 +62,10 @@ class LaundryFullDetails extends StatelessWidget {
                     (index) => Icon(
                       Icons.star,
                       size: 20,
-                      color: index < (shopData['rating'] ?? 0) 
-                          ? Colors.amber 
-                          : Colors.amber[200],
+                      color:
+                          index < (shopData['rating'] ?? 0)
+                              ? Colors.amber
+                              : Colors.amber[200],
                     ),
                   ),
                 ),
@@ -75,10 +73,7 @@ class LaundryFullDetails extends StatelessWidget {
             ),
             Text(
               "${shopData['total_ratings'] ?? '0'} ratings",
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 14,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 14),
             ),
             const SizedBox(height: 32),
             const Text(
@@ -100,12 +95,9 @@ class LaundryFullDetails extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              shopData['pricing_info'] ?? 
-              "Prices may vary based on the transaction of the user. Prices are also changed by the admin.",
-              style: TextStyle(
-                color: Colors.grey[600],
-                height: 1.5,
-              ),
+              shopData['pricing_info'] ??
+                  "Prices may vary based on the transaction of the user. Prices are also changed by the admin.",
+              style: TextStyle(color: Colors.grey[600], height: 1.5),
             ),
             const SizedBox(height: 16),
             const Text(
@@ -146,10 +138,7 @@ class LaundryFullDetails extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               "${shopData['zone'] ?? ''} ${shopData['street'] ?? ''}, ${shopData['barangay'] ?? ''}, ${shopData['building'] ?? ''}",
-              style: TextStyle(
-                color: Colors.grey[600],
-                height: 1.5,
-              ),
+              style: TextStyle(color: Colors.grey[600], height: 1.5),
             ),
           ],
         ),

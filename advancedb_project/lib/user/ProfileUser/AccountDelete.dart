@@ -52,10 +52,7 @@ class _AccountDeleteScreenState extends State<AccountDeleteScreen> {
             const SizedBox(height: 8),
             const Text(
               'We hope to see you again',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
           ],
         ),

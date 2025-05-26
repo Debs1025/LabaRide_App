@@ -17,7 +17,6 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../supabase_config.dart';
 
-
 class ProfileScreen extends StatefulWidget {
   final int userId;
   final String token;
@@ -44,14 +43,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   MapController mapController = MapController();
   String? selectedAddress;
   bool isSelectingLocation = false;
-  
-@override
-void initState() {
-  super.initState();
-  selectedLatLng = const LatLng(13.6217, 123.1948);
-  _setDefaultAddress(); // Add this
-  _loadUserData();
-}
+
+  @override
+  void initState() {
+    super.initState();
+    selectedLatLng = const LatLng(13.6217, 123.1948);
+    _setDefaultAddress(); // Add this
+    _loadUserData();
+  }
 
   void _setDefaultAddress() {
     final defaultAddress = {
@@ -60,28 +59,29 @@ void initState() {
       'barangay': userData['barangay'] ?? 'Peñafrancia',
       'building': userData['building'] ?? '',
     };
-    
+
     setState(() {
       selectedAddress = _formatAddress(defaultAddress);
     });
   }
+
   String _formatAddress(Map<String, dynamic> address) {
     List<String> parts = [];
-    
+
     String zone = (address['zone']?.toString() ?? '1').trim();
     parts.add('Zone $zone');
-    
+
     String street = (address['street']?.toString() ?? '').trim();
     if (street.isNotEmpty) parts.add(street);
-    
+
     String barangay = (address['barangay']?.toString() ?? '').trim();
     if (barangay.isNotEmpty) parts.add(barangay);
-    
+
     String? building = address['building']?.toString();
     if (building != null && building.trim().isNotEmpty) {
       parts.add(building.trim());
     }
-    
+
     return parts.join(', ');
   }
 
@@ -89,29 +89,28 @@ void initState() {
     try {
       final response = await http.get(
         Uri.parse(
-          'https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.latitude}&lon=${coordinates.longitude}&addressdetails=1&accept-language=en'
+          'https://nominatim.openstreetmap.org/reverse?format=json&lat=${coordinates.latitude}&lon=${coordinates.longitude}&addressdetails=1&accept-language=en',
         ),
-        headers: {
-          'Accept': 'application/json',
-          'User-Agent': 'LabaRide App'
-        }
+        headers: {'Accept': 'application/json', 'User-Agent': 'LabaRide App'},
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final address = data['address'];
 
-        String street = address['road'] ?? 
-                       address['street'] ?? 
-                       address['footway'] ?? 
-                       address['pedestrian'] ??
-                       'Unknown Street';
-        
-        String barangay = address['suburb'] ?? 
-                         address['village'] ?? 
-                         address['subdistrict'] ?? 
-                         address['neighbourhood'] ??
-                         'Unknown Barangay';
+        String street =
+            address['road'] ??
+            address['street'] ??
+            address['footway'] ??
+            address['pedestrian'] ??
+            'Unknown Street';
+
+        String barangay =
+            address['suburb'] ??
+            address['village'] ??
+            address['subdistrict'] ??
+            address['neighbourhood'] ??
+            'Unknown Barangay';
 
         Map<String, dynamic> addressComponents = {
           'zone': userData['zone'] ?? '1',
@@ -135,10 +134,12 @@ void initState() {
     }
   }
 
-   Future<void> _updateUserAddress(Map<String, dynamic> address) async {
+  Future<void> _updateUserAddress(Map<String, dynamic> address) async {
     try {
       final response = await http.put(
-        Uri.parse('${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}'),
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/update_user_details/${widget.userId}',
+        ),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
@@ -155,192 +156,196 @@ void initState() {
     }
   }
 
- Future<void> _loadUserData() async {
-  if (widget.isGuest) {
-    setState(() => _isLoading = false);
-    return;
-  }
+  Future<void> _loadUserData() async {
+    if (widget.isGuest) {
+      setState(() => _isLoading = false);
+      return;
+    }
 
-  try {
-    final userResponse = await http.get(
-      Uri.parse('${SupabaseConfig.apiUrl}/user/${widget.userId}'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${widget.token}',
-      },
-    );
-
-    print('DEBUG: User Response status: ${userResponse.statusCode}');
-    print('DEBUG: User Response body: ${userResponse.body}');
-
-    if (userResponse.statusCode == 200) {
-      final Map<String, dynamic> userData = jsonDecode(userResponse.body);
-      
-      // Now, check if user has a shop
-      final shopResponse = await http.get(
-        Uri.parse('${SupabaseConfig.apiUrl}/shop/user/${widget.userId}'),
+    try {
+      final userResponse = await http.get(
+        Uri.parse('${SupabaseConfig.apiUrl}/user/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
         },
       );
 
-      print('DEBUG: Shop Response status: ${shopResponse.statusCode}');
-      print('DEBUG: Shop Response body: ${shopResponse.body}');
+      print('DEBUG: User Response status: ${userResponse.statusCode}');
+      print('DEBUG: User Response body: ${userResponse.body}');
 
-      setState(() {
-        this.userData = userData['user'] ?? userData;
-        
-        // Set _hasShop based on shop response
-        if (shopResponse.statusCode == 200) {
-          final dynamic shopData = jsonDecode(shopResponse.body);
-          // More detailed shop data validation
-          _hasShop = shopData != null && 
-                     (shopData is Map<String, dynamic> && shopData.isNotEmpty) ||
-                     (shopData is List && shopData.isNotEmpty);
-                     
-          print('DEBUG: Shop data type: ${shopData.runtimeType}');
-          print('DEBUG: Has shop set to: $_hasShop');
-          
-          if (_hasShop) {
-            this.userData['shop'] = shopData is List ? shopData.first : shopData;
-            print('DEBUG: Stored shop data: ${this.userData['shop']}');
+      if (userResponse.statusCode == 200) {
+        final Map<String, dynamic> userData = jsonDecode(userResponse.body);
+
+        // Now, check if user has a shop
+        final shopResponse = await http.get(
+          Uri.parse('${SupabaseConfig.apiUrl}/shop/user/${widget.userId}'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ${widget.token}',
+          },
+        );
+
+        print('DEBUG: Shop Response status: ${shopResponse.statusCode}');
+        print('DEBUG: Shop Response body: ${shopResponse.body}');
+
+        setState(() {
+          this.userData = userData['user'] ?? userData;
+
+          // Set _hasShop based on shop response
+          if (shopResponse.statusCode == 200) {
+            final dynamic shopData = jsonDecode(shopResponse.body);
+            // More detailed shop data validation
+            _hasShop =
+                shopData != null &&
+                    (shopData is Map<String, dynamic> && shopData.isNotEmpty) ||
+                (shopData is List && shopData.isNotEmpty);
+
+            print('DEBUG: Shop data type: ${shopData.runtimeType}');
+            print('DEBUG: Has shop set to: $_hasShop');
+
+            if (_hasShop) {
+              this.userData['shop'] =
+                  shopData is List ? shopData.first : shopData;
+              print('DEBUG: Stored shop data: ${this.userData['shop']}');
+            }
+          } else {
+            _hasShop = false;
+            print('DEBUG: No shop found, status: ${shopResponse.statusCode}');
           }
-        } else {
-          _hasShop = false;
-          print('DEBUG: No shop found, status: ${shopResponse.statusCode}');
-        }
-        
-        _isLoading = false;
-      });
 
-      print('DEBUG: Final user data: ${this.userData}');
-      print('DEBUG: Final has shop flag: $_hasShop');
-    } else {
-      throw Exception('Failed to load user data: ${userResponse.statusCode}');
-    }
-  } catch (e) {
-    print('DEBUG: Error in _loadUserData: $e');
-    if (mounted) {
-      setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading profile: $e')),
-      );
+          _isLoading = false;
+        });
+
+        print('DEBUG: Final user data: ${this.userData}');
+        print('DEBUG: Final has shop flag: $_hasShop');
+      } else {
+        throw Exception('Failed to load user data: ${userResponse.statusCode}');
+      }
+    } catch (e) {
+      print('DEBUG: Error in _loadUserData: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading profile: $e')));
+      }
     }
   }
-}
 
-Widget _buildShopModeButton() {
-  return Container(
-    width: double.infinity,
-    margin: const EdgeInsets.symmetric(vertical: 8),
-    child: GestureDetector(
-      onTap: () {
-        if (!_hasShop) {
-          // Navigate to RegisterShop screen for users without shops
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => RegisterShop(
-                userId: widget.userId,
-                token: widget.token,
-              ),
-            ),
-          ).then((value) {
-            // After registration, navigate to login screen
-            Navigator.pushAndRemoveUntil(
+  Widget _buildShopModeButton() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      child: GestureDetector(
+        onTap: () {
+          if (!_hasShop) {
+            // Navigate to RegisterShop screen for users without shops
+            Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => const UnifiedLoginScreen(),
+                builder:
+                    (context) => RegisterShop(
+                      userId: widget.userId,
+                      token: widget.token,
+                    ),
               ),
-              (route) => false,
+            ).then((value) {
+              // After registration, navigate to login screen
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const UnifiedLoginScreen(),
+                ),
+                (route) => false,
+              );
+            });
+            return;
+          }
+
+          // Existing shop mode switch logic
+          Map<String, dynamic> shopData = {};
+          if (userData['shop'] != null) {
+            shopData = Map<String, dynamic>.from(userData['shop']);
+            shopData['user'] = {
+              'id': widget.userId,
+              'name': userData['name'],
+              'email': userData['email'],
+              'phone': userData['phone'],
+              'contact_number': userData['contact_number'],
+              'emergency_contact': userData['emergency_contact'],
+              'username': userData['username'],
+            };
+          }
+
+          if (shopData.isEmpty) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Shop data not available')),
             );
-          });
-          return;
-        }
+            return;
+          }
 
-        // Existing shop mode switch logic
-        Map<String, dynamic> shopData = {};
-        if (userData['shop'] != null) {
-          shopData = Map<String, dynamic>.from(userData['shop']);
-          shopData['user'] = {
-            'id': widget.userId,
-            'name': userData['name'],
-            'email': userData['email'],
-            'phone': userData['phone'],
-            'contact_number': userData['contact_number'],
-            'emergency_contact': userData['emergency_contact'],
-            'username': userData['username'],
-          };
-        }
-
-        if (shopData.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Shop data not available')),
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (context) => ProfileScreenAdmin(
+                    userId: widget.userId,
+                    token: widget.token,
+                    shopData: shopData,
+                    onSwitchToUser: () {},
+                  ),
+            ),
+            (route) => false,
           );
-          return;
-        }
-
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ProfileScreenAdmin(
-              userId: widget.userId,
-              token: widget.token,
-              shopData: shopData,
-              onSwitchToUser: () {}, 
-            ),
+        },
+        child: Container(
+          width: double.infinity,
+          height: 48,
+          decoration: BoxDecoration(
+            color: navyBlue,
+            borderRadius: BorderRadius.circular(8),
           ),
-          (route) => false,
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        height: 48,
-        decoration: BoxDecoration(
-          color: navyBlue,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              _hasShop ? Icons.store_outlined : Icons.add_business,
-              color: Colors.white
-            ),
-            const SizedBox(width: 8),
-            Text(
-              _hasShop ? 'Switch to Shop Mode' : 'Create Shop',
-              style: const TextStyle(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                _hasShop ? Icons.store_outlined : Icons.add_business,
                 color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                _hasShop ? 'Switch to Shop Mode' : 'Create Shop',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
-String _formatBirthdate(String? birthdate) {
-  if (birthdate == null || birthdate.isEmpty) {
-    return 'No birthdate';
+  String _formatBirthdate(String? birthdate) {
+    if (birthdate == null || birthdate.isEmpty) {
+      return 'No birthdate';
+    }
+    try {
+      String cleanDate = birthdate.split('T')[0];
+      final date = DateTime.parse(cleanDate);
+      return DateFormat('MM/dd/yyyy').format(date);
+    } catch (e) {
+      print('Error formatting birthdate: $e');
+      return 'No birthdate';
+    }
   }
-  try {
-    String cleanDate = birthdate.split('T')[0];
-    final date = DateTime.parse(cleanDate);
-    return DateFormat('MM/dd/yyyy').format(date);
-  } catch (e) {
-    print('Error formatting birthdate: $e');
-    return 'No birthdate';
-  }
-}
 
   @override
   Widget build(BuildContext context) {
-    print('DEBUG: Has shop: $_hasShop'); 
+    print('DEBUG: Has shop: $_hasShop');
     // Guest Mode
     if (widget.isGuest) {
       return Scaffold(
@@ -382,10 +387,7 @@ String _formatBirthdate(String? birthdate) {
               const SizedBox(height: 8),
               const Text(
                 'Please login to view your profile',
-                style: TextStyle(
-                  color: Colors.grey,
-                  fontSize: 16,
-                ),
+                style: TextStyle(color: Colors.grey, fontSize: 16),
               ),
               const SizedBox(height: 24),
               ElevatedButton(
@@ -472,15 +474,16 @@ String _formatBirthdate(String? birthdate) {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => EditProfileScreen(
-                          userId: widget.userId,
-                          token: widget.token,
-                          userData: userData,
-                        ),
+                        builder:
+                            (context) => EditProfileScreen(
+                              userId: widget.userId,
+                              token: widget.token,
+                              userData: userData,
+                            ),
                       ),
                     ).then((updated) {
                       if (updated == true) {
-                        _loadUserData(); 
+                        _loadUserData();
                       }
                     });
                   },
@@ -514,106 +517,131 @@ String _formatBirthdate(String? birthdate) {
                         ),
                       ),
                     ),
-                    _buildDetailItem('assets/locationblue.png', 
-                        '${userData['zone'] ?? ''}, ${userData['street'] ?? ''}, ${userData['barangay'] ?? ''}'),
-                    _buildDetailItem('assets/contact.png', userData['phone'] ?? 'No phone'),
-                    _buildDetailItem('assets/mail.png', userData['email'] ?? 'No email'),
-                    _buildDetailItem('assets/birthdate.png', _formatBirthdate(userData['birthdate'])),
-                    _buildDetailItem('assets/gender.png', userData['gender'] ?? 'No gender'),
-                    
+                    _buildDetailItem(
+                      'assets/locationblue.png',
+                      '${userData['zone'] ?? ''}, ${userData['street'] ?? ''}, ${userData['barangay'] ?? ''}',
+                    ),
+                    _buildDetailItem(
+                      'assets/contact.png',
+                      userData['phone'] ?? 'No phone',
+                    ),
+                    _buildDetailItem(
+                      'assets/mail.png',
+                      userData['email'] ?? 'No email',
+                    ),
+                    _buildDetailItem(
+                      'assets/birthdate.png',
+                      _formatBirthdate(userData['birthdate']),
+                    ),
+                    _buildDetailItem(
+                      'assets/gender.png',
+                      userData['gender'] ?? 'No gender',
+                    ),
+
                     // Action Buttons
                     Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         children: [
                           _buildActionButton(
-                            context, 
-                            'Addresses', 
+                            context,
+                            'Addresses',
                             'assets/locationwhite.png',
                             () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => Addresses(
-                                  userId: widget.userId,
-                                  token: widget.token,
-                                ),
+                                builder:
+                                    (context) => Addresses(
+                                      userId: widget.userId,
+                                      token: widget.token,
+                                    ),
                               ),
                             ),
                           ),
                           const SizedBox(height: 12),
                           _buildActionButton(
-                            context, 
-                            'Transactions', 
+                            context,
+                            'Transactions',
                             'assets/transaction.png',
                             () => Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => ActiveTransact(
-                                  userId: widget.userId,
-                                  token: widget.token,
-                                ),
+                                builder:
+                                    (context) => ActiveTransact(
+                                      userId: widget.userId,
+                                      token: widget.token,
+                                    ),
                               ),
                             ),
                           ),
-                         const SizedBox(height: 12),
-                         _buildShopModeButton(),
-                          
+                          const SizedBox(height: 12),
+                          _buildShopModeButton(),
+
                           // Logout Button
                           TextButton(
                             onPressed: () {
                               showDialog(
                                 context: context,
-                                builder: (BuildContext context) => AlertDialog(
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  title: const Text(
-                                    'Logout',
-                                    style: TextStyle(
-                                      color: Color.fromARGB(255, 255, 17, 0),
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  content: Text(
-                                    'Do you want to logout?',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey[800],
-                                    ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: Text(
-                                        'Cancel',
+                                builder:
+                                    (BuildContext context) => AlertDialog(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                      ),
+                                      title: const Text(
+                                        'Logout',
                                         style: TextStyle(
-                                          color: Colors.grey[600],
+                                          color: Color.fromARGB(
+                                            255,
+                                            255,
+                                            17,
+                                            0,
+                                          ),
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      content: Text(
+                                        'Do you want to logout?',
+                                        style: TextStyle(
                                           fontSize: 16,
+                                          color: Colors.grey[800],
                                         ),
                                       ),
-                                    ),
-                                    TextButton(
-                                    onPressed: () {
-                                      Navigator.pushAndRemoveUntil(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => const UnifiedLoginScreen(),
+                                      actions: [
+                                        TextButton(
+                                          onPressed:
+                                              () => Navigator.pop(context),
+                                          child: Text(
+                                            'Cancel',
+                                            style: TextStyle(
+                                              color: Colors.grey[600],
+                                              fontSize: 16,
+                                            ),
+                                          ),
                                         ),
-                                        (route) => false,
-                                      );
-                                    },
-                                    child: const Text(
-                                      'Confirm',
-                                      style: TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w600,
-                                      ),
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pushAndRemoveUntil(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder:
+                                                    (context) =>
+                                                        const UnifiedLoginScreen(),
+                                              ),
+                                              (route) => false,
+                                            );
+                                          },
+                                          child: const Text(
+                                            'Confirm',
+                                            style: TextStyle(
+                                              color: Colors.red,
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
-                                  ),
-                                  ],
-                                ),
                               );
                             },
                             style: TextButton.styleFrom(
@@ -647,9 +675,7 @@ String _formatBirthdate(String? birthdate) {
         height: 80,
         decoration: const BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(24),
-          ),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
           boxShadow: [
             BoxShadow(
               color: Colors.black12,
@@ -665,10 +691,11 @@ String _formatBirthdate(String? birthdate) {
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => LaundryDashboardScreen(
-                    userId: widget.userId,
-                    token: widget.token,
-                  ),
+                  builder:
+                      (context) => LaundryDashboardScreen(
+                        userId: widget.userId,
+                        token: widget.token,
+                      ),
                 ),
               );
             }),
@@ -676,10 +703,11 @@ String _formatBirthdate(String? birthdate) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => SearchScreen(
-                    userId: widget.userId,
-                    token: widget.token,
-                  ),
+                  builder:
+                      (context) => SearchScreen(
+                        userId: widget.userId,
+                        token: widget.token,
+                      ),
                 ),
               );
             }),
@@ -687,21 +715,32 @@ String _formatBirthdate(String? birthdate) {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ActivitiesScreen(
-                    userId: widget.userId,
-                    token: widget.token,
-                  ),
+                  builder:
+                      (context) => ActivitiesScreen(
+                        userId: widget.userId,
+                        token: widget.token,
+                      ),
                 ),
               );
             }),
-            _buildNavItem(Icons.person, 'Profile', const Color(0xFF375DFB), null),
+            _buildNavItem(
+              Icons.person,
+              'Profile',
+              const Color(0xFF375DFB),
+              null,
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, String label, Color color, VoidCallback? onTap) {
+  Widget _buildNavItem(
+    IconData icon,
+    String label,
+    Color color,
+    VoidCallback? onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -715,7 +754,10 @@ String _formatBirthdate(String? birthdate) {
               fontSize: 12,
               color: color,
               fontFamily: 'Inter',
-              fontWeight: color == const Color(0xFF375DFB) ? FontWeight.w600 : FontWeight.normal,
+              fontWeight:
+                  color == const Color(0xFF375DFB)
+                      ? FontWeight.w600
+                      : FontWeight.normal,
             ),
           ),
         ],
@@ -723,7 +765,7 @@ String _formatBirthdate(String? birthdate) {
     );
   }
 
-   Widget _buildDetailItem(String iconPath, String text) {
+  Widget _buildDetailItem(String iconPath, String text) {
     return GestureDetector(
       onTap: iconPath == 'assets/locationblue.png' ? _showLocationPicker : null,
       child: Padding(
@@ -740,10 +782,7 @@ String _formatBirthdate(String? birthdate) {
             Expanded(
               child: Text(
                 text,
-                style: TextStyle(
-                  color: Colors.grey[800],
-                  fontSize: 14,
-                ),
+                style: TextStyle(color: Colors.grey[800], fontSize: 14),
               ),
             ),
           ],
@@ -752,29 +791,30 @@ String _formatBirthdate(String? birthdate) {
     );
   }
 
-   void _showLocationPicker() {
+  void _showLocationPicker() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => Container(
-        height: MediaQuery.of(context).size.height * 0.8,
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildMapSection(),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-                if (selectedLatLng != null) {
-                  _getAddressFromCoordinates(selectedLatLng!);
-                }
-              },
-              child: const Text('Confirm Location'),
+      builder:
+          (context) => Container(
+            height: MediaQuery.of(context).size.height * 0.8,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                _buildMapSection(),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    if (selectedLatLng != null) {
+                      _getAddressFromCoordinates(selectedLatLng!);
+                    }
+                  },
+                  child: const Text('Confirm Location'),
+                ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 
@@ -845,61 +885,65 @@ String _formatBirthdate(String? birthdate) {
     );
   }
 
- Future<void> _useCurrentLocation() async {
-  try {
-    // Check location permission
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
+  Future<void> _useCurrentLocation() async {
+    try {
+      // Check location permission
+      LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
-        _handleGeolocationError();
-        return;
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          _handleGeolocationError();
+          return;
+        }
       }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        selectedLatLng = LatLng(position.latitude, position.longitude);
+        isSelectingLocation = true;
+      });
+
+      mapController.move(selectedLatLng!, 15.0);
+      await _getAddressFromCoordinates(selectedLatLng!);
+    } catch (e) {
+      print('Error getting location: $e');
+      _handleGeolocationError();
     }
+  }
 
-    // Get current position
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high
-    );
-
+  void _handleGeolocationError() {
+    _showError('Could not get current location. Showing Naga City center.');
     setState(() {
-      selectedLatLng = LatLng(position.latitude, position.longitude);
+      selectedLatLng = const LatLng(13.6217, 123.1948);
       isSelectingLocation = true;
     });
-    
     mapController.move(selectedLatLng!, 15.0);
-    await _getAddressFromCoordinates(selectedLatLng!);
-    
-  } catch (e) {
-    print('Error getting location: $e');
-    _handleGeolocationError();
+    _setDefaultAddress(); // Add this
   }
-}
 
-void _handleGeolocationError() {
-  _showError('Could not get current location. Showing Naga City center.');
-  setState(() {
-    selectedLatLng = const LatLng(13.6217, 123.1948);
-    isSelectingLocation = true;
-  });
-  mapController.move(selectedLatLng!, 15.0);
-  _setDefaultAddress(); // Add this
-}
+  void _showError(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
 
-void _showError(String message) {
-  if (!mounted) return;
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text(message)),
-  );
-}
+  void _handleMapTap(TapPosition tapPosition, LatLng point) async {
+    if (!isSelectingLocation) return;
+    setState(() => selectedLatLng = point);
+    await _getAddressFromCoordinates(point);
+  }
 
-void _handleMapTap(TapPosition tapPosition, LatLng point) async {
-  if (!isSelectingLocation) return;
-  setState(() => selectedLatLng = point);
-  await _getAddressFromCoordinates(point);
-}
-
-  Widget _buildActionButton(BuildContext context, String text, String iconPath, VoidCallback? onTap) {
+  Widget _buildActionButton(
+    BuildContext context,
+    String text,
+    String iconPath,
+    VoidCallback? onTap,
+  ) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -912,12 +956,7 @@ void _handleMapTap(TapPosition tapPosition, LatLng point) async {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(
-              iconPath,
-              width: 20,
-              height: 20,
-              color: Colors.white,
-            ),
+            Image.asset(iconPath, width: 20, height: 20, color: Colors.white),
             const SizedBox(width: 8),
             Text(
               text,

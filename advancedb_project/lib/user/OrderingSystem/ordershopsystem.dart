@@ -3,7 +3,6 @@ import './laundryfulldetails.dart';
 import '../Transaction/1OrderConfirm.dart';
 import '../../loginscreen.dart';
 
-
 class Service {
   final String title;
   final String description;
@@ -73,152 +72,163 @@ class _OrderShopSystemState extends State<OrderShopSystem> {
   @override
   void initState() {
     super.initState();
-    selectedServices = widget.initialItems?.map(
-      (key, value) => MapEntry(key, value),
-    ) ?? {};
+    selectedServices =
+        widget.initialItems?.map((key, value) => MapEntry(key, value)) ?? {};
     _loadServices();
   }
 
   void _handleCheckboxChanged(Service service, bool value) {
-  // Check if user is guest
-  if (widget.userId == -1) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const UnifiedLoginScreen(),
-      ),
-    );
-    return;
-  }
-
-  setState(() {
-    service.isChecked = value;
-    service.isSelected = value;
-    if (value) {
-      selectedServices[service.title] = 1;
-      service.quantity = 1;
-      if (service.kiloAmount <= 0) {
-        service.kiloAmount = 1.0;
-      }
-    } else {
-      selectedServices.remove(service.title);
-      service.resetAddOns();
+    // Check if user is guest
+    if (widget.userId == -1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const UnifiedLoginScreen()),
+      );
+      return;
     }
-    _updateTotalPrice();
-  });
-}
-
-Future<void> _loadServices() async {
-  setState(() => _isLoading = true);
-  try {
-    // Extract data directly from shopData since it already contains the services
-    final List<dynamic> services = widget.shopData['services'] as List<dynamic>? ?? [];
-    final List<dynamic> clothingTypes = widget.shopData['clothing_types'] as List<dynamic>? ?? [];
-    final List<dynamic> householdItems = widget.shopData['household_items'] as List<dynamic>? ?? [];
 
     setState(() {
-      this.services = services.map((service) => Service(
-            title: service['service_name']?.toString() ?? '',
-            description: service['description']?.toString() ?? 'No description available',
-            price: double.tryParse(service['price']?.toString() ?? '0') ?? 0.0,
-            color: Color(int.tryParse(service['color'] ?? '0xFF1A0066') ?? 0xFF1A0066),
-            shopData: {
-              'id': widget.shopData['id'],
-              'clothing_types': clothingTypes,
-              'household_items': householdItems,
-            },
-          )).toList();
-
-      // Restore previous selections if any
-      if (widget.initialService != null) {
-        for (var service in this.services) {
-          if (service.title == widget.initialService!.title) {
-            service.isChecked = true;
-            service.isSelected = true;
-            service.quantity = widget.initialItems?[service.title] ?? 0;
-            selectedServices[service.title] = service.quantity;
-          }
+      service.isChecked = value;
+      service.isSelected = value;
+      if (value) {
+        selectedServices[service.title] = 1;
+        service.quantity = 1;
+        if (service.kiloAmount <= 0) {
+          service.kiloAmount = 1.0;
         }
+      } else {
+        selectedServices.remove(service.title);
+        service.resetAddOns();
       }
       _updateTotalPrice();
     });
-  } catch (e) {
-    print('Error loading services: $e');
-    if (mounted) {
+  }
+
+  Future<void> _loadServices() async {
+    setState(() => _isLoading = true);
+    try {
+      // Extract data directly from shopData since it already contains the services
+      final List<dynamic> services =
+          widget.shopData['services'] as List<dynamic>? ?? [];
+      final List<dynamic> clothingTypes =
+          widget.shopData['clothing_types'] as List<dynamic>? ?? [];
+      final List<dynamic> householdItems =
+          widget.shopData['household_items'] as List<dynamic>? ?? [];
+
+      setState(() {
+        this.services =
+            services
+                .map(
+                  (service) => Service(
+                    title: service['service_name']?.toString() ?? '',
+                    description:
+                        service['description']?.toString() ??
+                        'No description available',
+                    price:
+                        double.tryParse(service['price']?.toString() ?? '0') ??
+                        0.0,
+                    color: Color(
+                      int.tryParse(service['color'] ?? '0xFF1A0066') ??
+                          0xFF1A0066,
+                    ),
+                    shopData: {
+                      'id': widget.shopData['id'],
+                      'clothing_types': clothingTypes,
+                      'household_items': householdItems,
+                    },
+                  ),
+                )
+                .toList();
+
+        // Restore previous selections if any
+        if (widget.initialService != null) {
+          for (var service in this.services) {
+            if (service.title == widget.initialService!.title) {
+              service.isChecked = true;
+              service.isSelected = true;
+              service.quantity = widget.initialItems?[service.title] ?? 0;
+              selectedServices[service.title] = service.quantity;
+            }
+          }
+        }
+        _updateTotalPrice();
+      });
+    } catch (e) {
+      print('Error loading services: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading services: $e')));
+      }
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  void _updateTotalPrice() {
+    setState(() {
+      totalPrice = 0.0;
+      for (var service in services.where((s) => s.isChecked)) {
+        totalPrice += service.totalPrice;
+      }
+    });
+  }
+
+  void _onBasketTap() {
+    if (widget.userId == -1) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const UnifiedLoginScreen()),
+      );
+      return;
+    }
+
+    // Existing basket logic for logged in users
+    if (selectedServices.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading services: $e')),
+        const SnackBar(content: Text('Please select at least one service')),
+      );
+      return;
+    }
+
+    final selectedServicesList = services.where((s) => s.isChecked).toList();
+    if (selectedServicesList.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a service')));
+      return;
+    }
+
+    Service selectedService = selectedServicesList.first;
+    if (widget.initialService != null) {
+      Navigator.pop(context, {
+        'selectedItems': Map<String, int>.from(selectedServices),
+        'service': selectedService,
+        'subtotal': totalPrice,
+        'deliveryOption': deliveryOption,
+        'deliveryFee': deliveryOption == "Deliver" ? 30.0 : 0.0,
+      });
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder:
+              (context) => OrderConfirmScreen(
+                userId: widget.userId,
+                token: widget.token,
+                service: selectedService,
+                selectedItems: Map<String, int>.from(selectedServices),
+                deliveryOption: deliveryOption,
+                notes: '',
+                subtotal: totalPrice,
+                deliveryFee: deliveryOption == "Deliver" ? 30.0 : 0.0,
+                voucherDiscount: 0.0,
+                shopData: widget.shopData,
+              ),
+        ),
       );
     }
-  } finally {
-    setState(() => _isLoading = false);
   }
-}
-  
-void _updateTotalPrice() {
-  setState(() {
-    totalPrice = 0.0;
-    for (var service in services.where((s) => s.isChecked)) {
-      totalPrice += service.totalPrice; 
-    }
-  });
-}
-  
-void _onBasketTap() {
-  if (widget.userId == -1) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => const UnifiedLoginScreen(),
-      ),
-    );
-    return;
-  }
-
-  // Existing basket logic for logged in users
-  if (selectedServices.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please select at least one service'))
-    );
-    return;
-  }
-
-  final selectedServicesList = services.where((s) => s.isChecked).toList();
-  if (selectedServicesList.isEmpty) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Please select a service'))
-    );
-    return;
-  }
-
-  Service selectedService = selectedServicesList.first;
-  if (widget.initialService != null) {
-    Navigator.pop(context, {
-      'selectedItems': Map<String, int>.from(selectedServices),
-      'service': selectedService,
-      'subtotal': totalPrice,
-      'deliveryOption': deliveryOption,
-      'deliveryFee': deliveryOption == "Deliver" ? 30.0 : 0.0
-    });
-  } else {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => OrderConfirmScreen(
-          userId: widget.userId,
-          token: widget.token,
-          service: selectedService,
-          selectedItems: Map<String, int>.from(selectedServices),
-          deliveryOption: deliveryOption,
-          notes: '',
-          subtotal: totalPrice,
-          deliveryFee: deliveryOption == "Deliver" ? 30.0 : 0.0,
-          voucherDiscount: 0.0,
-          shopData: widget.shopData,
-        ),
-      ),
-    );
-  }
-}
 
   void _showDeliveryOptions(BuildContext context) {
     showModalBottomSheet(
@@ -229,9 +239,7 @@ void _onBasketTap() {
         return Container(
           decoration: const BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.vertical(
-              top: Radius.circular(20),
-            ),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -263,10 +271,7 @@ void _onBasketTap() {
                 },
               ),
               ListTile(
-                leading: const Icon(
-                  Icons.store,
-                  color: Color(0xFF1A0066),
-                ),
+                leading: const Icon(Icons.store, color: Color(0xFF1A0066)),
                 title: const Text(
                   'Pickup',
                   style: TextStyle(
@@ -287,256 +292,275 @@ void _onBasketTap() {
     );
   }
 
-
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: Colors.grey[100],
-    appBar: PreferredSize(
-      preferredSize: const Size.fromHeight(70),
-      child: Container(
-        padding: const EdgeInsets.only(top: 20),
-        decoration: const BoxDecoration(
-          color: Color(0xFFE6E6FA), // Lavender background
-        ),
-        child: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          leading: Padding(
-            padding: const EdgeInsets.only(left: 16.0),
-            child: Container(
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: Color(0xFF1A0066),
-              ),
-              child: IconButton(
-                icon: const Icon(
-                  Icons.arrow_back,
-                  color: Colors.white,
-                  size: 24,
-                ),
-                onPressed: () => Navigator.pop(context),
-              ),
-            ),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[100],
+      appBar: PreferredSize(
+        preferredSize: const Size.fromHeight(70),
+        child: Container(
+          padding: const EdgeInsets.only(top: 20),
+          decoration: const BoxDecoration(
+            color: Color(0xFFE6E6FA), // Lavender background
           ),
-          actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0, top: 8.0),
-              child: Center(
-                child: GestureDetector(
-                  onTap: () => _showDeliveryOptions(context),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: const Color(0xFF1A0066),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Text(
-                          deliveryOption,
-                          style: const TextStyle(
-                            color: Color(0xFF1A0066),
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Image.asset(
-                          'assets/downarrow.png',
-                          height: 16,
-                          color: const Color(0xFF1A0066),
-                        ),
-                      ],
-                    ),
+          child: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: Padding(
+              padding: const EdgeInsets.only(left: 16.0),
+              child: Container(
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFF1A0066),
+                ),
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: Colors.white,
+                    size: 24,
                   ),
+                  onPressed: () => Navigator.pop(context),
                 ),
               ),
             ),
-          ],
-        ),
-      ),
-    ),
-    body: Column(
-      children: [
-        Container(
-          color: const Color(0xFFE6E6FA),
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => LaundryFullDetails(
-                    userId: widget.userId,
-                    token: widget.token,
-                    shopData: widget.shopData,
-                  ),
-                ),
-              );
-            },
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    spreadRadius: 1,
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 60,
-                      height: 60,
+            actions: [
+              Padding(
+                padding: const EdgeInsets.only(right: 16.0, top: 8.0),
+                child: Center(
+                  child: GestureDetector(
+                    onTap: () => _showDeliveryOptions(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
-                        image: DecorationImage(
-                          image: widget.shopData['image'] != null 
-                            ? NetworkImage(widget.shopData['image'])
-                            : const AssetImage('assets/lavanderaakoprfile.png') as ImageProvider,
-                          fit: BoxFit.cover,
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: const Color(0xFF1A0066),
+                          width: 1,
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Row(
                         children: [
                           Text(
-                            widget.shopData['shop_name'] ?? 'Shop Name',
+                            deliveryOption,
                             style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
                               color: Color(0xFF1A0066),
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "ID: ${widget.shopData['id'] ?? 'N/A'}",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Image.asset('assets/bluecircle.png', height: 16),
-                              const SizedBox(width: 4),
-                              Expanded(
-                                child: Text(
-                                  "${widget.shopData['zone'] ?? ''} ${widget.shopData['street'] ?? ''}, ${widget.shopData['barangay'] ?? ''}, ${widget.shopData['building'] ?? ''}",
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    color: Colors.grey[600],
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "Business Hours: ${widget.shopData['opening_time'] ?? '8:00am'} - ${widget.shopData['closing_time'] ?? '5:00pm'}",
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Colors.grey[600],
-                            ),
+                          const SizedBox(width: 4),
+                          Image.asset(
+                            'assets/downarrow.png',
+                            height: 16,
+                            color: const Color(0xFF1A0066),
                           ),
                         ],
                       ),
                     ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      body: Column(
+        children: [
+          Container(
+            color: const Color(0xFFE6E6FA),
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            child: GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder:
+                        (context) => LaundryFullDetails(
+                          userId: widget.userId,
+                          token: widget.token,
+                          shopData: widget.shopData,
+                        ),
+                  ),
+                );
+              },
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.05),
+                      spreadRadius: 1,
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
                   ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          image: DecorationImage(
+                            image:
+                                widget.shopData['image'] != null
+                                    ? NetworkImage(widget.shopData['image'])
+                                    : const AssetImage(
+                                          'assets/lavanderaakoprfile.png',
+                                        )
+                                        as ImageProvider,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.shopData['shop_name'] ?? 'Shop Name',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Color(0xFF1A0066),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "ID: ${widget.shopData['id'] ?? 'N/A'}",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Image.asset(
+                                  'assets/bluecircle.png',
+                                  height: 16,
+                                ),
+                                const SizedBox(width: 4),
+                                Expanded(
+                                  child: Text(
+                                    "${widget.shopData['zone'] ?? ''} ${widget.shopData['street'] ?? ''}, ${widget.shopData['barangay'] ?? ''}, ${widget.shopData['building'] ?? ''}",
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Colors.grey[600],
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              "Business Hours: ${widget.shopData['opening_time'] ?? '8:00am'} - ${widget.shopData['closing_time'] ?? '5:00pm'}",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
-        Expanded(
-          child: _isLoading
-              ? const Center(
-                  child: CircularProgressIndicator(
-                    color: Color(0xFF1A0066),
-                  ),
-                )
-              : ListView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  children: services.map((service) => ServiceCard(
-                    service: service,
-                    onCheckboxChanged: (value) => _handleCheckboxChanged(service, value),
-                    onTap: () => _handleCheckboxChanged(service, !service.isChecked),
-                  )).toList(),
-                ),
-        ),
-      ],
-    ),
-    bottomNavigationBar: GestureDetector(
-      onTap: _onBasketTap,
-      child: Container(
-        decoration: const BoxDecoration(
-          color: Color(0xFF1A0066),
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(20),
+          Expanded(
+            child:
+                _isLoading
+                    ? const Center(
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF1A0066),
+                      ),
+                    )
+                    : ListView(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      children:
+                          services
+                              .map(
+                                (service) => ServiceCard(
+                                  service: service,
+                                  onCheckboxChanged:
+                                      (value) => _handleCheckboxChanged(
+                                        service,
+                                        value,
+                                      ),
+                                  onTap:
+                                      () => _handleCheckboxChanged(
+                                        service,
+                                        !service.isChecked,
+                                      ),
+                                ),
+                              )
+                              .toList(),
+                    ),
           ),
-        ),
-        child: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: [
-                    Image.asset('assets/basket.png', height: 24),
-                    const SizedBox(width: 12),
-                    const Text(
-                      "Basket",
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+        ],
+      ),
+      bottomNavigationBar: GestureDetector(
+        onTap: _onBasketTap,
+        child: Container(
+          decoration: const BoxDecoration(
+            color: Color(0xFF1A0066),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Image.asset('assets/basket.png', height: 24),
+                      const SizedBox(width: 12),
+                      const Text(
+                        "Basket",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Image.asset('assets/peso.png', height: 20),
-                    Text(
-                      " ${totalPrice.toStringAsFixed(2)}",
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      Image.asset('assets/peso.png', height: 20),
+                      Text(
+                        " ${totalPrice.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    ),
-  );
- }
+    );
+  }
 }
 
 // Replace the existing ServiceCard class with this updated version

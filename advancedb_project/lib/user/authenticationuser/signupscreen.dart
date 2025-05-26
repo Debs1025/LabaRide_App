@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'userdetails.dart';
@@ -30,13 +31,13 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
-    
+
     setState(() => _isLoading = true);
-    
+
     try {
       // First create user in Supabase auth
       final response = await http.post(
-        Uri.parse('${SupabaseConfig.apiUrl}/signup'),  // Changed to use apiUrl
+        Uri.parse('${SupabaseConfig.apiUrlAuth}/signup'),
         headers: {
           'Content-Type': 'application/json',
           'apikey': SupabaseConfig.anonKey,
@@ -47,38 +48,52 @@ class _SignupScreenState extends State<SignupScreen> {
           'password': _passwordController.text,
         }),
       );
-      
+
       print('Debug - Signup Response: ${response.body}');
-      
+
       final data = jsonDecode(response.body);
-      
-      if (response.statusCode == 201) { // Changed to check for 201 specifically
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final userId =
+            data['id'] ?? data['user']?['id']; // handle both structures
+        // final userId = AuthResponse().user?.id;
+        final token = Supabase.instance.client.auth.currentSession?.accessToken;
         if (!mounted) return;
-        
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => UserDetailsScreen(
-              userId: data['user_id'],  // Changed from data['user']['id']
-              token: data['token'],     // Changed from data['access_token']
-            ),
+            builder:
+                (context) => UserDetailsScreen(
+                  userId: userId ?? '',
+                  token: token ?? '',
+                  name: _nameController.text.trim(),
+                  password: _passwordController.text,
+                  email:
+                      _emailController.text.trim(), // may be null, that’s okay
+                ),
           ),
         );
       } else {
-        throw Exception(data['message'] ?? data['error'] ?? 'Registration failed');
+        throw Exception(
+          data['msg'] ??
+              data['message'] ??
+              data['error'] ??
+              'Registration failed',
+        );
       }
     } catch (e) {
       print('Debug - Registration error: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(e.toString())));
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
       }
     }
-}
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -153,8 +168,9 @@ class _SignupScreenState extends State<SignupScreen> {
                           if (value == null || value.isEmpty) {
                             return 'Please enter your email';
                           }
-                          if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                              .hasMatch(value)) {
+                          if (!RegExp(
+                            r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                          ).hasMatch(value)) {
                             return 'Please enter a valid email';
                           }
                           return null;
@@ -255,14 +271,13 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             suffixIcon: IconButton(
               icon: Icon(
-                _isPasswordVisible
-                    ? Icons.visibility
-                    : Icons.visibility_off,
+                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
                 color: Colors.grey[400],
                 size: 20,
               ),
-              onPressed: () => setState(() =>
-                  _isPasswordVisible = !_isPasswordVisible),
+              onPressed:
+                  () =>
+                      setState(() => _isPasswordVisible = !_isPasswordVisible),
             ),
           ),
         ),
@@ -270,7 +285,7 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-   Widget _buildSignupButton() {
+  Widget _buildSignupButton() {
     return SizedBox(
       width: double.infinity,
       height: 48,
@@ -283,17 +298,18 @@ class _SignupScreenState extends State<SignupScreen> {
           ),
           elevation: 0,
         ),
-        child: _isLoading
-            ? const CircularProgressIndicator(color: Colors.white)
-            : const Text(
-                'Next',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Inter',
+        child:
+            _isLoading
+                ? const CircularProgressIndicator(color: Colors.white)
+                : const Text(
+                  'Next',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Inter',
+                  ),
                 ),
-              ),
       ),
     );
   }

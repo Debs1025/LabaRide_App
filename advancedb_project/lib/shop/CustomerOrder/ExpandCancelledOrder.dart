@@ -47,16 +47,18 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
   void _filterOrders() {
     final query = _searchController.text.toLowerCase();
     setState(() {
-      _filteredOrders = _cancelledOrders.where((order) {
-        final orderId = order['id']?.toString().toLowerCase() ?? '';
-        final userName = order['user_name']?.toString().toLowerCase() ?? '';
-        final service = order['service_name']?.toString().toLowerCase() ?? '';
-        final address = order['address']?.toString().toLowerCase() ?? '';
-        return orderId.contains(query) ||
-            userName.contains(query) ||
-            service.contains(query) ||
-            address.contains(query);
-      }).toList();
+      _filteredOrders =
+          _cancelledOrders.where((order) {
+            final orderId = order['id']?.toString().toLowerCase() ?? '';
+            final userName = order['user_name']?.toString().toLowerCase() ?? '';
+            final service =
+                order['service_name']?.toString().toLowerCase() ?? '';
+            final address = order['address']?.toString().toLowerCase() ?? '';
+            return orderId.contains(query) ||
+                userName.contains(query) ||
+                service.contains(query) ||
+                address.contains(query);
+          }).toList();
     });
   }
 
@@ -68,7 +70,9 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
 
     try {
       final response = await http.get(
-        Uri.parse('${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}?status=cancelled'),
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}?status=cancelled',
+        ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -78,15 +82,20 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final transactionsRaw = data['data'] ?? data['transactions'] ?? [];
-        final allOrders = (transactionsRaw as List)
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
+        final allOrders =
+            (transactionsRaw as List)
+                .map((e) => Map<String, dynamic>.from(e))
+                .toList();
         setState(() {
-          _cancelledOrders = allOrders
-              .where((order) =>
-                  order['status']?.toString().toLowerCase() == 'cancelled' ||
-                  order['status']?.toString().toLowerCase() == 'declined')
-              .toList();
+          _cancelledOrders =
+              allOrders
+                  .where(
+                    (order) =>
+                        order['status']?.toString().toLowerCase() ==
+                            'cancelled' ||
+                        order['status']?.toString().toLowerCase() == 'declined',
+                  )
+                  .toList();
           _filteredOrders = List.from(_cancelledOrders);
           _isLoading = false;
         });
@@ -128,11 +137,12 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => CustomerOrders(
-                  userId: widget.userId,
-                  token: widget.token,
-                  shopData: widget.shopData,
-                ),
+                builder:
+                    (context) => CustomerOrders(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                    ),
               ),
             );
           },
@@ -203,12 +213,13 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CancelDetails(
-              orderDetails: order,
-              userId: widget.userId,
-              token: widget.token,
-              shopData: widget.shopData,
-            ),
+            builder:
+                (context) => CancelDetails(
+                  orderDetails: order,
+                  userId: widget.userId,
+                  token: widget.token,
+                  shopData: widget.shopData,
+                ),
           ),
         );
       },
@@ -261,7 +272,9 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
               _buildOrderField('Date', _formatDate(order['created_at'])),
               _buildOrderField(
                 'Reason',
-                order['cancel_reason'] ?? order['notes'] ?? 'No reason provided',
+                order['cancel_reason'] ??
+                    order['notes'] ??
+                    'No reason provided',
               ),
             ],
           ),
@@ -271,28 +284,28 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
   }
 
   Widget _buildOrderField(String label, dynamic value) {
-  return Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
-      children: [
-        SizedBox(
-          width: 80,
-          child: Text(
-            label,
-            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+            ),
           ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Text(
-            value != null ? value.toString() : '',
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              value != null ? value.toString() : '',
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+            ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -307,32 +320,34 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
               _buildHeader(),
               _buildSearchBar(),
               Expanded(
-                child: _isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(color: Colors.white),
-                      )
-                    : _error.isNotEmpty
+                child:
+                    _isLoading
+                        ? const Center(
+                          child: CircularProgressIndicator(color: Colors.white),
+                        )
+                        : _error.isNotEmpty
                         ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  _error,
-                                  style: const TextStyle(color: Colors.white),
-                                  textAlign: TextAlign.center,
-                                ),
-                                const SizedBox(height: 16),
-                                ElevatedButton(
-                                  onPressed: _fetchCancelledOrders,
-                                  child: const Text('Retry'),
-                                ),
-                              ],
-                            ),
-                          )
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _error,
+                                style: const TextStyle(color: Colors.white),
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              ElevatedButton(
+                                onPressed: _fetchCancelledOrders,
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        )
                         : RefreshIndicator(
-                            onRefresh: _fetchCancelledOrders,
-                            child: _filteredOrders.isEmpty
-                                ? ListView(
+                          onRefresh: _fetchCancelledOrders,
+                          child:
+                              _filteredOrders.isEmpty
+                                  ? ListView(
                                     children: const [
                                       Center(
                                         child: Padding(
@@ -348,12 +363,14 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
                                       ),
                                     ],
                                   )
-                                : ListView.builder(
+                                  : ListView.builder(
                                     itemCount: _filteredOrders.length,
-                                    itemBuilder: (context, index) =>
-                                        _buildOrderCard(_filteredOrders[index]),
+                                    itemBuilder:
+                                        (context, index) => _buildOrderCard(
+                                          _filteredOrders[index],
+                                        ),
                                   ),
-                          ),
+                        ),
               ),
             ],
           ),
@@ -374,11 +391,12 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => DashboardScreen(
-                  userId: widget.userId,
-                  token: widget.token,
-                  shopData: widget.shopData,
-                ),
+                builder:
+                    (context) => DashboardScreen(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                    ),
               ),
             );
             break;
@@ -386,11 +404,12 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => TransactionsScreen(
-                  userId: widget.userId,
-                  token: widget.token,
-                  shopData: widget.shopData,
-                ),
+                builder:
+                    (context) => TransactionsScreen(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                    ),
               ),
             );
             break;
@@ -398,12 +417,13 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => ProfileScreenAdmin(
-                  userId: widget.userId,
-                  token: widget.token,
-                  shopData: widget.shopData,
-                  onSwitchToUser: () => Navigator.pop(context),
-                ),
+                builder:
+                    (context) => ProfileScreenAdmin(
+                      userId: widget.userId,
+                      token: widget.token,
+                      shopData: widget.shopData,
+                      onSwitchToUser: () => Navigator.pop(context),
+                    ),
               ),
             );
             break;

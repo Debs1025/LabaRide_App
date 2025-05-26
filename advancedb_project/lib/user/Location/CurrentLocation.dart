@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../Transaction/2PlaceOrder.dart';
-import '../OrderingSystem/ordershopsystem.dart'; 
-
+import '../OrderingSystem/ordershopsystem.dart';
 
 class CurrentLocation extends StatelessWidget {
   final String address;
@@ -17,7 +16,6 @@ class CurrentLocation extends StatelessWidget {
     required this.service,
   });
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,10 +24,7 @@ class CurrentLocation extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back, 
-            color: Color(0xFF1A0066),
-          ),
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF1A0066)),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -45,10 +40,7 @@ class CurrentLocation extends StatelessWidget {
         children: [
           // Map Section
           Positioned.fill(
-            child: Image.asset(
-              'assets/mapa.png',
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/mapa.png', fit: BoxFit.cover),
           ),
 
           // Centered Map Marker
@@ -152,39 +144,40 @@ class CurrentLocation extends StatelessWidget {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => CheckoutScreen(
-                            userId: userId,
-                            token: token,
-                            service: service,
-                            selectedItems: {},
-                            deliveryOption: 'Delivery',
-                            notes: '',
-                            subtotal: service.totalPrice,
-                            deliveryFee: 30.0,
-                            shopData: service.shopData,
-                            voucherDiscount: 0.0,
-                          ),
+                          builder:
+                              (context) => CheckoutScreen(
+                                userId: userId,
+                                token: token,
+                                service: service,
+                                selectedItems: {},
+                                deliveryOption: 'Delivery',
+                                notes: '',
+                                subtotal: service.totalPrice,
+                                deliveryFee: 30.0,
+                                shopData: service.shopData,
+                                voucherDiscount: 0.0,
+                              ),
                         ),
                       );
                     },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A0066),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1A0066),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
                     ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Confirm Address',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    child: const Text(
+                      'Confirm Address',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                )
                 ],
               ),
             ),

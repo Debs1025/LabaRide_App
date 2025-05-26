@@ -10,11 +10,7 @@ class ActiveTransact extends StatefulWidget {
   final int userId;
   final String token;
 
-  const ActiveTransact({
-    super.key,
-    required this.userId,
-    required this.token,
-  });
+  const ActiveTransact({super.key, required this.userId, required this.token});
 
   @override
   State<ActiveTransact> createState() => _ActiveTransactState();
@@ -38,31 +34,32 @@ class _ActiveTransactState extends State<ActiveTransact> {
       SocketService.joinUserRoom(widget.userId.toString());
       SocketService.listenToStatusUpdates((data) {
         if (!mounted) return;
-        
+
         try {
           setState(() {
-            final index = _activeOrders.indexWhere((t) => 
-              t['id'].toString() == data['transaction_id'].toString());
-              
+            final index = _activeOrders.indexWhere(
+              (t) => t['id'].toString() == data['transaction_id'].toString(),
+            );
+
             if (index != -1) {
               _activeOrders[index]['status'] = data['status'];
               _activeOrders[index]['notes'] = data['notes'];
-              
+
               if (data['total_amount'] != null) {
                 _activeOrders[index]['total_amount'] = data['total_amount'];
               }
-              
+
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
-                    'Order ${data['transaction_id']} status updated to: ${data['status']}'
+                    'Order ${data['transaction_id']} status updated to: ${data['status']}',
                   ),
                   backgroundColor: const Color(0xFF1A0066),
                   duration: const Duration(seconds: 3),
                 ),
               );
-              
-              if (data['status'].toString().toLowerCase() == 'completed' || 
+
+              if (data['status'].toString().toLowerCase() == 'completed' ||
                   data['status'].toString().toLowerCase() == 'cancelled') {
                 _activeOrders.removeAt(index);
               }
@@ -87,45 +84,50 @@ class _ActiveTransactState extends State<ActiveTransact> {
     super.dispose();
   }
 
- Future<void> _fetchActiveOrders() async {
-  setState(() {
-    _isLoading = true;
-    _error = '';
-  });
+  Future<void> _fetchActiveOrders() async {
+    setState(() {
+      _isLoading = true;
+      _error = '';
+    });
 
-  try {
-    final response = await http.get(
-      Uri.parse('${SupabaseConfig.apiUrl}/user_transactions/${widget.userId}'),
-      headers: {
-        'Authorization': 'Bearer ${widget.token}',
-        'Content-Type': 'application/json',
-      },
-    );
+    try {
+      final response = await http.get(
+        Uri.parse(
+          '${SupabaseConfig.apiUrl}/user_transactions/${widget.userId}',
+        ),
+        headers: {
+          'Authorization': 'Bearer ${widget.token}',
+          'Content-Type': 'application/json',
+        },
+      );
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final allTransactions = List<Map<String, dynamic>>.from(data['data'] ?? []);
-      
-      // Filter active orders (status is 'Processing' or 'Pending')
-      final activeOrders = allTransactions.where((order) {
-        final status = order['status']?.toString().toLowerCase() ?? '';
-        return status == 'processing' || status == 'pending';
-      }).toList();
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final allTransactions = List<Map<String, dynamic>>.from(
+          data['data'] ?? [],
+        );
 
+        // Filter active orders (status is 'Processing' or 'Pending')
+        final activeOrders =
+            allTransactions.where((order) {
+              final status = order['status']?.toString().toLowerCase() ?? '';
+              return status == 'processing' || status == 'pending';
+            }).toList();
+
+        setState(() {
+          _activeOrders = activeOrders;
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load active orders');
+      }
+    } catch (e) {
       setState(() {
-        _activeOrders = activeOrders;
+        _error = e.toString();
         _isLoading = false;
       });
-    } else {
-      throw Exception('Failed to load active orders');
     }
-  } catch (e) {
-    setState(() {
-      _error = e.toString();
-      _isLoading = false;
-    });
   }
-}
 
   String _formatDateTime(String dateTime) {
     try {
@@ -172,9 +174,7 @@ class _ActiveTransactState extends State<ActiveTransact> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
               color: Colors.white,
-              border: Border(
-                bottom: BorderSide(color: Colors.grey[200]!),
-              ),
+              border: Border(bottom: BorderSide(color: Colors.grey[200]!)),
             ),
             child: Row(
               children: [
@@ -202,10 +202,11 @@ class _ActiveTransactState extends State<ActiveTransact> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => PastTransact(
-                          userId: widget.userId,
-                          token: widget.token,
-                        ),
+                        builder:
+                            (context) => PastTransact(
+                              userId: widget.userId,
+                              token: widget.token,
+                            ),
                       ),
                     );
                   },
@@ -234,57 +235,66 @@ class _ActiveTransactState extends State<ActiveTransact> {
 
           // Orders List
           Expanded(
-            child: _isLoading 
-                ? const Center(child: CircularProgressIndicator())
-                : _error.isNotEmpty
+            child:
+                _isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error.isNotEmpty
                     ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(_error),
-                            ElevatedButton(
-                              onPressed: _fetchActiveOrders,
-                              child: const Text('Retry'),
-                            ),
-                          ],
-                        ),
-                      )
-                    : _activeOrders.isEmpty
-                        ? Center(
-                            child: Text(
-                              'No active orders',
-                              style: TextStyle(
-                                color: Colors.grey[600],
-                                fontSize: 16,
-                              ),
-                            ),
-                          )
-                        : RefreshIndicator(
-                            onRefresh: _fetchActiveOrders,
-                            child: SingleChildScrollView(
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16.0),
-                                child: Column(
-                                  children: _activeOrders.map((order) {
-                                    return Padding(
-                                      padding: const EdgeInsets.only(bottom: 16.0),
-                                      child: _buildOrderCard(
-                                        date: _formatDateTime(order['created_at'] ?? ''),
-                                        orderId: '#${order['id'] ?? ''}',
-                                        location: order['shop_name'] ?? 'Unknown Location',
-                                        amount: '₱${order['total_amount'] ?? '0.00'}',
-                                        deliveryFee: '₱${order['delivery_fee'] ?? '0.00'}',
-                                        status: order['status'] ?? 'Processing',
-                                        service: order['service_name'] ?? 'Unknown Service',
-                                        orderDetails: order,
-                                      ),
-                                    );
-                                  }).toList(),
-                                ),
-                              ),
-                            ),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(_error),
+                          ElevatedButton(
+                            onPressed: _fetchActiveOrders,
+                            child: const Text('Retry'),
                           ),
+                        ],
+                      ),
+                    )
+                    : _activeOrders.isEmpty
+                    ? Center(
+                      child: Text(
+                        'No active orders',
+                        style: TextStyle(color: Colors.grey[600], fontSize: 16),
+                      ),
+                    )
+                    : RefreshIndicator(
+                      onRefresh: _fetchActiveOrders,
+                      child: SingleChildScrollView(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            children:
+                                _activeOrders.map((order) {
+                                  return Padding(
+                                    padding: const EdgeInsets.only(
+                                      bottom: 16.0,
+                                    ),
+                                    child: _buildOrderCard(
+                                      date: _formatDateTime(
+                                        order['created_at'] ?? '',
+                                      ),
+                                      orderId: '#${order['id'] ?? ''}',
+                                      location:
+                                          order['shop_name'] ??
+                                          'Unknown Location',
+                                      amount:
+                                          '₱${order['total_amount'] ?? '0.00'}',
+                                      deliveryFee:
+                                          '₱${order['delivery_fee'] ?? '0.00'}',
+                                      status: order['status'] ?? 'Processing',
+                                      service:
+                                          order['service_name'] ??
+                                          'Unknown Service',
+                                      orderDetails: order,
+                                    ),
+                                  );
+                                }).toList(),
+                          ),
+                        ),
+                      ),
+                    ),
           ),
         ],
       ),
@@ -321,10 +331,7 @@ class _ActiveTransactState extends State<ActiveTransact> {
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
             child: Text(
               date,
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 12,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
             ),
           ),
           Padding(
@@ -348,17 +355,19 @@ class _ActiveTransactState extends State<ActiveTransact> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: status.toLowerCase() == 'processing'
-                            ? Colors.orange[50]
-                            : Colors.blue[50],
+                        color:
+                            status.toLowerCase() == 'processing'
+                                ? Colors.orange[50]
+                                : Colors.blue[50],
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         status,
                         style: TextStyle(
-                          color: status.toLowerCase() == 'processing'
-                              ? Colors.orange
-                              : Colors.blue,
+                          color:
+                              status.toLowerCase() == 'processing'
+                                  ? Colors.orange
+                                  : Colors.blue,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -369,18 +378,12 @@ class _ActiveTransactState extends State<ActiveTransact> {
                 const SizedBox(height: 8),
                 Text(
                   location,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   'Service: $service',
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 12,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -434,18 +437,19 @@ class _ActiveTransactState extends State<ActiveTransact> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => DetailTransact(
-                              orderDetails: {
-                                'date': date,
-                                'orderId': orderId,
-                                'location': location,
-                                'serviceAmount': amount,
-                                'deliveryFee': deliveryFee,
-                                'status': status,
-                                'service_name': service,
-                                ...orderDetails,
-                              },
-                            ),
+                            builder:
+                                (context) => DetailTransact(
+                                  orderDetails: {
+                                    'date': date,
+                                    'orderId': orderId,
+                                    'location': location,
+                                    'serviceAmount': amount,
+                                    'deliveryFee': deliveryFee,
+                                    'status': status,
+                                    'service_name': service,
+                                    ...orderDetails,
+                                  },
+                                ),
                           ),
                         );
                       },

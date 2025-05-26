@@ -3,10 +3,7 @@ import 'package:flutter/material.dart';
 class DetailTransact extends StatelessWidget {
   final Map<String, dynamic> orderDetails;
 
-  const DetailTransact({
-    super.key,
-    required this.orderDetails,
-  });
+  const DetailTransact({super.key, required this.orderDetails});
 
   @override
   Widget build(BuildContext context) {
@@ -135,7 +132,8 @@ class DetailTransact extends StatelessWidget {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    orderDetails['user_name'] ?? 'Customer Name',
+                                    orderDetails['user_name'] ??
+                                        'Customer Name',
                                     style: const TextStyle(fontSize: 14),
                                   ),
                                   Text(
@@ -217,12 +215,12 @@ class DetailTransact extends StatelessWidget {
                       children: [
                         _buildSummaryRow(
                           'Subtotal',
-                          '₱${orderDetails['subtotal']?.toString() ?? '0.00'}'
+                          '₱${orderDetails['subtotal']?.toString() ?? '0.00'}',
                         ),
                         const SizedBox(height: 8),
                         _buildSummaryRow(
                           'Delivery Fee',
-                          '₱${orderDetails['delivery_fee']?.toString() ?? '0.00'}'
+                          '₱${orderDetails['delivery_fee']?.toString() ?? '0.00'}',
                         ),
                         if (orderDetails['voucher_discount'] != null &&
                             orderDetails['voucher_discount'] > 0) ...[
@@ -250,17 +248,17 @@ class DetailTransact extends StatelessWidget {
                       children: [
                         _buildSummaryRow(
                           'Order ID:',
-                          '#${orderDetails['id']?.toString() ?? ''}'
+                          '#${orderDetails['id']?.toString() ?? ''}',
                         ),
                         const SizedBox(height: 8),
                         _buildSummaryRow(
                           'Payment Method',
-                          orderDetails['payment_method'] ?? 'Cash on Delivery'
+                          orderDetails['payment_method'] ?? 'Cash on Delivery',
                         ),
                       ],
                     ),
                   ),
-                  
+
                   const SizedBox(height: 80),
                 ],
               ),
@@ -301,10 +299,7 @@ class DetailTransact extends StatelessWidget {
                   ),
                   child: const Text(
                     'Order Again',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),
@@ -329,40 +324,52 @@ class DetailTransact extends StatelessWidget {
   }
 
   String _formatAddress(Map<String, dynamic> details) {
-  try {
-    final List<String> addressParts = [];
-    
-    // Check for address fields and add them if they exist
-    if (details['address'] != null && details['address'].toString().isNotEmpty) {
-      addressParts.add(details['address'].toString());
-    }
-    
-    // Only add specific parts if they exist and aren't empty
-    final locationDetails = details['location'] ?? {};
-    if (locationDetails is Map) {
-      if (locationDetails['zone'] != null && locationDetails['zone'].toString().isNotEmpty) {
-        addressParts.add('Zone ${locationDetails['zone']}');
-      }
-      if (locationDetails['street'] != null && locationDetails['street'].toString().isNotEmpty) {
-        addressParts.add(locationDetails['street'].toString());
-      }
-      if (locationDetails['barangay'] != null && locationDetails['barangay'].toString().isNotEmpty) {
-        addressParts.add(locationDetails['barangay'].toString());
-      }
-      if (locationDetails['building'] != null && locationDetails['building'].toString().isNotEmpty) {
-        addressParts.add(locationDetails['building'].toString());
-      }
-    }
+    try {
+      final List<String> addressParts = [];
 
-    // If no address parts are available, return a default message
-    return addressParts.isEmpty ? 'Address not available' : addressParts.join(', ');
-  } catch (e) {
-    print('Error formatting address: $e');
-    return 'Address not available';
+      // Check for address fields and add them if they exist
+      if (details['address'] != null &&
+          details['address'].toString().isNotEmpty) {
+        addressParts.add(details['address'].toString());
+      }
+
+      // Only add specific parts if they exist and aren't empty
+      final locationDetails = details['location'] ?? {};
+      if (locationDetails is Map) {
+        if (locationDetails['zone'] != null &&
+            locationDetails['zone'].toString().isNotEmpty) {
+          addressParts.add('Zone ${locationDetails['zone']}');
+        }
+        if (locationDetails['street'] != null &&
+            locationDetails['street'].toString().isNotEmpty) {
+          addressParts.add(locationDetails['street'].toString());
+        }
+        if (locationDetails['barangay'] != null &&
+            locationDetails['barangay'].toString().isNotEmpty) {
+          addressParts.add(locationDetails['barangay'].toString());
+        }
+        if (locationDetails['building'] != null &&
+            locationDetails['building'].toString().isNotEmpty) {
+          addressParts.add(locationDetails['building'].toString());
+        }
+      }
+
+      // If no address parts are available, return a default message
+      return addressParts.isEmpty
+          ? 'Address not available'
+          : addressParts.join(', ');
+    } catch (e) {
+      print('Error formatting address: $e');
+      return 'Address not available';
+    }
   }
-}
 
-  Widget _buildSummaryRow(String label, String value, {bool isTotal = false, bool isDiscount = false}) {
+  Widget _buildSummaryRow(
+    String label,
+    String value, {
+    bool isTotal = false,
+    bool isDiscount = false,
+  }) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -377,7 +384,10 @@ class DetailTransact extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            color: isDiscount ? Colors.green : (isTotal ? Colors.black : Colors.grey[600]),
+            color:
+                isDiscount
+                    ? Colors.green
+                    : (isTotal ? Colors.black : Colors.grey[600]),
             fontSize: isTotal ? 16 : 14,
             fontWeight: isTotal ? FontWeight.w600 : FontWeight.normal,
           ),
