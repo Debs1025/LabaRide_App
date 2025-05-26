@@ -7,6 +7,7 @@ import '../ShopDashboard/homescreen.dart';
 import '../Services/ServiceScreen1.dart';
 import 'CustomerOrder.dart';
 import 'CompleteDetails.dart';
+import '../../supabase_config.dart';
 
 class ExpandCompleteOrder extends StatefulWidget {
   final int userId;
@@ -70,9 +71,7 @@ class _ExpandCompleteOrderState extends State<ExpandCompleteOrder> {
 
     try {
       final response = await http.get(
-        Uri.parse(
-          'http://localhost:5000/shop_transactions/${widget.shopData['id']}',
-        ),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

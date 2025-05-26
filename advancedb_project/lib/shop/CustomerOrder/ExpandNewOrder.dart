@@ -7,7 +7,7 @@ import '../ShopDashboard/homescreen.dart';
 import '../Services/ServiceScreen1.dart';
 import 'CustomerOrder.dart';
 import 'AcceptingOrder.dart';
-
+import '../../supabase_config.dart';
 
 
 class ExpandNewOrder extends StatefulWidget {
@@ -78,16 +78,14 @@ class _ExpandNewOrderState extends State<ExpandNewOrder> {
       _error = '';
     });
 
-    try {
-      final response = await http.get(
-        Uri.parse(
-          'http://localhost:5000/shop_transactions/${widget.shopData['id']}',
-        ),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+   try {
+    final response = await http.get(
+      Uri.parse('${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
@@ -122,7 +120,7 @@ class _ExpandNewOrderState extends State<ExpandNewOrder> {
 Future<void> _declineOrder(int orderId) async {
   try {
     final response = await http.put(
-      Uri.parse('http://localhost:5000/api/orders/$orderId/decline'),
+      Uri.parse('${SupabaseConfig.apiUrl}/api/orders/$orderId/decline'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',

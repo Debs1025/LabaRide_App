@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'OrderDeclined.dart';
+import '../../../supabase_config.dart';
 
 class DeclineOrder4 extends StatefulWidget {
   final String reason;
@@ -49,7 +50,7 @@ class _DeclineOrder4State extends State<DeclineOrder4> {
 
       // Make API call to decline order
       final response = await http.put(
-        Uri.parse('http://localhost:5000/update_transaction_status/${widget.orderDetails['id']}'),
+        Uri.parse('${SupabaseConfig.apiUrl}/update_transaction_status/${widget.orderDetails['id']}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

@@ -1,7 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'supabase_config.dart';
 
 class SupabaseService {
   static final supabase = Supabase.instance.client;
+  static final String apiUrl = SupabaseConfig.apiUrl;
 
   // User methods
   static Future<bool> checkEmailExists(String email) async {

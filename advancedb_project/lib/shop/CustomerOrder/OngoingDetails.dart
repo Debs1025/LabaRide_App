@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../../supabase_config.dart';
 
 class OngoingDetails extends StatefulWidget {
   final Map<String, dynamic> orderDetails;
@@ -49,7 +50,7 @@ class _OngoingDetailsState extends State<OngoingDetails> {
 
     try {
       final response = await http.put(
-        Uri.parse('http://localhost:5000/api/orders/${widget.orderDetails['id']}/status'),
+        Uri.parse('${SupabaseConfig.apiUrl}/api/orders/${widget.orderDetails['id']}/status'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

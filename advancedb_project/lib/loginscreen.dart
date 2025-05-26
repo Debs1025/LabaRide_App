@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'user/authenticationuser/signupscreen.dart';
 import 'user/Dashboard/laundry_dashboard_screen.dart';
 import 'user/authenticationuser/forgot1_user.dart';
+import 'supabase_config.dart';
 
 class UnifiedLoginScreen extends StatefulWidget {
   const UnifiedLoginScreen({super.key});
@@ -38,13 +39,13 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:5000/login'),     
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'email': _emailController.text.trim(),
-          'password': _passwordController.text.trim(),
-        }),
-      );
+      Uri.parse('${SupabaseConfig.apiUrl}/login'),  // Changed from localhost
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'email': _emailController.text.trim(),
+        'password': _passwordController.text.trim(),
+      }), 
+    );
 
       final data = jsonDecode(response.body);
 

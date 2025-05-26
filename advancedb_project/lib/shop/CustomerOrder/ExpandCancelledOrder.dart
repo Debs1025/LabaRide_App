@@ -6,6 +6,7 @@ import '../ProfileShop/ShopProfile.dart';
 import '../ShopDashboard/homescreen.dart';
 import 'CustomerOrder.dart';
 import 'CancelDetails.dart';
+import '../../supabase_config.dart';
 
 class ExpandCancelledOrder extends StatefulWidget {
   final int userId;
@@ -67,9 +68,7 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
 
     try {
       final response = await http.get(
-        Uri.parse(
-          'http://localhost:5000/shop_transactions/${widget.shopData['id']}?status=cancelled',
-        ),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}?status=cancelled'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

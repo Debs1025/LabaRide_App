@@ -10,6 +10,7 @@ import 'ExpandCancelledOrder.dart';
 import 'ExpandOngoingOrder.dart';
 import 'ExpandCompleteOrder.dart';
 import '../../Sockets/socketService.dart';
+import '../../supabase_config.dart';
 
 class CustomerOrders extends StatefulWidget {
   final int userId;
@@ -104,7 +105,7 @@ class _CustomerOrdersState extends State<CustomerOrders> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/shop_transactions/$shopId'),
+        Uri.parse('${SupabaseConfig.apiUrl}/shop_transactions/${widget.shopData['id']}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

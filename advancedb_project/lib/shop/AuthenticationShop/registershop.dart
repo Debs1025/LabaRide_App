@@ -6,6 +6,7 @@ import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_ti
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../user/authenticationuser/signupcomplete.dart';
+import '../../supabase.dart';
 
 class RegisterShop extends StatefulWidget {
   final int userId;
@@ -348,72 +349,52 @@ class _RegisterShopState extends State<RegisterShop> {
     super.dispose();
   }
 
-  Future<void> _handleSubmit() async {
-    if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all required fields')),
-      );
-      return;
-    }
+Future<void> _handleSubmit() async {
+  if (!_formKey.currentState!.validate()) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Please fill in all required fields')),
+    );
+    return;
+  }
 
-    setState(() => _isLoading = true);
+  setState(() => _isLoading = true);
 
-    try {
-      print('Debug - Token being sent: ${widget.token}');
-      print('Debug - User ID: ${widget.userId}');
+  try {
+    // Use SupabaseService instead of direct http call
+    final shopData = {
+      'shop_name': _shopNameController.text.trim(),
+      'contact_number': _contactNumberController.text.trim(),
+      'zone': _zoneController.text.trim(),
+      'street': _streetController.text.trim(),
+      'barangay': _barangayController.text.trim(),
+      'building': _buildingController.text.trim(),
+      'opening_time': _openingTimeController.text.trim(),
+      'closing_time': _closingTimeController.text.trim(),
+      'latitude': selectedLatLng?.latitude,
+      'longitude': selectedLatLng?.longitude,
+      'user_id': widget.userId
+    };
 
-      final response = await http.post(
-        Uri.parse('http://localhost:5000/register_shop/${widget.userId}'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
-        body: jsonEncode({
-          'shop_name': _shopNameController.text.trim(),
-          'contact_number': _contactNumberController.text.trim(),
-          'zone': _zoneController.text.trim(),
-          'street': _streetController.text.trim(),
-          'barangay': _barangayController.text.trim(),
-          'building': _buildingController.text.trim(),
-          'opening_time': _openingTimeController.text.trim(),
-          'closing_time': _closingTimeController.text.trim(),
-          'latitude': selectedLatLng?.latitude,
-          'longitude': selectedLatLng?.longitude,
-        }),
-      );
+    await SupabaseService.createShop(shopData);
 
-      print('Debug - Response Status: ${response.statusCode}');
-      print('Debug - Response Body: ${response.body}');
-
-      final data = jsonDecode(response.body);
-
-      if (response.statusCode == 201) {
-        if (!mounted) return;
-        
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const SignUpCompleteScreen(),
-          ),
-        );
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Registration failed')),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    if (!mounted) return;
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const SignUpCompleteScreen(),
+      ),
+    );
+  } catch (e) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: $e')),
+    );
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
+}
 
   Widget _buildSectionTitle(String title) {
     return Padding(

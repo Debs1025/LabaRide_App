@@ -7,6 +7,7 @@ import '../ShopDashboard/homescreen.dart';
 import '../Services/ServiceScreen1.dart';
 import 'CustomerOrder.dart';
 import 'OngoingDetails.dart';
+import '../../supabase_config.dart';
 
 class ExpandOngoingOrder extends StatefulWidget {
   final int userId;
@@ -67,9 +68,7 @@ class _ExpandOngoingOrderState extends State<ExpandOngoingOrder> {
 
     try {
       final response = await http.get(
-        Uri.parse(
-          'http://localhost:5000/api/orders?shop_id=${widget.shopData['id']}&status=processing',
-        ),
+        Uri.parse('${SupabaseConfig.apiUrl}/api/orders?shop_id=${widget.shopData['id']}&status=processing'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
