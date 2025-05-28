@@ -49,7 +49,7 @@ class _DeclineOrder4State extends State<DeclineOrder4> {
 
       // Make API call to decline order
       final response = await http.put(
-        Uri.parse('http://localhost:5000/update_transaction_status/${widget.orderDetails['id']}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/update_transaction_status/${widget.orderDetails['id']}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

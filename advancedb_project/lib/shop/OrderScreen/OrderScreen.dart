@@ -32,79 +32,124 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   bool isLoading = true;
   String? error;
   bool isDeleting = false;
+  final ScrollController _scrollController = ScrollController();
+  List<Map<String, dynamic>> _cachedTransactions = [];
+  static const int _pageSize = 20;
 
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_scrollListener);
     fetchTransactions();
   }
 
-Future<void> fetchTransactions() async {
-  setState(() {
-    isLoading = true;
-    error = null;
-  });
+  @override
+  void dispose() {
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels == _scrollController.position.maxScrollExtent) {
+      _loadMoreTransactions();
+    }
+  }
+
+Future<void> _loadMoreTransactions() async {
+  if (isLoading) return;
+
+  final currentLength = transactionsData.length;
+  if (currentLength >= _cachedTransactions.length) return; // No more data to load
+
+  setState(() => isLoading = true);
 
   try {
-    // Changed null check to properly verify shop ID
-    if (widget.shopData.isEmpty || widget.shopData['id'] == null) {
-      throw Exception('No shop data available');
-    }
+    // Get next batch from cached data
+    final nextBatch = _cachedTransactions
+        .skip(currentLength)
+        .take(_pageSize)
+        .toList();
 
-    print('Fetching transactions for shop ID: ${widget.shopData['id']}');
-    final response = await http.get(
-      Uri.parse('http://localhost:5000/shop_transactions/${widget.shopData['id']}'),
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ${widget.token}',
-      },
-    );
-
-    print('Response status: ${response.statusCode}');
-    print('Response body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      
-      if (data is Map<String, dynamic> && data.containsKey('transactions')) {
-        final transactions = List<Map<String, dynamic>>.from(data['transactions']).map((transaction) {
-          return {
-            'id': transaction['id'],
-            'transaction_id': transaction['id'],
-            'user_name': transaction['customer_name'] ?? transaction['user_name'] ?? 'N/A',
-            'service_name': transaction['service_name']?.toString() ?? 'N/A',
-            'delivery_type': transaction['delivery_type']?.toString() ?? 'N/A',
-            'status': transaction['status']?.toString() ?? 'N/A',
-            'payment_method': transaction['payment_method']?.toString() ?? 'N/A',
-            'total_amount': transaction['total_amount']?.toString() ?? '0',
-            'created_at': transaction['created_at']?.toString() ?? 'N/A',
-          };
-        }).toList();
-
-        setState(() {
-          transactionsData = transactions;
-          isLoading = false;
-        });
-      } else {
-        setState(() {
-          transactionsData = [];
-          isLoading = false;
-        });
-      }
-    } else {
-      throw Exception('Failed to load transactions: ${response.statusCode}');
+    if (mounted) {
+      setState(() {
+        transactionsData.addAll(nextBatch);
+        isLoading = false;
+      });
     }
   } catch (e) {
-    print('Error in fetchTransactions: $e');
-    setState(() {
-      error = e.toString();
-      isLoading = false;
-    });
     if (mounted) {
-      _showErrorSnackBar('Error fetching transactions: $e');
+      setState(() {
+        error = e.toString();
+        isLoading = false;
+      });
+      _showErrorSnackBar('Error loading more transactions: $e');
     }
   }
 }
+
+Future<void> fetchTransactions() async {
+    if (isLoading) return;
+
+    setState(() {
+      isLoading = true;
+      error = null;
+    });
+
+    try {
+      if (widget.shopData.isEmpty || widget.shopData['id'] == null) {
+        throw Exception('No shop data available');
+      }
+
+      final response = await http.get(
+        Uri.parse('https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ${widget.token}',
+        },
+      ).timeout(const Duration(seconds: 15)); // Add timeout
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        
+        if (data is Map<String, dynamic> && data.containsKey('transactions')) {
+          final allTransactions = List<Map<String, dynamic>>.from(data['transactions']);
+          
+          // Store all transactions in cache
+          _cachedTransactions = allTransactions.map((transaction) {
+            return {
+              'id': transaction['id'],
+              'transaction_id': transaction['id'],
+              'user_name': transaction['customer_name'] ?? transaction['user_name'] ?? 'N/A',
+              'service_name': transaction['service_name']?.toString() ?? 'N/A',
+              'delivery_type': transaction['delivery_type']?.toString() ?? 'N/A',
+              'status': transaction['status']?.toString() ?? 'N/A',
+              'payment_method': transaction['payment_method']?.toString() ?? 'N/A',
+              'total_amount': transaction['total_amount']?.toString() ?? '0',
+              'created_at': transaction['created_at']?.toString() ?? 'N/A',
+            };
+          }).toList();
+
+          // Show initial page
+          setState(() {
+            transactionsData = _cachedTransactions.take(_pageSize).toList();
+            isLoading = false;
+          });
+        }
+      } else {
+        throw Exception('Failed to load transactions: ${response.statusCode}');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          error = e.toString();
+          isLoading = false;
+        });
+        _showErrorSnackBar('Error fetching transactions: $e');
+      }
+    }
+  }
+
 
   void _showErrorSnackBar(String message) {
     if (!mounted) return;
@@ -130,7 +175,7 @@ Future<void> fetchTransactions() async {
 
       for (final id in selectedTransactionIds) {
         final response = await http.delete(
-          Uri.parse('http://localhost:5000/transactions/$id'),
+          Uri.parse('https://backend-production-5974.up.railway.app/transactions/$id'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer ${widget.token}',

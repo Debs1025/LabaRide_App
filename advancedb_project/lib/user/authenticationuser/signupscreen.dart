@@ -36,7 +36,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:5000/signup'),
+        Uri.parse('https://backend-production-5974.up.railway.app/signup'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'name': _nameController.text.trim(),
@@ -45,7 +45,7 @@ class _SignupScreenState extends State<SignupScreen> {
         }),
       );
       
-      print('Debug - Signup Response: ${response.body}'); // Add debug print
+      print('Debug - Signup Response: ${response.body}'); 
 
       if (response.statusCode == 201) {
         final data = jsonDecode(response.body);

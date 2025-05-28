@@ -72,7 +72,7 @@ class _ShopMapState extends State<ShopMap> {
   Future<void> _fetchNearbyShops(Position position) async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/nearby_shops?lat=${position.latitude}&lng=${position.longitude}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/nearby_shops?lat=${position.latitude}&lng=${position.longitude}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

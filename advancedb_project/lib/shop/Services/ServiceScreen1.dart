@@ -64,7 +64,7 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
     setState(() => _isLoading = true);
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/shop/${widget.shopData['id']}/services'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/${widget.shopData['id']}/services'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -92,7 +92,7 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
  Future<void> _loadKiloPrices() async {
   try {
     final response = await http.get(
-      Uri.parse('http://localhost:5000/shop/${widget.shopData['id']}/kilo-prices'),
+      Uri.parse('https://backend-production-5974.up.railway.app/shop/${widget.shopData['id']}/kilo-prices'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -130,7 +130,7 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
   setState(() => _isLoading = true);
   try {
     final response = await http.post(
-      Uri.parse('http://localhost:5000/shop/${widget.shopData['id']}/service'),
+      Uri.parse('https://backend-production-5974.up.railway.app/shop/${widget.shopData['id']}/service'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
   Future<void> _updateService(int serviceId, String name, double price) async {
   try {
     final response = await http.put(
-      Uri.parse('http://localhost:5000/shop/service/$serviceId'),
+      Uri.parse('https://backend-production-5974.up.railway.app/shop/service/$serviceId'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -191,7 +191,7 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
   Future<void> _deleteService(int serviceId) async {
     try {
       final response = await http.delete(
-        Uri.parse('http://localhost:5000/shop/service/$serviceId'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/service/$serviceId'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
         },
@@ -243,7 +243,7 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
     }
 
     final response = await http.post(
-      Uri.parse('http://localhost:5000/shop/${widget.shopData['id']}/kilo-price'),
+      Uri.parse('https://backend-production-5974.up.railway.app/shop/${widget.shopData['id']}/kilo-price'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -297,7 +297,7 @@ class _ServiceScreen1State extends State<ServiceScreen1> {
   Future<void> _deleteKiloPrice(double minKilo, double maxKilo) async {
     try {
       final response = await http.delete(
-        Uri.parse('http://localhost:5000/shop/${widget.shopData['id']}/kilo-price'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/${widget.shopData['id']}/kilo-price'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

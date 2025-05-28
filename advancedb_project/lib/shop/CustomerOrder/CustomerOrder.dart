@@ -104,7 +104,7 @@ class _CustomerOrdersState extends State<CustomerOrders> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/shop_transactions/$shopId'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop_transactions/$shopId'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

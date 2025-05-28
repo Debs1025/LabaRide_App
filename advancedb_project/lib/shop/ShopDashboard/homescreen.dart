@@ -82,7 +82,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 Future<void> _fetchNearbyShops(Position position) async {
   try {
     final response = await http.get(
-      Uri.parse('http://localhost:5000/nearby_shops?lat=${position.latitude}&lng=${position.longitude}'),
+      Uri.parse('https://backend-production-5974.up.railway.app/nearby_shops?lat=${position.latitude}&lng=${position.longitude}'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -135,7 +135,7 @@ void _showShopDetails(Map<String, dynamic> shop) {
   Future<void> _loadDashboardData() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/shop_transactions/${widget.shopData['id']}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

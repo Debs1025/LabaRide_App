@@ -32,7 +32,7 @@ class _ConfirmCancelScreen2State extends State<ConfirmCancelScreen2> {
     print('Selected reason: $selectedReason');
     
     final response = await http.put( // Changed from delete to put
-      Uri.parse('http://localhost:5000/cancel_transaction/${widget.transactionId}'), // Changed endpoint
+      Uri.parse('https://backend-production-5974.up.railway.app/cancel_transaction/${widget.transactionId}'), // Changed endpoint
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ${widget.token}',

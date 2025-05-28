@@ -137,7 +137,7 @@ void initState() {
    Future<void> _updateUserAddress(Map<String, dynamic> address) async {
     try {
       final response = await http.put(
-        Uri.parse('http://localhost:5000/update_user_details/${widget.userId}'),
+        Uri.parse('http://backend-production-5974.up.railway.app/update_user_details/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
@@ -170,7 +170,7 @@ void initState() {
     
     // First, get user data
     final userResponse = await http.get(
-      Uri.parse('http://localhost:5000/user/${widget.userId}'),
+      Uri.parse('https://backend-production-5974.up.railway.app/user/${widget.userId}'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ${widget.token}',
@@ -185,7 +185,7 @@ void initState() {
       
       // Now, check if user has a shop
       final shopResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/user/${widget.userId}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/user/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',

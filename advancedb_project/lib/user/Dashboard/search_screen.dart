@@ -56,7 +56,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/shops'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shops'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
@@ -175,7 +175,7 @@ Future<void> _handleShopTap(LaundryShop shop) async {
       print('Fetching shop data for ID: $shopId');
 
       final shopResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/$shopId'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -188,7 +188,7 @@ Future<void> _handleShopTap(LaundryShop shop) async {
 
       final shopData = jsonDecode(shopResponse.body);
       final servicesResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/services'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/$shopId/services'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -196,7 +196,7 @@ Future<void> _handleShopTap(LaundryShop shop) async {
       );
 
       final clothingResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/clothing'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/$shopId/clothing'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -204,7 +204,7 @@ Future<void> _handleShopTap(LaundryShop shop) async {
       );
 
       final householdResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/household'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/$shopId/household'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

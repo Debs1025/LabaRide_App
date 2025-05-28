@@ -97,7 +97,7 @@ class _ShopDetailsState extends State<ShopDetails> {
 
   Future<void> _saveShopLocationToBackend(LatLng latlng, String address) async {
     final response = await http.put(
-      Uri.parse('http://localhost:5000/update_shop_location/${widget.shopData['id']}'),
+      Uri.parse('https://backend-production-5974.up.railway.app/update_shop_location/${widget.shopData['id']}'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -132,7 +132,7 @@ class _ShopDetailsState extends State<ShopDetails> {
       if (updateData.isEmpty) return;
 
       final response = await http.put(
-        Uri.parse('http://localhost:5000/update_shop/${widget.shopData['id']}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/update_shop/${widget.shopData['id']}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

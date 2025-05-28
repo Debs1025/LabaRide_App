@@ -68,7 +68,7 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
     try {
       final response = await http.get(
         Uri.parse(
-          'http://localhost:5000/shop_transactions/${widget.shopData['id']}?status=cancelled',
+          'https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}?status=cancelled',
         ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',

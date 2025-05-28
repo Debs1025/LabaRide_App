@@ -47,7 +47,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
 
     try {
       final response = await http.put(
-        Uri.parse('http://localhost:5000/update_password/${widget.userId}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/update_password/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',

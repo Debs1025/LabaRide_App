@@ -91,7 +91,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     final response = await http.put(
-      Uri.parse('http://localhost:5000/update_user_details/${widget.userId}'),
+      Uri.parse('https://backend-production-5974.up.railway.app/update_user_details/${widget.userId}'),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer ${widget.token}',
@@ -142,7 +142,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     try {
       final response = await http.delete(
-        Uri.parse('http://localhost:5000/delete_account/${widget.userId}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/delete_account/${widget.userId}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

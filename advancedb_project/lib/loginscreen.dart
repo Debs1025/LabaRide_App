@@ -38,7 +38,7 @@ class _UnifiedLoginScreenState extends State<UnifiedLoginScreen> {
 
     try {
       final response = await http.post(
-        Uri.parse('http://localhost:5000/login'),     
+        Uri.parse('https://backend-production-5974.up.railway.app/login'),     
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'email': _emailController.text.trim(),

@@ -58,7 +58,7 @@ class _AddressesState extends State<Addresses> {
   Future<void> _loadSavedAddresses() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/user/${widget.userId}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/user/${widget.userId}'),
         headers: {'Authorization': 'Bearer ${widget.token}'},
       );
 
@@ -263,7 +263,7 @@ class _AddressesState extends State<Addresses> {
       };
 
       final response = await http.put(
-        Uri.parse('http://localhost:5000/update_user_details/${widget.userId}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/update_user_details/${widget.userId}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

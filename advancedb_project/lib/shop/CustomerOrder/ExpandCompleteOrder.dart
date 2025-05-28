@@ -71,7 +71,7 @@ class _ExpandCompleteOrderState extends State<ExpandCompleteOrder> {
     try {
       final response = await http.get(
         Uri.parse(
-          'http://localhost:5000/shop_transactions/${widget.shopData['id']}',
+          'https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}',
         ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',

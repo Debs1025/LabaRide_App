@@ -98,14 +98,14 @@ class _UserDetailsScreenState extends State<UserDetailsScreen> {
     print('Debug - User ID: ${widget.userId}');
 
     final response = await http.put(
-      Uri.parse('http://localhost:5000/update_user_details/${widget.userId}'),
+      Uri.parse('https://backend-production-5974.up.railway.app/update_user_details/${widget.userId}'),
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',  // Add Accept header
+        'Accept': 'application/json', 
         'Authorization': 'Bearer ${widget.token}',
       },
       body: jsonEncode({
-        'phone': _phoneController.text.trim(),  // Add trim()
+        'phone': _phoneController.text.trim(),
         'birthdate': _birthdateController.text,
         'gender': selectedGender,
         'zone': _zoneController.text.trim(),

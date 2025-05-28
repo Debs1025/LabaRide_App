@@ -68,7 +68,7 @@ class _ExpandOngoingOrderState extends State<ExpandOngoingOrder> {
     try {
       final response = await http.get(
         Uri.parse(
-          'http://localhost:5000/api/orders?shop_id=${widget.shopData['id']}&status=processing',
+          'https://backend-production-5974.up.railway.app/api/orders?shop_id=${widget.shopData['id']}&status=processing',
         ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',

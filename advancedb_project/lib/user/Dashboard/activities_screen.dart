@@ -44,7 +44,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
 
   try {
     final response = await http.get(
-      Uri.parse('http://localhost:5000/user_transactions/${widget.userId}'),
+      Uri.parse('https://backend-production-5974.up.railway.app/user_transactions/${widget.userId}'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',

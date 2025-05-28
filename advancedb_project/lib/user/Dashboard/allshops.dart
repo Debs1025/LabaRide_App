@@ -80,7 +80,7 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
       setState(() => _isLoading = true);
 
       final response = await http.get(
-        Uri.parse('http://localhost:5000/shops'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shops'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
@@ -136,7 +136,7 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
       }
 
       final shopResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/$shopId'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -150,7 +150,7 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
       final shopData = jsonDecode(shopResponse.body);
 
       final servicesResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/services'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/$shopId/services'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -158,7 +158,7 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
       );
 
       final clothingResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/clothing'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/$shopId/clothing'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -166,7 +166,7 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
       );
 
       final householdResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/household'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/$shopId/household'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

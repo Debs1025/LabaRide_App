@@ -64,7 +64,7 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     try {
       print('Making API request for transaction ${widget.transactionId}');
       final response = await http.get(
-        Uri.parse('http://localhost:5000/transactions/${widget.transactionId}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/transactions/${widget.transactionId}'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

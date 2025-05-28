@@ -7,7 +7,7 @@ class SocketService {
   static void initializeSocket() {
     if (socket != null) return;
 
-    socket = IO.io('http://localhost:5000', <String, dynamic>{
+    socket = IO.io('https://backend-production-5974.up.railway.app', <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
       'reconnection': true,

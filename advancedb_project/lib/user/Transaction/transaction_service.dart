@@ -14,7 +14,7 @@ class TransactionService {
       }
 
       final response = await http.post(
-        Uri.parse('http://localhost:5000/create_transaction/$userId'),
+        Uri.parse('https://backend-production-5974.up.railway.app/create_transaction/$userId'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',

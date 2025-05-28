@@ -39,7 +39,7 @@ class _CompleteDetailsState extends State<CompleteDetails> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/order_items/${widget.orderDetails['id']}'),
+        Uri.parse('https://localhost:5000/order_items/${widget.orderDetails['id']}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

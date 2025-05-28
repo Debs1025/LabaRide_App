@@ -29,7 +29,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/api/notifications/${widget.userId}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/api/notifications/${widget.userId}'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

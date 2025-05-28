@@ -1,5 +1,5 @@
 CREATE DATABASE IF NOT EXISTS LabaRide_DB;
-USE LabaRide_DB;
+USE railway;
 
 -- User table
 CREATE TABLE users (

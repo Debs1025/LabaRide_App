@@ -49,7 +49,7 @@ class _OngoingDetailsState extends State<OngoingDetails> {
 
     try {
       final response = await http.put(
-        Uri.parse('http://localhost:5000/api/orders/${widget.orderDetails['id']}/status'),
+        Uri.parse('https://backend-production-5974.up.railway.app/api/orders/${widget.orderDetails['id']}/status'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

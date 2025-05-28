@@ -81,7 +81,7 @@ class _ExpandNewOrderState extends State<ExpandNewOrder> {
     try {
       final response = await http.get(
         Uri.parse(
-          'http://localhost:5000/shop_transactions/${widget.shopData['id']}',
+          'https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}',
         ),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
@@ -122,7 +122,7 @@ class _ExpandNewOrderState extends State<ExpandNewOrder> {
 Future<void> _declineOrder(int orderId) async {
   try {
     final response = await http.put(
-      Uri.parse('http://localhost:5000/api/orders/$orderId/decline'),
+      Uri.parse('https://backend-production-5974.up.railway.app/api/orders/$orderId/decline'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
@@ -151,7 +151,7 @@ Future<void> _declineOrder(int orderId) async {
   Future<void> _setOrderPrice(int orderId, String price) async {
   try {
     final response = await http.put(
-      Uri.parse('http://localhost:5000/api/orders/$orderId/set_price'),
+      Uri.parse('https://backend-production-5974.up.railway.app/api/orders/$orderId/set_price'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',

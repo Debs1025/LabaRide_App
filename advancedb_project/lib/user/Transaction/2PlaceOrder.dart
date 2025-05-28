@@ -151,7 +151,7 @@ Future<void> _placeOrder() async {
  Future<double> _getPricePerKilo(double kiloAmount) async {
   try {
     final response = await http.get(
-      Uri.parse('http://localhost:5000/shop/${widget.shopData['id']}/kilo-prices'),
+      Uri.parse('https://backend-production-5974.up.railway.app/shop/${widget.shopData['id']}/kilo-prices'),
       headers: {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',

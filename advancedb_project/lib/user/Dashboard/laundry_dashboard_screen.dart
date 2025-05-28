@@ -109,7 +109,7 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
 
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/user/${widget.userId}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/user/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
@@ -140,7 +140,7 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
   Future<void> _fetchShopData() async {
     try {
       final response = await http.get(
-        Uri.parse('http://localhost:5000/shops/recent'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shops/recent'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ${widget.token}',
@@ -245,7 +245,7 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
 
       // Fetch basic shop data
       final shopResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/$shopId'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -263,7 +263,7 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
 
       // Fetch services for this shop
       final servicesResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/services'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/$shopId/services'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -276,7 +276,7 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
 
       // Fetch clothing types
       final clothingResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/clothing'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/$shopId/clothing'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',
@@ -285,7 +285,7 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
 
       // Fetch household items
       final householdResponse = await http.get(
-        Uri.parse('http://localhost:5000/shop/$shopId/household'),
+        Uri.parse('https://backend-production-5974.up.railway.app/shop/$shopId/household'),
         headers: {
           'Authorization': 'Bearer ${widget.token}',
           'Content-Type': 'application/json',

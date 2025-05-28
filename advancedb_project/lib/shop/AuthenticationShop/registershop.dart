@@ -363,7 +363,7 @@ class _RegisterShopState extends State<RegisterShop> {
       print('Debug - User ID: ${widget.userId}');
 
       final response = await http.post(
-        Uri.parse('http://localhost:5000/register_shop/${widget.userId}'),
+        Uri.parse('https://backend-production-5974.up.railway.app/register_shop/${widget.userId}'),
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
