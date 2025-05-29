@@ -5,7 +5,7 @@ import 'laundry_dashboard_screen.dart';
 import '../ProfileUser/UserProfile.dart';
 import 'search_screen.dart';
 import '../../loginscreen.dart';
-import '../History/ActiveTransact.dart';
+import '../History/DetailTransact.dart';
 
 class ActivitiesScreen extends StatefulWidget {
   final int userId;
@@ -36,7 +36,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
     }
   }
 
-  Future<void> _fetchUserTransactions() async {
+ Future<void> _fetchUserTransactions() async {
   setState(() {
     _isLoading = true;
     _errorMessage = '';
@@ -53,17 +53,20 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
 
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
-      // The backend returns transactions directly in the response
-      setState(() {
-        _recentTransactions = List<Map<String, dynamic>>.from(data['transactions'] ?? []);
-        _isLoading = false;
-      });
+      if (data['status'] == 'success' && data['data'] != null) {
+        setState(() {
+          _recentTransactions = List<Map<String, dynamic>>.from(data['data']);
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Invalid response format');
+      }
     } else {
-      throw Exception('Failed to load transactions');
+      throw Exception('Failed to load transactions: ${response.statusCode}');
     }
   } catch (e) {
     setState(() {
-      _errorMessage = 'Error: $e';
+      _errorMessage = e.toString();
       _isLoading = false;
     });
   }
@@ -181,53 +184,24 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'Activity',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontFamily: 'Inter',
-              fontWeight: FontWeight.bold,
-            ),
+Widget _buildHeader() {
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Row(
+      children: const [
+        Text(
+          'Activity',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 20,
+            fontFamily: 'Inter',
+            fontWeight: FontWeight.bold,
           ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ActiveTransact(
-                    userId: widget.userId,
-                    token: widget.token,
-                  ),
-                ),
-              );
-            },
-            icon: const Icon(Icons.history, color: Color(0xFF4D3E8C)),
-            label: const Text(
-              'History',
-              style: TextStyle(
-                color: Color(0xFF4D3E8C),
-                fontSize: 12,
-                fontFamily: 'Inter',
-              ),
-            ),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildRecentSection() {
   return Column(
@@ -237,7 +211,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
         child: Row(
           children: const [
             Text(
-              'Recent',
+              'All Transactions',
               style: TextStyle(
                 color: Colors.white,
                 fontSize: 16,
@@ -323,10 +297,21 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
   }
 
   Widget _buildTransactionCard(Map<String, dynamic> transaction) {
-    final status = transaction['status'] ?? 'Unknown';
-    final color = _getStatusColor(status);
+  final status = transaction['status'] ?? 'Unknown';
+  final color = _getStatusColor(status);
 
-    return Padding(
+  return GestureDetector( // Add this wrapper
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DetailTransact(
+            orderDetails: transaction,
+          ),
+        ),
+      );
+    },
+    child: Padding(
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Container(
         padding: const EdgeInsets.all(12.0),
@@ -375,7 +360,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          transaction['created_at'] ?? 'Unknown date',
+                          _formatDateTime(transaction['created_at'] ?? ''),
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 12,
@@ -391,7 +376,7 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '₱${transaction['total_amount']?.toString() ?? '0.00'}',
+                  '₱${(transaction['total_amount'] ?? 0.0).toStringAsFixed(2)}',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -422,8 +407,20 @@ class _ActivitiesScreenState extends State<ActivitiesScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
+}
+
+// Add this helper method for consistent date formatting
+String _formatDateTime(String dateTime) {
+  try {
+    final DateTime dt = DateTime.parse(dateTime);
+    return '${dt.day}/${dt.month}/${dt.year} ${dt.hour}:${dt.minute.toString().padLeft(2, '0')}';
+  } catch (e) {
+    print('Error formatting date: $e');
+    return dateTime;
   }
+}
 
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {

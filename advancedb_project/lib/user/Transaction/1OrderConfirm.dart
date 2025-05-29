@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../OrderingSystem/ordershopsystem.dart';
 import '2PlaceOrder.dart';
-import 'LaundryCount.dart';
 
 class OrderConfirmScreen extends StatefulWidget {
   final int userId;
@@ -55,7 +54,6 @@ class _OrderConfirmScreenState extends State<OrderConfirmScreen> {
           padding: const EdgeInsets.all(16.0),
           child: Column(
             children: [
-              _buildOrderSummaryCard(),
               _buildServicesCard(),
               _buildNoteCard(),
               _buildTotalSection(),
@@ -86,50 +84,6 @@ class _OrderConfirmScreenState extends State<OrderConfirmScreen> {
     );
   }
 
-  Widget _buildOrderSummaryCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                Image.asset(
-                  'assets/basket.png',
-                  height: 24,
-                  color: navyBlue,
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Order Summary',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Text(
-                  '₱${widget.subtotal.toStringAsFixed(2)}',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: navyBlue,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(Icons.edit, size: 20, color: navyBlue),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildServicesCard() {
     return Card(
       margin: const EdgeInsets.only(top: 16),
@@ -148,44 +102,25 @@ class _OrderConfirmScreenState extends State<OrderConfirmScreen> {
   }
 
   Widget _buildServicesHeader() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            Image.asset(
-              'assets/washingmachine.png',
-              height: 24,
-              color: navyBlue,
-            ),
-            const SizedBox(width: 12),
-            Text(
-              'Services',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: navyBlue,
-              ),
-            ),
-          ],
+  return Row(
+    children: [
+      Image.asset(
+        'assets/washingmachine.png',
+        height: 24,
+        color: navyBlue,
+      ),
+      const SizedBox(width: 12),
+      Text(
+        'Services',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: navyBlue,
         ),
-        IconButton(
-          icon: Icon(Icons.edit, color: navyBlue),
-          onPressed: () async {
-            final result = await Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => const EditLaundriesScreen(),
-              ),
-            );
-            if (result != null) {
-              setState(() {});
-            }
-          },
-        ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
   Widget _buildSelectedItemsList() {
     return Column(

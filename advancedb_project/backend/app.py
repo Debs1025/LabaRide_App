@@ -138,22 +138,39 @@ def update_user_details(user_id):
     except Exception as e:
         return jsonify({'status': 500, 'message': str(e)}), 500
 
-@app.route('/update_password/<int:user_id>', methods=['PUT'])
-@jwt_required
-def update_password(user_id):
-    try:
-        result = user_controller.update_password(user_id, request.json)
-        return jsonify(result), result['status']
-    except Exception as e:
-        return jsonify({'status': 500, 'message': str(e)}), 500
-
 @app.route('/delete_account/<int:user_id>', methods=['DELETE'])
 @jwt_required
 def delete_account(user_id):
     result = user_controller.delete_account(user_id)
     return jsonify(result), result['status']
 
-
+@app.route('/get_user_by_id/<int:user_id>', methods=['GET'])
+def get_user_by_id(user_id):
+    connection = None
+    try:
+        connection = create_connection()
+        cursor = connection.cursor(dictionary=True)
+        
+        cursor.execute("""
+            SELECT id, email, name 
+            FROM users 
+            WHERE id = %s
+        """, (user_id,))
+        
+        user = cursor.fetchone()
+        
+        if user:
+            return jsonify(user), 200  # Add proper return
+        return jsonify({'message': 'User not found'}), 404
+        
+    except Exception as e:
+        print(f"Error getting user: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+            
 # Shop Routes
 @app.route('/register_shop/<int:user_id>', methods=['POST'])
 @jwt_required
@@ -306,7 +323,7 @@ def get_recent_shops():
     finally:
         if connection and connection.is_connected():
             cursor.close()
-            connection.close()       
+            connection.close()   
             
 @app.route('/shop/<int:shop_id>', methods=['GET'])
 @jwt_required
@@ -337,6 +354,53 @@ def get_shop_by_id(shop_id):
         
     except Exception as e:
         print(f"Error fetching shop {shop_id}: {str(e)}")  # Debug log
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+
+@app.route('/update_shop/<int:shop_id>', methods=['PUT'])
+@jwt_required
+def update_shop(shop_id):
+    connection = None
+    try:
+        data = request.json
+        connection = create_connection()
+        cursor = connection.cursor()
+        
+        query = """
+            UPDATE shops 
+            SET shop_name = %s,
+                contact_number = %s,
+                opening_time = %s,
+                closing_time = %s
+            WHERE id = %s
+        """
+        
+        values = (
+            data['shop_name'],
+            data['contact_number'],
+            data['opening_time'],
+            data['closing_time'],
+            shop_id
+        )
+        
+        cursor.execute(query, values)
+        connection.commit()
+        
+        if cursor.rowcount > 0:
+            return jsonify({
+                'message': 'Shop updated successfully',
+                'shop_id': shop_id
+            }), 200
+        else:
+            return jsonify({'message': 'No shop found with that ID'}), 404
+            
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        print(f"Error updating shop: {e}")
         return jsonify({'error': str(e)}), 500
     finally:
         if connection and connection.is_connected():
@@ -379,9 +443,30 @@ def get_user_transactions(user_id):
         connection = create_connection()
         cursor = connection.cursor(dictionary=True)
         
-        # Query to get user's transactions with shop details
         query = """
-            SELECT t.*, s.shop_name
+            SELECT 
+                t.id,
+                t.status,
+                t.created_at,
+                t.service_name,
+                CAST(t.kilo_amount AS FLOAT) as kilo_amount,
+                CAST(t.subtotal AS FLOAT) as subtotal,
+                CAST(t.delivery_fee AS FLOAT) as delivery_fee,
+                CAST(t.voucher_discount AS FLOAT) as voucher_discount,
+                CAST(t.total_amount AS FLOAT) as total_amount,
+                s.shop_name,
+                t.payment_method,
+                t.user_name,
+                t.user_email,
+                t.user_phone,
+                t.delivery_type,
+                t.zone,
+                t.street,
+                t.barangay,
+                t.building,
+                t.scheduled_date,
+                t.scheduled_time,
+                t.notes
             FROM transactions t
             JOIN shops s ON t.shop_id = s.id
             WHERE t.user_id = %s
@@ -390,17 +475,32 @@ def get_user_transactions(user_id):
         cursor.execute(query, (user_id,))
         transactions = cursor.fetchall()
         
-        # Convert decimal values to strings for JSON serialization
+        # Format dates, times, and decimals
+        formatted_transactions = []
         for transaction in transactions:
-            if 'total_amount' in transaction:
-                transaction['total_amount'] = str(transaction['total_amount'])
-            if 'created_at' in transaction:
-                transaction['created_at'] = transaction['created_at'].strftime('%Y-%m-%d %H:%M:%S')
-        
-        return jsonify({'status': 'success', 'data': transactions}), 200
+            formatted_transaction = {}
+            for key, value in transaction.items():
+                if isinstance(value, datetime):
+                    formatted_transaction[key] = value.strftime('%Y-%m-%d %H:%M:%S')
+                elif isinstance(value, timedelta):
+                    formatted_transaction[key] = str(value)
+                elif isinstance(value, Decimal):
+                    formatted_transaction[key] = float(value)
+                else:
+                    formatted_transaction[key] = value
+            formatted_transactions.append(formatted_transaction)
+            
+        return jsonify({
+            'status': 'success',
+            'data': formatted_transactions
+        }), 200
         
     except Exception as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        print(f"Error: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
     finally:
         if connection and connection.is_connected():
             cursor.close()

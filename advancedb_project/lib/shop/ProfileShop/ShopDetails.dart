@@ -26,6 +26,10 @@ class _ShopDetailsState extends State<ShopDetails> {
   late final TextEditingController _businessHoursController;
   late final TextEditingController _contactController;
   late final TextEditingController _shopIdController;
+  late final TextEditingController _zoneController;
+  late final TextEditingController _streetController;
+  late final TextEditingController _barangayController;
+  late final TextEditingController _buildingController;
   
   bool _isShopNameEditing = false;
   bool _isBusinessHoursEditing = false;
@@ -49,8 +53,21 @@ class _ShopDetailsState extends State<ShopDetails> {
       text: '${widget.shopData['opening_time'] ?? ''} - ${widget.shopData['closing_time'] ?? ''}'
     );
     _contactController = TextEditingController(
-      text: widget.shopData['contact_number'] ?? widget.shopData['user']?['contact_number'] ?? ''
+      text: widget.shopData['contact_number'] ?? ''
     );
+    _zoneController = TextEditingController(
+      text: widget.shopData['zone'] ?? ''
+    );
+    _streetController = TextEditingController(
+      text: widget.shopData['street'] ?? ''
+    );
+    _barangayController = TextEditingController(
+      text: widget.shopData['barangay'] ?? ''
+    );
+    _buildingController = TextEditingController(
+      text: widget.shopData['building'] ?? ''
+    );
+
     // Initialize map location
     shopLatLng = (widget.shopData['latitude'] != null && widget.shopData['longitude'] != null)
         ? LatLng(
@@ -113,119 +130,120 @@ class _ShopDetailsState extends State<ShopDetails> {
     }
   }
 
-  Future<void> _saveField(String field, String value) async {
-    try {
-      final updateData = <String, dynamic>{};
-      
-      if (field == 'Shop Name') {
-        updateData['shop_name'] = value;
-      } else if (field == 'Contact') {
-        updateData['contact_number'] = value;
-      } else if (field == 'Business Hours') {
-        final times = value.split(' - ');
-        if (times.length == 2) {
-          updateData['opening_time'] = times[0].trim();
-          updateData['closing_time'] = times[1].trim();
-        }
-      }
-      
-      if (updateData.isEmpty) return;
-
-      final response = await http.put(
-        Uri.parse('https://backend-production-5974.up.railway.app/update_shop/${widget.shopData['id']}'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(updateData),
-      );
-
-      if (response.statusCode == 200) {
-        setState(() {
-          widget.shopData.addAll(updateData);
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Changes saved successfully')),
-        );
-      } else {
-        throw Exception('Failed to save changes');
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to save changes: $e')),
-      );
+  Future<void> _saveAllChanges() async {
+  try {
+    // Validate business hours format
+    final times = _businessHoursController.text.split(' - ');
+    if (times.length != 2) {
+      throw Exception('Invalid business hours format. Please use format: HH:MM - HH:MM');
     }
-  }
 
-  Widget _buildEditableField(String label, TextEditingController controller, bool isEditing, Function() onEditPress, {bool isEditable = true}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1A0066),
-          ),
+    final updateData = {
+      'shop_name': _shopNameController.text,
+      'contact_number': _contactController.text,
+      'opening_time': times[0].trim(),
+      'closing_time': times[1].trim(),
+    };
+
+    print('Sending update data: $updateData'); // Debug print
+
+    final response = await http.put(
+      Uri.parse('https://backend-production-5974.up.railway.app/update_shop/${widget.shopData['id']}'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(updateData),
+    );
+
+    print('Response status: ${response.statusCode}'); // Debug print
+    print('Response body: ${response.body}'); // Debug print
+
+    final responseData = jsonDecode(response.body);
+    
+    if (response.statusCode == 200) {
+      setState(() {
+        widget.shopData['shop_name'] = _shopNameController.text;
+        widget.shopData['contact_number'] = _contactController.text;
+        widget.shopData['opening_time'] = times[0].trim();
+        widget.shopData['closing_time'] = times[1].trim();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Shop details updated successfully'),
+          backgroundColor: Colors.green,
         ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.grey[300]!),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: isEditing
-                    ? TextField(
-                        controller: controller,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                        ),
-                        decoration: const InputDecoration(
-                          border: InputBorder.none,
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                        ),
-                        onSubmitted: (value) {
-                          _saveField(label, value);
-                          onEditPress();
-                        },
-                      )
-                    : Text(
-                        controller.text,
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: Colors.black87,
-                        ),
-                      ),
-              ),
-              if (isEditable)
-                GestureDetector(
-                  onTap: onEditPress,
-                  child: ColorFiltered(
-                    colorFilter: ColorFilter.mode(
-                      isEditing ? const Color(0xFF1A0066) : Colors.grey[400]!,
-                      BlendMode.srcIn,
-                    ),
-                    child: Image.asset(
-                      isEditing ? 'assets/Admin/Save.png' : 'assets/Admin/Edit.png',
-                      width: 20,
-                      height: 20,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
+      );
+
+      // Return updated data to previous screen
+      Navigator.pop(context, widget.shopData);
+    } else {
+      throw Exception(responseData['message'] ?? 'Failed to update shop details');
+    }
+  } catch (e) {
+    print('Error saving changes: $e'); // Debug print
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Error: ${e.toString()}'),
+        backgroundColor: Colors.red,
+      ),
     );
   }
+}
+
+  Widget _buildEditableField(String label, TextEditingController controller, bool isEditing, Function() onEditPress, {bool isEditable = true}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        label,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF1A0066),
+        ),
+      ),
+      const SizedBox(height: 8),
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: controller,
+                enabled: isEditable,
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.black87,
+                ),
+                decoration: const InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ),
+            if (isEditable)
+              GestureDetector(
+                onTap: onEditPress,
+                child: Icon(
+                  Icons.edit,
+                  color: isEditing ? const Color(0xFF1A0066) : Colors.grey[400],
+                  size: 20,
+                ),
+              ),
+          ],
+        ),
+      ),
+    ],
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -236,7 +254,16 @@ class _ShopDetailsState extends State<ShopDetails> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Color(0xFF1A0066)),
-          onPressed: () => Navigator.pop(context, widget.shopData),
+          onPressed: () {
+            // Return the updated shop data to the previous screen
+            Navigator.pop(context, {
+              ...widget.shopData,
+              'shop_name': _shopNameController.text,
+              'contact_number': _contactController.text,
+              'opening_time': _businessHoursController.text.split(' - ')[0],
+              'closing_time': _businessHoursController.text.split(' - ')[1],
+            });
+          },
         ),
         title: const Text(
           'Shop Details',
@@ -252,6 +279,7 @@ class _ShopDetailsState extends State<ShopDetails> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Existing map section
             const Text(
               'Shop Location',
               style: TextStyle(
@@ -312,40 +340,94 @@ class _ShopDetailsState extends State<ShopDetails> {
                   style: const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
               ),
-            const SizedBox(height: 24),
-            _buildEditableField(
-              'Shop ID',
-              _shopIdController,
-              false,
-              () {},
-              isEditable: false,
+            // Shop Details Section
+          _buildEditableField(
+          'Shop ID',
+          _shopIdController,
+          false,
+          () {},
+          isEditable: false,
+          ),
+          const SizedBox(height: 16),
+          _buildEditableField(
+            'Shop Name',
+            _shopNameController,
+            _isShopNameEditing,
+            () => setState(() => _isShopNameEditing = !_isShopNameEditing),
+          ),
+          const SizedBox(height: 16),
+          _buildEditableField(
+            'Business Hours',
+            _businessHoursController,
+            _isBusinessHoursEditing,
+            () => setState(() => _isBusinessHoursEditing = !_isBusinessHoursEditing),
+          ),
+          const SizedBox(height: 16),
+          _buildEditableField(
+            'Contact',
+            _contactController,
+            _isContactEditing,
+            () => setState(() => _isContactEditing = !_isContactEditing),
+          ),
+          // Read-only address fields
+          const SizedBox(height: 16),
+          _buildEditableField(
+            'Zone',
+            _zoneController,
+            false,
+            () {},
+            isEditable: false,
+          ),
+          const SizedBox(height: 16),
+          _buildEditableField(
+            'Street',
+            _streetController,
+            false,
+            () {},
+            isEditable: false,
+          ),
+          const SizedBox(height: 16),
+          _buildEditableField(
+            'Barangay',
+            _barangayController,
+            false,
+            () {},
+            isEditable: false,
+          ),
+          const SizedBox(height: 16),
+          _buildEditableField(
+            'Building',
+            _buildingController,
+            false,
+            () {},
+            isEditable: false,
+          ),
+          const SizedBox(height: 24),
+          Center(
+            child: ElevatedButton(
+              onPressed: _saveAllChanges,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF1A0066),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'Save All Changes',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
             ),
-            const SizedBox(height: 16),
-            _buildEditableField(
-              'Shop Name',
-              _shopNameController,
-              _isShopNameEditing,
-              () => setState(() => _isShopNameEditing = !_isShopNameEditing),
-            ),
-            const SizedBox(height: 16),
-            _buildEditableField(
-              'Business Hours',
-              _businessHoursController,
-              _isBusinessHoursEditing,
-              () => setState(() => _isBusinessHoursEditing = !_isBusinessHoursEditing),
-            ),
-            const SizedBox(height: 16),
-            _buildEditableField(
-              'Contact',
-              _contactController,
-              _isContactEditing,
-              () => setState(() => _isContactEditing = !_isContactEditing),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   @override
   void dispose() {
@@ -353,6 +435,10 @@ class _ShopDetailsState extends State<ShopDetails> {
     _shopNameController.dispose();
     _businessHoursController.dispose();
     _contactController.dispose();
+    _zoneController.dispose();
+    _streetController.dispose();
+    _barangayController.dispose();
+    _buildingController.dispose();
     super.dispose();
   }
 }

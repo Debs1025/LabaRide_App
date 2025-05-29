@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../OrderingSystem/ordershopsystem.dart';
-import 'viewmap.dart';
 
 class LaundryShop {
   final String id;
@@ -236,27 +235,6 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
     });
   }
 
-  void _navigateToMap() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => MapScreen(
-          userId: widget.userId,
-          token: widget.token,
-          shops: allShops.map((shop) => {
-            'id': shop.id,
-            'shop_name': shop.name,
-            'latitude': shop.latitude,
-            'longitude': shop.longitude,
-            'street': shop.street,
-            'barangay': shop.barangay,
-            'building': shop.building,
-          }).toList(),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -271,12 +249,6 @@ class _AllShopsScreenState extends State<AllShopsScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.map, color: Colors.white),
-            onPressed: _navigateToMap,
-          ),
-        ],
       ),
       body: _isLoading 
         ? const Center(

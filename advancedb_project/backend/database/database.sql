@@ -42,7 +42,18 @@ CREATE TABLE transactions (
     scheduled_time TIME NOT NULL,
     payment_method VARCHAR(50) NOT NULL DEFAULT 'Cash on Delivery',
     notes TEXT,
-    status ENUM('Pending', 'Processing', 'Completed', 'Cancelled') DEFAULT 'Pending',
+    status ENUM(
+        'Pending',
+        'Processing',
+        'In Progress',
+        'Washing',
+        'Folding',
+        'Picked-up',
+        'Delivering',
+        'Complete',
+        'Completed',
+        'Cancelled'
+    ) DEFAULT 'Pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id),
     FOREIGN KEY (shop_id) REFERENCES shops(id)

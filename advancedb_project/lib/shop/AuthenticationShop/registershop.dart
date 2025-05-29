@@ -6,6 +6,8 @@ import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_ti
 import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../user/authenticationuser/signupcomplete.dart';
+import 'dart:async';
+import '../../config/api_config.dart';
 
 class RegisterShop extends StatefulWidget {
   final int userId;
@@ -39,10 +41,12 @@ class _RegisterShopState extends State<RegisterShop> {
   bool isSelectingLocation = false;
   bool _isLoading = false;
 
+  static const LatLng nagaCityCenter = LatLng(13.6217, 123.1948);
+
   @override
   void initState() {
     super.initState();
-    selectedLatLng = const LatLng(13.6217, 123.1948);
+    selectedLatLng = nagaCityCenter;
     _setDefaultAddress();
   }
 
@@ -147,33 +151,42 @@ class _RegisterShopState extends State<RegisterShop> {
   }
 
  Future<void> _useCurrentLocation() async {
+  if (_isLoading) return;
+  setState(() => _isLoading = true);
+
   try {
-    // Check location permission
     LocationPermission permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        _handleGeolocationError();
+      if (permission == LocationPermission.denied || 
+          permission == LocationPermission.deniedForever) {
+        _showError('Location permissions are required to use current location.');
         return;
       }
     }
 
-    // Get current position
     Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high
+      desiredAccuracy: LocationAccuracy.high,
+      timeLimit: const Duration(seconds: 10),
     );
 
     setState(() {
       selectedLatLng = LatLng(position.latitude, position.longitude);
       isSelectingLocation = true;
     });
-    
+
     mapController.move(selectedLatLng!, 15.0);
     await _getAddressFromCoordinates(selectedLatLng!);
-    
+
   } catch (e) {
     print('Error getting location: $e');
+    String errorMessage = e is TimeoutException 
+        ? 'Getting location timed out. Try again.'
+        : 'Failed to get current location.';
+    _showError(errorMessage);
     _handleGeolocationError();
+  } finally {
+    setState(() => _isLoading = false);
   }
 }
 
@@ -348,72 +361,66 @@ class _RegisterShopState extends State<RegisterShop> {
     super.dispose();
   }
 
-  Future<void> _handleSubmit() async {
-    if (!_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all required fields')),
+ Future<void> _handleSubmit() async {
+  if (!_formKey.currentState!.validate()) {
+    _showError('Please fill in all required fields');
+    return;
+  }
+
+  if (selectedLatLng == null) {
+    _showError('Please pinpoint your shop location on the map.');
+    return;
+  }
+
+  setState(() => _isLoading = true);
+
+  try {
+    final requestBody = {
+      'user_id': widget.userId,
+      'shop_name': _shopNameController.text.trim(),
+      'contact_number': _contactNumberController.text.trim(),
+      'zone': _zoneController.text.trim(),
+      'street': _streetController.text.trim(),
+      'barangay': _barangayController.text.trim(),
+      'building': _buildingController.text.trim(),
+      'opening_time': _openingTimeController.text.trim(),
+      'closing_time': _closingTimeController.text.trim(),
+      'latitude': selectedLatLng?.latitude,
+      'longitude': selectedLatLng?.longitude,
+    };
+
+    final response = await http.post(
+      Uri.parse(ApiConfig.getShopRegistrationUrl(widget.userId)),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer ${widget.token}',
+      },
+      body: jsonEncode(requestBody),
+    );
+
+    if (!mounted) return;
+
+    if (response.statusCode == 201) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const SignUpCompleteScreen(),
+        ),
       );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    try {
-      print('Debug - Token being sent: ${widget.token}');
-      print('Debug - User ID: ${widget.userId}');
-
-      final response = await http.post(
-        Uri.parse('https://backend-production-5974.up.railway.app/register_shop/${widget.userId}'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
-        body: jsonEncode({
-          'shop_name': _shopNameController.text.trim(),
-          'contact_number': _contactNumberController.text.trim(),
-          'zone': _zoneController.text.trim(),
-          'street': _streetController.text.trim(),
-          'barangay': _barangayController.text.trim(),
-          'building': _buildingController.text.trim(),
-          'opening_time': _openingTimeController.text.trim(),
-          'closing_time': _closingTimeController.text.trim(),
-          'latitude': selectedLatLng?.latitude,
-          'longitude': selectedLatLng?.longitude,
-        }),
-      );
-
-      print('Debug - Response Status: ${response.statusCode}');
-      print('Debug - Response Body: ${response.body}');
-
+    } else {
       final data = jsonDecode(response.body);
-
-      if (response.statusCode == 201) {
-        if (!mounted) return;
-        
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const SignUpCompleteScreen(),
-          ),
-        );
-      } else {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(data['message'] ?? 'Registration failed')),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $e')),
-      );
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+      _showError(data['message'] ?? 'Registration failed');
+    }
+  } catch (e) {
+    if (!mounted) return;
+    _showError('Error: $e');
+  } finally {
+    if (mounted) {
+      setState(() => _isLoading = false);
     }
   }
+}
 
   Widget _buildSectionTitle(String title) {
     return Padding(
@@ -430,56 +437,60 @@ class _RegisterShopState extends State<RegisterShop> {
     );
   }
 
-  Widget _buildTextField(String label, String hint, TextEditingController controller, {bool required = true}) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text.rich(
-          TextSpan(
-            children: [
-              TextSpan(
-                text: label,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.black87,
-                  fontFamily: 'Inter',
-                ),
+ Widget _buildTextField(String label, String hint, TextEditingController controller, {
+  bool required = true, 
+  TextInputType keyboardType = TextInputType.text
+}) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: label,
+              style: const TextStyle(
+                fontSize: 14,
+                color: Colors.black87,
+                fontFamily: 'Inter',
               ),
-              if (required)
-                const TextSpan(
-                  text: ' *',
-                  style: TextStyle(color: Colors.red),
-                ),
-            ],
+            ),
+            if (required)
+              const TextSpan(
+                text: ' *',
+                style: TextStyle(color: Colors.red),
+              ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 8),
+      TextFormField(
+        controller: controller,
+        keyboardType: keyboardType,
+        validator: (value) {
+          if (required && (value == null || value.isEmpty)) {
+            return 'This field is required';
+          }
+          return null;
+        },
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey[400]),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          filled: true,
+          fillColor: Colors.grey[50],
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
           ),
         ),
-        const SizedBox(height: 8),
-        TextFormField(
-          controller: controller,
-          validator: (value) {
-            if (required && (value == null || value.isEmpty)) {
-              return 'This field is required';
-            }
-            return null;
-          },
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: Colors.grey[400]),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide.none,
-            ),
-            filled: true,
-            fillColor: Colors.grey[50],
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
   @override
   Widget build(BuildContext context) {

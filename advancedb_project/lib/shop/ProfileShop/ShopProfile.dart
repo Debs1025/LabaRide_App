@@ -90,22 +90,41 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
                       _buildMenuItem(
                         'Account Information',
                         'assets/ProfileScreen/Profile.png',
-                        onTap: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => AdminAccountInfo(
-                              userId: widget.userId,
-                              token: widget.token,
-                              userData: {
-                                'id': widget.shopData['user']?['id'],
-                                'name': widget.shopData['user']?['name'],
-                                'username': widget.shopData['user']?['username'],
-                                'contact_number': widget.shopData['user']?['contact_number'] ?? widget.shopData['user']?['phone'],
-                                'email': widget.shopData['user']?['email'],
-                              },
+                        onTap: () async {
+                          final userData = {
+                            'id': widget.shopData['user']?['id'],
+                            'name': widget.shopData['user']?['name'] ?? '',
+                            'email': widget.shopData['user']?['email'] ?? '',
+                            'contact_number': widget.shopData['user']?['contact_number'] ?? widget.shopData['user']?['phone'] ?? '',
+                            'birthdate': widget.shopData['user']?['birthdate'] ?? '',
+                            'gender': widget.shopData['user']?['gender'] ?? '',
+                            'zone': widget.shopData['user']?['zone'] ?? '',
+                            'street': widget.shopData['user']?['street'] ?? '',
+                            'barangay': widget.shopData['user']?['barangay'] ?? '',
+                            'building': widget.shopData['user']?['building'] ?? '',
+                          };
+
+                          final updatedUserData = await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => AdminAccountInfo(
+                                userId: widget.userId,
+                                token: widget.token,
+                                userData: userData,
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                          
+                          if (updatedUserData != null && mounted) {
+                            setState(() {
+                              widget.shopData['user'] = <String, dynamic>{
+                                if (widget.shopData['user'] != null) 
+                                  ...widget.shopData['user'] as Map<String, dynamic>,
+                                ...updatedUserData as Map<String, dynamic>,
+                              };
+                            });
+                          }
+                        },
                       ),
                       _buildMenuItem(
                         'Shop Details',
@@ -121,9 +140,10 @@ class _ProfileScreenAdminState extends State<ProfileScreenAdmin> {
                               ),
                             ),
                           );
-                          if (updatedShopData != null) {
+                          
+                          if (updatedShopData != null && mounted) {
                             setState(() {
-                              widget.shopData.addAll(updatedShopData);
+                              widget.shopData.addAll(updatedShopData as Map<String, dynamic>);
                             });
                           }
                         },

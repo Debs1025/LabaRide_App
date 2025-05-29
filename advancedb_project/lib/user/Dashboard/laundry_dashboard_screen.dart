@@ -12,7 +12,7 @@ import '../../loginscreen.dart';
 import 'allshops.dart';
 
 class LaundryShop {
-  final String id; // Add this field
+  final String id;
   final String name;
   final String image;
   final double rating;
@@ -21,9 +21,14 @@ class LaundryShop {
   final String location;
   final String status;
   final String totalPrice;
+  final double? latitude;
+  final double? longitude;
+  final String street;
+  final String barangay;
+  final String building;
 
   LaundryShop({
-    required this.id, // Add this
+    required this.id,
     required this.name,
     required this.image,
     required this.rating,
@@ -32,6 +37,11 @@ class LaundryShop {
     required this.location,
     required this.status,
     required this.totalPrice,
+    this.latitude,
+    this.longitude,
+    this.street = '',
+    this.barangay = '',
+    this.building = '',
   });
 }
 
@@ -138,54 +148,84 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
   }
 
   Future<void> _fetchShopData() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://backend-production-5974.up.railway.app/shops/recent'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
-      );
+  try {
+    final response = await http.get(
+      Uri.parse('https://backend-production-5974.up.railway.app/shops/recent'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final List<dynamic> data = jsonDecode(response.body);
-        print('Fetched shop data: $data');
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      print('Fetched shop data: $data');
 
-        setState(() {
-          recentShops =
-              data
-                  .map((shop) {
-                    final shopId = shop['id'];
-                    if (shopId == null) {
-                      print(
-                        'Warning: Shop with name ${shop['shop_name']} has no ID',
-                      );
-                      return null;
-                    }
+      setState(() {
+        recentShops = data.map((shop) {
+          final shopId = shop['id'];
+          if (shopId == null) {
+            print('Warning: Shop with name ${shop['shop_name']} has no ID');
+            return null;
+          }
 
-                    return LaundryShop(
-                      id: shopId.toString(),
-                      name: shop['shop_name'] ?? '',
-                      image: shop['image'] ?? 'assets/default_shop.png',
-                      rating: shop['rating']?.toDouble() ?? 0.0,
-                      distance: shop['distance'] ?? 'N/A',
-                      isOpen: shop['is_open'] ?? false,
-                      location: shop['location'] ?? 'Unknown Location',
-                      status: shop['status'] ?? 'Unknown',
-                      totalPrice: shop['total_price'] ?? 'N/A',
-                    );
-                  })
-                  .whereType<LaundryShop>() // Filter out null values
-                  .toList();
-        });
-      }
-    } catch (e) {
-      print('Error in _fetchShopData: $e');
-      throw e;
+          // Format the location using shop address components
+          String formattedLocation = _formatShopAddress(shop);
+
+          return LaundryShop(
+            id: shopId.toString(),
+            name: shop['shop_name'] ?? '',
+            image: shop['image'] ?? 'assets/default_shop.png',
+            rating: shop['rating']?.toDouble() ?? 0.0,
+            distance: shop['distance'] ?? 'N/A',
+            isOpen: shop['is_open'] ?? false,
+            location: formattedLocation,
+            status: shop['status'] ?? 'Unknown',
+            totalPrice: shop['total_price'] ?? 'N/A',
+            latitude: shop['latitude'] != null ? double.tryParse(shop['latitude'].toString()) : null,
+            longitude: shop['longitude'] != null ? double.tryParse(shop['longitude'].toString()) : null,
+            street: shop['street'] ?? '',
+            barangay: shop['barangay'] ?? '',
+            building: shop['building'] ?? '',
+          );
+        }).whereType<LaundryShop>().toList();
+      });
     }
+  } catch (e) {
+    print('Error in _fetchShopData: $e');
+    throw e;
+  }
+}
+  String _formatShopAddress(Map<String, dynamic> shop) {
+  List<String> parts = [];
+
+  String zone = (shop['zone']?.toString() ?? '').trim();
+  if (zone.isNotEmpty) {
+    parts.add('Zone $zone');
   }
 
-  // In laundry_dashboard_screen.dart
+  String street = (shop['street']?.toString() ?? '').trim();
+  if (street.isNotEmpty) {
+    parts.add(street);
+  }
+
+  String barangay = (shop['barangay']?.toString() ?? '').trim();
+  if (barangay.isNotEmpty) {
+    parts.add(barangay);
+  }
+
+  String? building = shop['building']?.toString();
+  if (building != null && building.trim().isNotEmpty) {
+    parts.add(building.trim());
+  }
+
+  if (parts.isEmpty) {
+    return 'Unknown Location';
+  }
+
+  return parts.join(', ');
+}
+
   void _navigateToShop(LaundryShop shop) {
     if (widget.isGuest) {
       Navigator.push(
@@ -195,7 +235,6 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
       return;
     }
 
-    // Since shop.id is non-nullable, just check for empty
     if (shop.id.isEmpty) {
       ScaffoldMessenger.of(
         context,
@@ -352,8 +391,19 @@ class _LaundryDashboardScreenState extends State<LaundryDashboardScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder:
-            (context) => MapScreen(userId: widget.userId, token: widget.token),
+        builder: (context) => MapScreen(
+          userId: widget.userId,
+          token: widget.token,
+          shops: recentShops.map((shop) => {
+            'id': shop.id,
+            'shop_name': shop.name,
+            'latitude': shop.latitude,
+            'longitude': shop.longitude,
+            'street': shop.street,
+            'barangay': shop.barangay,
+            'building': shop.building,
+          }).toList(),
+        ),
       ),
     );
   }

@@ -8,7 +8,6 @@ import '../OrderScreen/OrderScreen.dart';
 import '../Services/ServiceScreen1.dart';
 import '../ProfileShop/ShopProfile.dart';
 import '../CustomerOrder/CustomerOrder.dart';
-import 'notifpage.dart';
 import 'shop_map.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -183,20 +182,6 @@ void _showShopDetails(Map<String, dynamic> shop) {
             color: Colors.white,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Image.asset('assets/adminIcon/bell.png'),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationsScreen(),
-                ),
-              );
-            },
-          ),
-          const SizedBox(width: 8),
-        ],
       ),
       body: WillPopScope(
       onWillPop: () async => false, // Prevent back navigation

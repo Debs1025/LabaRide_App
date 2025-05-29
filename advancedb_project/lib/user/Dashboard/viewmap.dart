@@ -5,6 +5,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import 'viewshopinfo.dart';
 
 class MapScreen extends StatefulWidget {
@@ -28,7 +29,9 @@ class _MapScreenState extends State<MapScreen> {
   final MapController mapController = MapController();
   final List<Marker> markers = [];
   Position? currentPosition;
+  List<Map<String, dynamic>> allShops = []; // Add this for better shop management
   bool isLoading = true;
+  LatLng? currentLatLng;
 
   static const LatLng nagaCityCenter = LatLng(13.6248, 123.1875);
   static const double nagaCityRadius = 11.0;
@@ -72,93 +75,123 @@ void didChangeDependencies() {
   }
 
   Future<void> _getCurrentLocation() async {
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        _showError('Location services are disabled');
+  try {
+    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      _showError('Location services are disabled');
+      return;
+    }
+
+    LocationPermission permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        _showError('Location permissions are denied');
         return;
       }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          _showError('Location permissions are denied');
-          return;
-        }
-      }
-
-      Position position = await Geolocator.getCurrentPosition();
-      
-      if (_isWithinNagaCity(position)) {
-        setState(() {
-          currentPosition = position;
-          markers.add(_createCurrentLocationMarker(position));
-        });
-        await _fetchNearbyShops(position);
-      } else {
-        _showError('You are outside Naga City. Showing Naga City center.');
-        await _fetchNearbyShops(Position(
-          latitude: nagaCityCenter.latitude,
-          longitude: nagaCityCenter.longitude,
-          timestamp: DateTime.now(),
-          accuracy: 0,
-          altitude: 0,
-          heading: 0,
-          speed: 0,
-          speedAccuracy: 0,
-          altitudeAccuracy: 0,
-          headingAccuracy: 0,
-        ));
-      }
-
-      setState(() => isLoading = false);
-    } catch (e) {
-      print('Error getting location: $e');
-      _showError('Failed to get current location');
-      setState(() => isLoading = false);
     }
+
+    Position position = await Geolocator.getCurrentPosition();
+    
+    if (_isWithinNagaCity(position)) {
+      setState(() {
+        currentPosition = position;
+        currentLatLng = LatLng(position.latitude, position.longitude);
+        markers.add(Marker(
+          point: currentLatLng!,
+          width: 40,
+          height: 40,
+          child: const Icon(
+            Icons.my_location,
+            color: Colors.blue,
+            size: 40,
+          ),
+        ));
+      });
+      await _fetchNearbyShops(position);
+    } else {
+      _showError('You are outside Naga City. Showing Naga City center.');
+      await _fetchNearbyShops(Position(
+        latitude: nagaCityCenter.latitude,
+        longitude: nagaCityCenter.longitude,
+        timestamp: DateTime.now(),
+        accuracy: 0,
+        altitude: 0,
+        heading: 0,
+        speed: 0,
+        speedAccuracy: 0,
+        altitudeAccuracy: 0,
+        headingAccuracy: 0,
+      ));
+    }
+
+    setState(() => isLoading = false);
+  } catch (e) {
+    print('Error getting location: $e');
+    _showError('Failed to get current location');
+    setState(() => isLoading = false);
   }
+}
 
-  Future<void> _fetchAllShopsWithCoordinates() async {
-    try {
-      final response = await http.get(
-        Uri.parse('https://backend-production-5974.up.railway.app/shops'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+Future<void> _fetchAllShopsWithCoordinates() async {
+  try {
+    print('Fetching shops data...');
+    final response = await http.get(
+      Uri.parse('https://backend-production-5974.up.railway.app/shops'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final shopsList = data is List ? data : data['shops'] as List;
-        setState(() {
-          for (var shop in shopsList) {
-            if (shop['latitude'] != null && shop['longitude'] != null) {
-              markers.add(_createShopMarker(shop));
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final shopsList = data is List ? data : data['shops'] as List;
+      
+      setState(() {
+        allShops = List<Map<String, dynamic>>.from(shopsList);
+        markers.clear();
+
+        if (currentPosition != null) {
+          markers.add(Marker(
+            point: LatLng(currentPosition!.latitude, currentPosition!.longitude),
+            width: 40,
+            height: 40,
+            child: const Icon(
+              Icons.my_location,
+              color: Colors.blue,
+              size: 40,
+            ),
+          ));
+        }
+
+        for (var shop in shopsList) {
+          if (shop['latitude'] != null && shop['longitude'] != null) {
+            final latitude = double.tryParse(shop['latitude'].toString());
+            final longitude = double.tryParse(shop['longitude'].toString());
+            
+            if (latitude != null && longitude != null) {
+              markers.add(_createShopMarker({
+                'id': shop['id'],
+                'name': shop['shop_name'],
+                'latitude': latitude,
+                'longitude': longitude,
+                'address': '${shop['zone'] ?? ''}, ${shop['street'] ?? ''}, ${shop['barangay'] ?? ''}',
+                'shop_name': shop['shop_name'],
+                'zone': shop['zone'],
+                'street': shop['street'],
+                'barangay': shop['barangay'],
+                'building': shop['building'],
+              }));
             }
           }
-        });
-      } else {
-        _showError('Failed to fetch all shops');
-      }
-    } catch (e) {
-      print('Error fetching all shops: $e');
-      _showError('Failed to fetch all shops');
+        }
+      });
     }
+  } catch (e) {
+    print('Error fetching shops: $e');
   }
-
-  Marker _createCurrentLocationMarker(Position position) {
-    return Marker(
-      point: LatLng(position.latitude, position.longitude),
-      child: const Icon(
-        Icons.location_on,
-        color: Colors.blue,
-        size: 40,
-      ),
-    );
-  }
+}
 
   bool _isWithinNagaCity(Position position) {
     final Distance distance = Distance();
@@ -365,85 +398,112 @@ void didChangeDependencies() {
   }
 
   Widget _buildSearchField() {
-    return Row(
-      children: [
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 8.0),
-          child: Icon(
-            Icons.location_on,
-            color: Color(0xFF1A0066),
-          ),
+  return Row(
+    children: [
+      const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 8.0),
+        child: Icon(
+          Icons.location_on,
+          color: Color(0xFF1A0066),
         ),
-        Expanded(
-          child: TextField(
-            controller: _searchController,
-            decoration: const InputDecoration(
-              hintText: 'Type laundry shop name',
-              hintStyle: TextStyle(
-                color: Color(0xFF9CA3AF),
-                fontSize: 14,
-              ),
-              border: InputBorder.none,
+      ),
+      Expanded(
+        child: TextField(
+          controller: _searchController,
+          decoration: const InputDecoration(
+            hintText: 'Type laundry shop name or address',
+            hintStyle: TextStyle(
+              color: Color(0xFF9CA3AF),
+              fontSize: 14,
             ),
-            onSubmitted: _handleSearch,
+            border: InputBorder.none,
           ),
+          onChanged: _handleSearch,
+          onSubmitted: _handleSearch,
         ),
-      ],
-    );
-  }
+      ),
+      if (_searchController.text.isNotEmpty)
+        IconButton(
+          icon: const Icon(Icons.clear, color: Colors.grey),
+          onPressed: () {
+            _searchController.clear();
+            _handleSearch('');
+          },
+        ),
+    ],
+  );
+}
 
-  void _handleSearch(String value) {
-  if (value.isEmpty) {
+void _handleSearch(String value) {
+  final query = value.toLowerCase().trim();
+
+  if (query.isEmpty) {
     setState(() {
       markers.clear();
       if (currentPosition != null) {
-        markers.add(_createCurrentLocationMarker(currentPosition!));
+        markers.add(Marker(
+          point: LatLng(currentPosition!.latitude, currentPosition!.longitude),
+          width: 40,
+          height: 40,
+          child: const Icon(
+            Icons.my_location,
+            color: Colors.blue,
+            size: 40,
+          ),
+        ));
       }
-      // Restore all shop markers
-      if (widget.shops != null) {
-        for (var shop in widget.shops!) {
-          if (shop['latitude'] != null && shop['longitude'] != null) {
-            markers.add(_createShopMarker(shop));
-          }
+      for (var shop in allShops) {
+        if (shop['latitude'] != null && shop['longitude'] != null) {
+          markers.add(_createShopMarker(shop));
         }
       }
     });
     return;
   }
 
+  final filteredShops = allShops.where((shop) {
+    final shopName = shop['shop_name']?.toString().toLowerCase() ?? '';
+    final street = shop['street']?.toString().toLowerCase() ?? '';
+    final barangay = shop['barangay']?.toString().toLowerCase() ?? '';
+    final building = shop['building']?.toString().toLowerCase() ?? '';
+
+    return shopName.contains(query) ||
+           street.contains(query) ||
+           barangay.contains(query) ||
+           building.contains(query);
+  }).toList();
+
   setState(() {
     markers.clear();
     if (currentPosition != null) {
-      markers.add(_createCurrentLocationMarker(currentPosition!));
+      markers.add(Marker(
+        point: LatLng(currentPosition!.latitude, currentPosition!.longitude),
+        width: 40,
+        height: 40,
+        child: const Icon(
+          Icons.my_location,
+          color: Colors.blue,
+          size: 40,
+        ),
+      ));
     }
-    // Only add matching shops with improved search
-    if (widget.shops != null) {
-      for (var shop in widget.shops!) {
-        final shopName = shop['shop_name']?.toString().toLowerCase() ?? '';
-        final street = shop['street']?.toString().toLowerCase() ?? '';
-        final barangay = shop['barangay']?.toString().toLowerCase() ?? '';
-        final building = shop['building']?.toString().toLowerCase() ?? '';
-        
-        final matches = shopName.contains(value.toLowerCase()) ||
-                       street.contains(value.toLowerCase()) ||
-                       barangay.contains(value.toLowerCase()) ||
-                       building.contains(value.toLowerCase());
-        
-        if (matches && shop['latitude'] != null && shop['longitude'] != null) {
-          markers.add(_createShopMarker(shop));
-        }
-      }
+    for (var shop in filteredShops) {
+      markers.add(_createShopMarker(shop));
     }
   });
 
-  if (markers.length <= 1) { // Only current location marker
+  if (filteredShops.isEmpty) {
     _showError('No shops found matching "$value"');
   }
 }
 
   Future<void> _handleLocationPress() async {
   try {
-    Position position = await Geolocator.getCurrentPosition();
+    setState(() => isLoading = true);
+    Position position = await Geolocator.getCurrentPosition(
+      timeLimit: const Duration(seconds: 10)
+    );
+
     if (_isWithinNagaCity(position)) {
       mapController.move(
         LatLng(position.latitude, position.longitude),
@@ -451,14 +511,32 @@ void didChangeDependencies() {
       );
       setState(() {
         currentPosition = position;
+        markers.removeWhere((marker) => 
+          marker.child is Icon && 
+          (marker.child as Icon).icon == Icons.my_location
+        );
+        markers.add(Marker(
+          point: LatLng(position.latitude, position.longitude),
+          width: 40,
+          height: 40,
+          child: const Icon(
+            Icons.my_location,
+            color: Colors.blue,
+            size: 40,
+          ),
+        ));
       });
     } else {
+      _showError('You are outside Naga City. Showing Naga City center.');
       mapController.move(nagaCityCenter, 14.0);
-      _showError('Showing Naga City center');
     }
   } catch (e) {
     print('Error getting location: $e');
-    _showError('Failed to get current location');
+    String errorMessage = 'Failed to get current location.';
+    if (e is TimeoutException) errorMessage = 'Getting location timed out. Try again.';
+    _showError(errorMessage);
+  } finally {
+    setState(() => isLoading = false);
   }
 }
 
