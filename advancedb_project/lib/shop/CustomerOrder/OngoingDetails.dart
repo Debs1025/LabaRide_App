@@ -27,6 +27,7 @@ class _OngoingDetailsState extends State<OngoingDetails> {
   String _error = '';
 
   final List<String> statusOptions = [
+    'Processing',
     'In Progress',
     'Washing',
     'Folding',
@@ -38,7 +39,10 @@ class _OngoingDetailsState extends State<OngoingDetails> {
   @override
   void initState() {
     super.initState();
-    currentStatus = widget.orderDetails['status'] ?? 'In Progress';
+    // Handle status initialization with Processing status
+    String status = widget.orderDetails['status'] ?? 'In Progress';
+    if (status == 'Processing') status = 'In Progress';
+    currentStatus = status;
   }
 
   Future<void> _updateOrderStatus(String newStatus) async {
@@ -62,19 +66,26 @@ class _OngoingDetailsState extends State<OngoingDetails> {
           currentStatus = newStatus;
           isExpanded = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Order status updated to $newStatus')),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Order status updated to $newStatus')),
+          );
+        }
       } else {
+        print('Status update failed: ${response.statusCode} ${response.body}');
         throw Exception('Failed to update order status');
       }
     } catch (e) {
-      setState(() => _error = e.toString());
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: $_error')),
-      );
+      if (mounted) {
+        setState(() => _error = e.toString());
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $_error')),
+        );
+      }
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 

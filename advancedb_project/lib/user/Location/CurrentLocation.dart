@@ -1,22 +1,18 @@
 import 'package:flutter/material.dart';
-import '../Transaction/2PlaceOrder.dart';
-import '../OrderingSystem/ordershopsystem.dart'; 
-
 
 class CurrentLocation extends StatelessWidget {
   final String address;
   final int userId;
   final String token;
-  final Service service;
+  final List<String> services;
 
   const CurrentLocation({
     super.key,
     required this.address,
     required this.userId,
     required this.token,
-    required this.service,
+    required this.services,
   });
-
 
   @override
   Widget build(BuildContext context) {
@@ -43,15 +39,12 @@ class CurrentLocation extends StatelessWidget {
       ),
       body: Stack(
         children: [
-          // Map Section
           Positioned.fill(
             child: Image.asset(
               'assets/mapa.png',
               fit: BoxFit.cover,
             ),
           ),
-
-          // Centered Map Marker
           Center(
             child: Padding(
               padding: const EdgeInsets.only(bottom: 32.0),
@@ -69,8 +62,6 @@ class CurrentLocation extends StatelessWidget {
               ),
             ),
           ),
-
-          // Address Section
           Align(
             alignment: Alignment.bottomCenter,
             child: Container(
@@ -149,42 +140,27 @@ class CurrentLocation extends StatelessWidget {
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => CheckoutScreen(
-                            userId: userId,
-                            token: token,
-                            service: service,
-                            selectedItems: {},
-                            deliveryOption: 'Delivery',
-                            notes: '',
-                            subtotal: service.totalPrice,
-                            deliveryFee: 30.0,
-                            shopData: service.shopData,
-                            voucherDiscount: 0.0,
-                          ),
-                        ),
-                      );
+                      // Return the address to the previous screen
+                      Navigator.pop(context, address);
                     },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1A0066),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    minimumSize: const Size(double.infinity, 56),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1A0066),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      minimumSize: const Size(double.infinity, 56),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
                     ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Confirm Address',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+                    child: const Text(
+                      'Confirm Address',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
-                )
                 ],
               ),
             ),

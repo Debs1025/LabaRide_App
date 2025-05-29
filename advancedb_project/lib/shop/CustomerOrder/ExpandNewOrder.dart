@@ -73,51 +73,49 @@ class _ExpandNewOrderState extends State<ExpandNewOrder> {
   }
 
   Future<void> _fetchNewOrders() async {
-    setState(() {
-      _isLoading = true;
-      _error = '';
-    });
+  setState(() {
+    _isLoading = true;
+    _error = '';
+  });
 
-    try {
-      final response = await http.get(
-        Uri.parse(
-          'https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}',
-        ),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+  try {
+    final response = await http.get(
+      Uri.parse(
+        'https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}',
+      ),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final transactionsRaw = data['data'] ?? data['transactions'] ?? [];
-        final allOrders =
-            (transactionsRaw as List)
-                .map((e) => Map<String, dynamic>.from(e))
-                .toList();
-        setState(() {
-          _newOrders =
-              allOrders
-                  .where(
-                    (order) =>
-                        order['status']?.toString().toLowerCase() == 'new' ||
-                        order['status']?.toString().toLowerCase() == 'pending',
-                  )
-                  .toList();
-          _filteredOrders = List.from(_newOrders);
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load new orders');
-      }
-    } catch (e) {
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final transactionsRaw = data['data'] ?? data['transactions'] ?? [];
+      final allOrders = (transactionsRaw as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
       setState(() {
-        _error = e.toString();
+        _newOrders = allOrders
+            .where(
+              (order) =>
+                  order['status']?.toString().toLowerCase() == 'new' ||
+                  order['status']?.toString().toLowerCase() == 'pending',
+            )
+            .toList();
+        _filteredOrders = List.from(_newOrders);
         _isLoading = false;
       });
+    } else {
+      throw Exception('Failed to load new orders');
     }
+  } catch (e) {
+    setState(() {
+      _error = e.toString();
+      _isLoading = false;
+    });
   }
+}
 
 Future<void> _declineOrder(int orderId) async {
   try {
@@ -135,20 +133,20 @@ Future<void> _declineOrder(int orderId) async {
       );
       _fetchNewOrders();
       if (widget.onOrderAccepted != null) {
-        widget.onOrderAccepted!(); // <-- Insert this here!
+        widget.onOrderAccepted!();
       }
-      Navigator.pop(context); // Optionally close the screen after decline
+      Navigator.pop(context);
     } else {
       throw Exception('Failed to decline order');
     }
   } catch (e) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error: ${e.toString()}')),
+    );
   }
 }
 
-  Future<void> _setOrderPrice(int orderId, String price) async {
+  Future<void> _setOrderPrice(int orderId, String price, String serviceFee) async {
   try {
     final response = await http.put(
       Uri.parse('https://backend-production-5974.up.railway.app/api/orders/$orderId/set_price'),
@@ -156,15 +154,16 @@ Future<void> _declineOrder(int orderId) async {
         'Authorization': 'Bearer ${widget.token}',
         'Content-Type': 'application/json',
       },
-      body: jsonEncode({'price_per_kilo': price}),
+      body: jsonEncode({'price_per_kilo': price, 'service_fee': serviceFee}),
     );
+
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Price set successfully!')),
       );
       _fetchNewOrders();
       if (widget.onOrderAccepted != null) {
-        widget.onOrderAccepted!(); // <-- Notify parent to refresh ongoing orders
+        widget.onOrderAccepted!();
       }
     } else {
       throw Exception('Failed to set price');
@@ -380,7 +379,9 @@ Future<void> _declineOrder(int orderId) async {
                           onPressed: () {
                             final price = _priceControllers[orderId]?.text ?? '';
                             if (price.isNotEmpty) {
-                              _setOrderPrice(orderId, price);
+                              // Add default service fee or get it from the order
+                              final serviceFee = order['service_fee']?.toString() ?? '50';
+                              _setOrderPrice(orderId, price, serviceFee);
                             }
                           },
                         ),

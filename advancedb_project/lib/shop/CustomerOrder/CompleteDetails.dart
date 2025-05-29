@@ -32,36 +32,36 @@ class _CompleteDetailsState extends State<CompleteDetails> {
   }
 
   Future<void> _loadOrderDetails() async {
-    setState(() {
-      _isLoading = true;
-      _error = '';
-    });
+  setState(() {
+    _isLoading = true;
+    _error = '';
+  });
 
-    try {
-      final response = await http.get(
-        Uri.parse('https://localhost:5000/order_items/${widget.orderDetails['id']}'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+  try {
+    final response = await http.get(
+      Uri.parse('https://backend-production-5974.up.railway.app/order_items/${widget.orderDetails['id']}'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        setState(() {
-          _items = List<Map<String, dynamic>>.from(data['data'] ?? []);
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load order items');
-      }
-    } catch (e) {
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
       setState(() {
-        _error = e.toString();
+        _items = List<Map<String, dynamic>>.from(data['data'] ?? []);
         _isLoading = false;
       });
+    } else {
+      throw Exception('Failed to load order items');
     }
+  } catch (e) {
+    setState(() {
+      _error = e.toString();
+      _isLoading = false;
+    });
   }
+}
 
   Color _getServiceColor(String service) {
     switch (service.toUpperCase()) {

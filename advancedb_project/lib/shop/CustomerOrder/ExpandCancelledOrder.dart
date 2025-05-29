@@ -60,47 +60,47 @@ class _ExpandCancelledOrderState extends State<ExpandCancelledOrder> {
   }
 
   Future<void> _fetchCancelledOrders() async {
-    setState(() {
-      _isLoading = true;
-      _error = '';
-    });
+  setState(() {
+    _isLoading = true;
+    _error = '';
+  });
 
-    try {
-      final response = await http.get(
-        Uri.parse(
-          'https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}?status=cancelled',
-        ),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+  try {
+    final response = await http.get(
+      Uri.parse(
+        'https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}?status=cancelled',
+      ),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final transactionsRaw = data['data'] ?? data['transactions'] ?? [];
-        final allOrders = (transactionsRaw as List)
-            .map((e) => Map<String, dynamic>.from(e))
-            .toList();
-        setState(() {
-          _cancelledOrders = allOrders
-              .where((order) =>
-                  order['status']?.toString().toLowerCase() == 'cancelled' ||
-                  order['status']?.toString().toLowerCase() == 'declined')
-              .toList();
-          _filteredOrders = List.from(_cancelledOrders);
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load cancelled orders');
-      }
-    } catch (e) {
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final transactionsRaw = data['data'] ?? data['transactions'] ?? [];
+      final allOrders = (transactionsRaw as List)
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList();
       setState(() {
-        _error = e.toString();
+        _cancelledOrders = allOrders
+            .where((order) =>
+                order['status']?.toString().toLowerCase() == 'cancelled' ||
+                order['status']?.toString().toLowerCase() == 'declined')
+            .toList();
+        _filteredOrders = List.from(_cancelledOrders);
         _isLoading = false;
       });
+    } else {
+      throw Exception('Failed to load cancelled orders');
     }
+  } catch (e) {
+    setState(() {
+      _error = e.toString();
+      _isLoading = false;
+    });
   }
+}
 
   String _formatDate(String? dateTime) {
     if (dateTime == null) return '';

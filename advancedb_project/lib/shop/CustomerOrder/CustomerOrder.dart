@@ -78,7 +78,7 @@ class _CustomerOrdersState extends State<CustomerOrders> {
   }
 
   void _refreshOrders() {
-    _fetchShopOrders(); // This will refresh all order lists
+    _fetchShopOrders(); 
   }
 
   @override
@@ -88,52 +88,51 @@ class _CustomerOrdersState extends State<CustomerOrders> {
   }
 
   Future<void> _fetchShopOrders() async {
+  setState(() {
+    _isLoading = true;
+    _error = '';
+  });
+
+  final shopId = widget.shopData['id'];
+  if (shopId == null || shopId.toString().isEmpty) {
     setState(() {
-      _isLoading = true;
-      _error = '';
+      _error = 'Shop ID is missing!';
+      _isLoading = false;
     });
-
-    final shopId = widget.shopData['id'];
-    if (shopId == null || shopId.toString().isEmpty) {
-      setState(() {
-        _error = 'Shop ID is missing!';
-        _isLoading = false;
-      });
-      return;
-    }
-
-    try {
-      final response = await http.get(
-        Uri.parse('https://backend-production-5974.up.railway.app/shop_transactions/$shopId'),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
-
-      if (response.statusCode != 200) {
-        throw Exception('Failed to load orders: ${response.statusCode}');
-      }
-
-      final data = jsonDecode(response.body);
-      final transactionsRaw = data['data'] ?? data['transactions'] ?? [];
-      final ordersList =
-          (transactionsRaw as List)
-              .where((e) => e is Map)
-              .map((e) => Map<String, dynamic>.from(e as Map))
-              .toList();
-
-      setState(() {
-        _shopOrders = ordersList;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _error = e.toString();
-        _isLoading = false;
-      });
-    }
+    return;
   }
+
+  try {
+    final response = await http.get(
+      Uri.parse('https://backend-production-5974.up.railway.app/shop_transactions/$shopId'),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to load orders: ${response.statusCode}');
+    }
+
+    final data = jsonDecode(response.body);
+    final transactionsRaw = data['data'] ?? data['transactions'] ?? [];
+    final ordersList = (transactionsRaw as List)
+        .where((e) => e is Map)
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+
+    setState(() {
+      _shopOrders = ordersList;
+      _isLoading = false;
+    });
+  } catch (e) {
+    setState(() {
+      _error = e.toString();
+      _isLoading = false;
+    });
+  }
+}
 
   List<Map<String, dynamic>> _filterOrdersByStatus(String status) {
     return _shopOrders
@@ -286,9 +285,10 @@ class _CustomerOrdersState extends State<CustomerOrders> {
   }
 
   Widget _buildOngoingOrderCard() {
-    final processingOrders = _filterOrdersByStatus('processing');
-    final acceptedOrders = _filterOrdersByStatus('accepted');
-    final ongoingOrders = [...processingOrders, ...acceptedOrders];
+  final processingOrders = _filterOrdersByStatus('processing');
+  final acceptedOrders = _filterOrdersByStatus('accepted');
+  final inProgressOrders = _filterOrdersByStatus('In Progress');
+  final ongoingOrders = [...processingOrders, ...acceptedOrders, ...inProgressOrders];
 
     return GestureDetector(
       onTap: () {
@@ -396,7 +396,7 @@ class _CustomerOrdersState extends State<CustomerOrders> {
   }
 
   Widget _buildCompletedOrdersCard() {
-    final completedOrders = _filterOrdersByStatus('completed');
+    final completedOrders = _filterOrdersByStatus('complete');
     return GestureDetector(
       onTap: () {
         Navigator.push(

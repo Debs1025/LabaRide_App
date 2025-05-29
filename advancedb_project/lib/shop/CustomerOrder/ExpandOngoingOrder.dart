@@ -44,57 +44,96 @@ class _ExpandOngoingOrderState extends State<ExpandOngoingOrder> {
     super.dispose();
   }
 
-  void _filterOrders() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      _filteredOrders =
-          _ongoingOrders.where((order) {
-            final user = (order['user_name'] ?? '').toLowerCase();
-            final service = (order['service'] ?? '').toLowerCase();
-            final address = (order['address'] ?? '').toLowerCase();
-            return user.contains(query) ||
-                service.contains(query) ||
-                address.contains(query);
-          }).toList();
-    });
-  }
+void _filterOrders() {
+  final query = _searchController.text.toLowerCase();
+  setState(() {
+    _filteredOrders = _ongoingOrders.where((order) {
+      String userName = (order['user_name'] ?? '').toString().toLowerCase();
+      String service = (order['service'] ?? '').toString().toLowerCase();
+      String address = (order['address'] ?? '').toString().toLowerCase();
+      
+      return userName.contains(query) ||
+             service.contains(query) ||
+             address.contains(query);
+    }).toList();
+  });
+}
 
-  Future<void> _fetchOngoingOrders() async {
-    setState(() {
-      _isLoading = true;
-      _error = '';
-    });
+Future<void> _fetchOngoingOrders() async {
+  setState(() {
+    _isLoading = true;
+    _error = '';
+  });
 
-    try {
-      final response = await http.get(
-        Uri.parse(
-          'https://backend-production-5974.up.railway.app/api/orders?shop_id=${widget.shopData['id']}&status=processing',
-        ),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+  try {
+    final response = await http.get(
+      Uri.parse(
+        'https://backend-production-5974.up.railway.app/api/orders?shop_id=${widget.shopData['id']}&status=processing',
+      ),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final orders =
-            data['data'] ?? data['orders'] ?? data['transactions'] ?? [];
-        setState(() {
-          _ongoingOrders = List<Map<String, dynamic>>.from(orders);
-          _filteredOrders = List.from(_ongoingOrders);
-          _isLoading = false;
-        });
-      } else {
-        throw Exception('Failed to load ongoing orders');
-      }
-    } catch (e) {
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final orders = data['data'] ?? data['orders'] ?? data['transactions'] ?? [];
+      
+      // Process the orders
+      List<Map<String, dynamic>> processedOrders = List<Map<String, dynamic>>.from(orders).map((order) {
+        return {
+          ...order,
+          'id': order['id']?.toString(),
+          'user_name': order['user_name'] ?? order['customer_name'] ?? 'Unknown',
+          'service_name': order['service_name']?.toString() ?? 'Unknown',
+          'total_amount': order['total_amount']?.toString() ?? '0',
+          'address': _buildAddress(order),
+          'status': order['status'] ?? 'Processing',
+          'created_at': order['created_at']?.toString(),
+        };
+      }).toList();
+
       setState(() {
-        _error = e.toString();
+        _ongoingOrders = processedOrders;
+        _filteredOrders = List.from(processedOrders);
         _isLoading = false;
       });
+    } else {
+      throw Exception('Failed to load ongoing orders');
     }
+  } catch (e) {
+    setState(() {
+      _error = e.toString();
+      _isLoading = false;
+    });
   }
+}
+
+String _buildAddress(Map<String, dynamic> order) {
+  List<String> addressParts = [];
+  
+  // Fixed null checks
+  String? building = order['building']?.toString();
+  String? street = order['street']?.toString();
+  String? zone = order['zone']?.toString();
+  String? barangay = order['barangay']?.toString();
+
+  if (building != null && building.isNotEmpty) {
+    addressParts.add(building);
+  }
+  if (street != null && street.isNotEmpty) {
+    addressParts.add(street);
+  }
+  if (zone != null && zone.isNotEmpty) {
+    addressParts.add('Zone $zone');
+  }
+  if (barangay != null && barangay.isNotEmpty) {
+    addressParts.add(barangay);
+  }
+  
+  return addressParts.isEmpty ? 'No address' : addressParts.join(', ');
+}
 
   String _formatDate(String? dateTime) {
     if (dateTime == null) return '';
@@ -194,71 +233,85 @@ class _ExpandOngoingOrderState extends State<ExpandOngoingOrder> {
   }
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap:
-            () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (context) => OngoingDetails(
-                      orderDetails: order,
-                      userId: widget.userId,
-                      token: widget.token,
-                      shopData: widget.shopData,
-                    ),
-              ),
+  String id = order['id']?.toString() ?? '';
+  String status = order['status'] ?? 'Processing';
+  String userName = order['user_name'] ?? 'Unknown';
+  String serviceName = order['service_name'] ?? 'Unknown';
+  String amount = order['total_amount']?.toString() ?? '0';
+  String address = order['address'] ?? 'No address';
+  String createdAt = order['created_at']?.toString() ?? '';
+
+  return Card(
+    margin: const EdgeInsets.only(bottom: 12),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    child: InkWell(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OngoingDetails(
+              orderDetails: order,
+              userId: widget.userId,
+              token: widget.token,
+              shopData: widget.shopData,
             ),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '#${order['id'] ?? ''}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.indigo[900],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.pink[50],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'In Progress',
-                      style: TextStyle(
-                        color: Colors.pink[400],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(height: 24),
-              _buildOrderField('Customer', order['user_name'] ?? 'Unknown'),
-              _buildOrderField('Service', order['service_name'] ?? 'Unknown'),
-              _buildOrderField('Amount', '₱${order['total_amount'] ?? '0.00'}'),
-              _buildOrderField('Address', order['address'] ?? 'No address'),
-              _buildOrderField('Date', _formatDate(order['created_at'])),
-            ],
           ),
+        );
+        if (result == 'status_updated') {
+          _fetchOngoingOrders();
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '#$id',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.indigo[900],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.pink[50],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    status,
+                    style: TextStyle(
+                      color: Colors.pink[400],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            _buildOrderField('Customer', userName),
+            _buildOrderField('Service', serviceName),
+            _buildOrderField(
+              'Amount', 
+              '₱${double.tryParse(amount)?.toStringAsFixed(2) ?? '0.00'}'
+            ),
+            _buildOrderField('Address', address),
+            _buildOrderField('Date', _formatDate(createdAt)),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildOrderField(String label, dynamic value) {
     return Padding(

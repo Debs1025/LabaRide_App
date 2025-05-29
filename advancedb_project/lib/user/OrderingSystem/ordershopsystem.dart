@@ -196,6 +196,12 @@ void _onBasketTap() {
   }
 
   Service selectedService = selectedServicesList.first;
+  
+  // Convert Service to List<String> for the services parameter
+  List<String> selectedServiceNames = selectedServicesList
+      .map((service) => service.title)
+      .toList();
+
   if (widget.initialService != null) {
     Navigator.pop(context, {
       'selectedItems': Map<String, int>.from(selectedServices),
@@ -211,7 +217,7 @@ void _onBasketTap() {
         builder: (context) => OrderConfirmScreen(
           userId: widget.userId,
           token: widget.token,
-          service: selectedService,
+          services: selectedServiceNames, // Pass list of service names instead of Service object
           selectedItems: Map<String, int>.from(selectedServices),
           deliveryOption: deliveryOption,
           notes: '',

@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'CurrentLocation.dart';
-import '../OrderingSystem/ordershopsystem.dart';
 
 class AddLocation extends StatefulWidget {
   final int userId;
   final String token;
-  final Service? service;  
+  final List<String>? services; 
 
   const AddLocation({
     super.key,
     required this.userId,
     required this.token,
-    this.service,  
+    this.services,
   });
 
   @override
@@ -181,7 +180,7 @@ Widget _buildCurrentLocationButton() {
     padding: const EdgeInsets.all(16.0),
     child: ElevatedButton.icon(
       onPressed: () {
-        if (widget.service != null) {
+        if (widget.services != null && widget.services!.isNotEmpty) {
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -189,7 +188,7 @@ Widget _buildCurrentLocationButton() {
                 address: selectedLocation,
                 userId: widget.userId,
                 token: widget.token,
-                service: widget.service!,  //can be null since service is only needed for transaction
+                services: widget.services!, // Pass the list of services
               ),
             ),
           );
@@ -197,24 +196,24 @@ Widget _buildCurrentLocationButton() {
           Navigator.pop(context, selectedLocation);
         }
       },
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'Use Current Location',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white,
-          ),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF1A0066),
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          minimumSize: const Size(double.infinity, 50),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
+      icon: const Icon(Icons.add, color: Colors.white),
+      label: const Text(
+        'Use Current Location',
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
         ),
       ),
-    );
-  }
+      style: ElevatedButton.styleFrom(
+        backgroundColor: const Color(0xFF1A0066),
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        minimumSize: const Size(double.infinity, 50),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(24),
+        ),
+      ),
+    ),
+  );
+}
 }

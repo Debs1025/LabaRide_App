@@ -60,12 +60,11 @@ Future<void> _loadMoreTransactions() async {
   if (isLoading) return;
 
   final currentLength = transactionsData.length;
-  if (currentLength >= _cachedTransactions.length) return; // No more data to load
+  if (currentLength >= _cachedTransactions.length) return;
 
   setState(() => isLoading = true);
 
   try {
-    // Get next batch from cached data
     final nextBatch = _cachedTransactions
         .skip(currentLength)
         .take(_pageSize)
@@ -89,66 +88,67 @@ Future<void> _loadMoreTransactions() async {
 }
 
 Future<void> fetchTransactions() async {
-    if (isLoading) return;
+  if (isLoading) return;
 
-    setState(() {
-      isLoading = true;
-      error = null;
-    });
+  setState(() {
+    isLoading = true;
+    error = null;
+  });
 
-    try {
-      if (widget.shopData.isEmpty || widget.shopData['id'] == null) {
-        throw Exception('No shop data available');
-      }
+  try {
+    if (widget.shopData.isEmpty || widget.shopData['id'] == null) {
+      throw Exception('No shop data available');
+    }
 
-      final response = await http.get(
-        Uri.parse('https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer ${widget.token}',
-        },
-      ).timeout(const Duration(seconds: 15)); // Add timeout
+    final response = await http.get(
+      Uri.parse('https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}'),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ${widget.token}',
+      },
+    ).timeout(const Duration(seconds: 15));
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      
+      if (data is Map<String, dynamic> && data.containsKey('transactions')) {
+        final allTransactions = List<Map<String, dynamic>>.from(data['transactions']);
         
-        if (data is Map<String, dynamic> && data.containsKey('transactions')) {
-          final allTransactions = List<Map<String, dynamic>>.from(data['transactions']);
-          
-          // Store all transactions in cache
-          _cachedTransactions = allTransactions.map((transaction) {
-            return {
-              'id': transaction['id'],
-              'transaction_id': transaction['id'],
-              'user_name': transaction['customer_name'] ?? transaction['user_name'] ?? 'N/A',
-              'service_name': transaction['service_name']?.toString() ?? 'N/A',
-              'delivery_type': transaction['delivery_type']?.toString() ?? 'N/A',
-              'status': transaction['status']?.toString() ?? 'N/A',
-              'payment_method': transaction['payment_method']?.toString() ?? 'N/A',
-              'total_amount': transaction['total_amount']?.toString() ?? '0',
-              'created_at': transaction['created_at']?.toString() ?? 'N/A',
-            };
-          }).toList();
+        // Store all transactions in cache
+        _cachedTransactions = allTransactions.map((transaction) {
+          return {
+            'id': transaction['id'],
+            'transaction_id': transaction['id'],
+            'user_name': transaction['customer_name'] ?? transaction['user_name'] ?? 'N/A',
+            'service_name': transaction['service_name']?.toString() ?? 'N/A',
+            'delivery_type': transaction['delivery_type']?.toString() ?? 'N/A',
+            'status': transaction['status']?.toString() ?? 'N/A',
+            'payment_method': transaction['payment_method']?.toString() ?? 'N/A',
+            'total_amount': transaction['total_amount']?.toString() ?? '0',
+            'created_at': transaction['created_at']?.toString() ?? 'N/A',
+            'notification_status': transaction['notification_status']?.toString(),
+          };
+        }).toList();
 
-          // Show initial page
-          setState(() {
-            transactionsData = _cachedTransactions.take(_pageSize).toList();
-            isLoading = false;
-          });
-        }
-      } else {
-        throw Exception('Failed to load transactions: ${response.statusCode}');
-      }
-    } catch (e) {
-      if (mounted) {
+        // Show initial page
         setState(() {
-          error = e.toString();
+          transactionsData = _cachedTransactions.take(_pageSize).toList();
           isLoading = false;
         });
-        _showErrorSnackBar('Error fetching transactions: $e');
       }
+    } else {
+      throw Exception('Failed to load transactions: ${response.statusCode}');
+    }
+  } catch (e) {
+    if (mounted) {
+      setState(() {
+        error = e.toString();
+        isLoading = false;
+      });
+      _showErrorSnackBar('Error fetching transactions: $e');
     }
   }
+}
 
 
   void _showErrorSnackBar(String message) {
@@ -210,14 +210,19 @@ Future<void> fetchTransactions() async {
   }
 
   List<Map<String, dynamic>> getFilteredTransactions() {
-    if (selectedFilter == 'All') {
-      return transactionsData;
-    }
-    return transactionsData.where((transaction) {
-      return transaction['status']?.toString().toLowerCase() == 
-             selectedFilter.toLowerCase();
-    }).toList();
+  if (selectedFilter == 'All') {
+    return transactionsData.where((transaction) =>
+        (transaction['notification_status'] ?? 'accepted') == 'accepted').toList();
   }
+  if (selectedFilter == 'Cancelled') {
+    return transactionsData.where((transaction) =>
+        (transaction['notification_status'] ?? '') == 'cancelled').toList();
+  }
+  return transactionsData.where((transaction) {
+    return transaction['status']?.toString().toLowerCase() == 
+           selectedFilter.toLowerCase();
+  }).toList();
+}
 
   Future<void> _viewSelectedTransaction() async {
     final selectedTransactionId = selectedItems.entries

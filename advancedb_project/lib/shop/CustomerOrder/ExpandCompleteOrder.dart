@@ -63,58 +63,56 @@ class _ExpandCompleteOrderState extends State<ExpandCompleteOrder> {
   }
 
   Future<void> _fetchCompletedOrders() async {
-    setState(() {
-      _isLoading = true;
-      _error = '';
-    });
+  setState(() {
+    _isLoading = true;
+    _error = '';
+  });
 
-    try {
-      final response = await http.get(
-        Uri.parse(
-          'https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}',
-        ),
-        headers: {
-          'Authorization': 'Bearer ${widget.token}',
-          'Content-Type': 'application/json',
-        },
-      );
+  try {
+    final response = await http.get(
+      Uri.parse(
+        'https://backend-production-5974.up.railway.app/shop_transactions/${widget.shopData['id']}',
+      ),
+      headers: {
+        'Authorization': 'Bearer ${widget.token}',
+        'Content-Type': 'application/json',
+      },
+    );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final ordersRaw = data['data'] ?? data['orders'] ?? [];
-        List<Map<String, dynamic>> allOrders = [];
-        if (ordersRaw is List) {
-          allOrders = List<Map<String, dynamic>>.from(
-            ordersRaw.map((e) => Map<String, dynamic>.from(e)),
-          );
-        } else if (ordersRaw is Map) {
-          allOrders = [Map<String, dynamic>.from(ordersRaw)];
-        } else {
-          allOrders = [];
-        }
-
-        setState(() {
-          _completedOrders =
-              allOrders
-                  .where(
-                    (order) =>
-                        order['status']?.toString().toLowerCase() ==
-                        'completed',
-                  )
-                  .toList();
-          _filteredOrders = List.from(_completedOrders);
-          _isLoading = false;
-        });
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final ordersRaw = data['transactions'] ?? [];
+      List<Map<String, dynamic>> allOrders = [];
+      if (ordersRaw is List) {
+        allOrders = List<Map<String, dynamic>>.from(
+          ordersRaw.map((e) => Map<String, dynamic>.from(e)),
+        );
+      } else if (ordersRaw is Map) {
+        allOrders = [Map<String, dynamic>.from(ordersRaw)];
       } else {
-        throw Exception('Failed to load completed orders');
+        allOrders = [];
       }
-    } catch (e) {
+
       setState(() {
-        _error = e.toString();
+        _completedOrders = allOrders
+            .where(
+              (order) =>
+                  order['status']?.toString().toLowerCase() == 'complete',
+            )
+            .toList();
+        _filteredOrders = List.from(_completedOrders);
         _isLoading = false;
       });
+    } else {
+      throw Exception('Failed to load completed orders');
     }
+  } catch (e) {
+    setState(() {
+      _error = e.toString();
+      _isLoading = false;
+    });
   }
+}
 
   String _formatDate(String? dateTime) {
     if (dateTime == null) return '';
@@ -214,76 +212,78 @@ class _ExpandCompleteOrderState extends State<ExpandCompleteOrder> {
   }
 
   Widget _buildOrderCard(Map<String, dynamic> order) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: InkWell(
-        onTap:
-            () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder:
-                    (context) => CompleteDetails(
-                      orderDetails: Map<String, String>.from(
-                        order.map(
-                          (key, value) =>
-                              MapEntry(key, value?.toString() ?? ''),
-                        ),
-                      ),
-                      userId: widget.userId,
-                      token: widget.token,
-                      shopData: widget.shopData,
-                    ),
+  return Card(
+    margin: const EdgeInsets.only(bottom: 12),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    child: InkWell(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CompleteDetails(
+              orderDetails: Map<String, String>.from(
+                order.map(
+                  (key, value) => MapEntry(key, value?.toString() ?? ''),
+                ),
               ),
+              userId: widget.userId,
+              token: widget.token,
+              shopData: widget.shopData,
             ),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    '#${order['id'] ?? ''}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.indigo[900],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.green[50],
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      'Complete',
-                      style: TextStyle(
-                        color: Colors.green[400],
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(height: 24),
-              _buildOrderField('Customer', order['user_name'] ?? 'Unknown'),
-              _buildOrderField('Service', order['service_name'] ?? 'Unknown'),
-              _buildOrderField('Amount', '₱${order['total_amount'] ?? '0.00'}'),
-              _buildOrderField('Address', order['address'] ?? 'No address'),
-              _buildOrderField('Date', _formatDate(order['created_at'])),
-            ],
           ),
+        );
+        if (result == 'status_updated') {
+          _fetchCompletedOrders(); // Refresh list if status updated
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '#${order['id'] ?? ''}',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.indigo[900],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green[50],
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Complete',
+                    style: TextStyle(
+                      color: Colors.green[400],
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 24),
+            _buildOrderField('Customer', order['user_name'] ?? 'Unknown'),
+            _buildOrderField('Service', order['service_name'] ?? 'Unknown'),
+            _buildOrderField('Amount', '₱${order['total_amount'] ?? '0.00'}'),
+            _buildOrderField('Address', order['address'] ?? 'No address'),
+            _buildOrderField('Date', _formatDate(order['created_at'])),
+          ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildOrderField(String label, dynamic value) {
     return Padding(

@@ -170,6 +170,63 @@ def get_user_by_id(user_id):
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
+
+@app.route('/update_password/<int:user_id>', methods=['PUT'])
+def update_password(user_id): 
+    connection = None
+    try:
+        data = request.json
+        connection = create_connection()
+        cursor = connection.cursor(dictionary=True)
+        
+        # First verify user exists
+        cursor.execute("""
+            SELECT id, password, email FROM users 
+            WHERE id = %s
+        """, (user_id,))
+        
+        user = cursor.fetchone()
+        if not user:
+            return jsonify({'message': 'User not found'}), 404
+            
+        # Get the existing salt from current password
+        current_password = user['password']
+        if current_password and current_password.count('$') >= 3:
+            # Extract salt part (everything up to the last $)
+            salt_parts = current_password.rsplit('$', 1)[0]
+            
+            # Create new hashed password using same salt format
+            from werkzeug.security import generate_password_hash
+            new_password = generate_password_hash(
+                data['new_password'],
+                method='pbkdf2:sha256',
+                salt_length=16
+            )
+
+            # Update password
+            cursor.execute("""
+                UPDATE users 
+                SET password = %s 
+                WHERE id = %s
+            """, (new_password, user_id))
+            
+            connection.commit()
+            
+            return jsonify({
+                'message': 'Password updated successfully'
+            }), 200
+        else:
+            return jsonify({'message': 'Invalid password format'}), 400
+        
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        print(f"Error updating password: {e}")
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
             
 # Shop Routes
 @app.route('/register_shop/<int:user_id>', methods=['POST'])
@@ -412,17 +469,21 @@ def update_shop(shop_id):
 @jwt_required
 def create_transaction(user_id):
     try:
-        result = transaction_controller.create_transaction(user_id, request.json)
+        data = request.json.copy()
+        # Convert list of services to comma-separated string
+        services = data.get('services', [])
+        data['service_name'] = ', '.join(services)
+        result = transaction_controller.create_transaction(user_id, data)
         if result['status'] == 201:
-            shop_id = request.json['shop_id']
+            shop_id = data['shop_id']
             transaction_data = {
                 'transaction_id': result['transaction_id'],
                 'user_id': user_id,
                 'shop_id': shop_id,
-                'service_name': request.json.get('service_name'),
-                'items': request.json.get('items', []),
+                'service_name': data.get('service_name'),
+                'items': data.get('items', []),
                 'status': 'Pending',
-                'total_amount': request.json['total_amount'],
+                'total_amount': data['total_amount'],
                 'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             }
             
@@ -1262,6 +1323,164 @@ def get_notifications(user_id):
         if connection and connection.is_connected():
             cursor.close()
             connection.close()
+
+@app.route('/api/notifications/accept/<int:notification_id>', methods=['POST'])
+@jwt_required
+def accept_notification(notification_id):
+    connection = None
+    try:
+        connection = create_connection()
+        cursor = connection.cursor(dictionary=True)
+        # Get the related transaction_id
+        cursor.execute("SELECT transaction_id FROM notifications WHERE id = %s", (notification_id,))
+        notif = cursor.fetchone()
+        if notif and notif['transaction_id']:
+            cursor.execute(
+                "UPDATE transactions SET status = 'processing' WHERE id = %s",
+                (notif['transaction_id'],)
+            )
+        # Update notification status to accepted
+        cursor.execute(
+            "UPDATE notifications SET status = 'accepted', is_read = 1 WHERE id = %s",
+            (notification_id,)
+        )
+        connection.commit()
+        return jsonify({'message': 'Notification accepted'}), 200
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+
+@app.route('/api/notifications/decline/<int:notification_id>', methods=['POST'])
+@jwt_required
+def decline_notification(notification_id):
+    connection = None
+    try:
+        connection = create_connection()
+        cursor = connection.cursor(dictionary=True)
+        # Get the related transaction_id
+        cursor.execute("SELECT transaction_id FROM notifications WHERE id = %s", (notification_id,))
+        notif = cursor.fetchone()
+        if notif and notif['transaction_id']:
+            cursor.execute(
+                "UPDATE transactions SET status = 'cancelled' WHERE id = %s",
+                (notif['transaction_id'],)
+            )
+        # Update notification status to cancelled
+        cursor.execute(
+            "UPDATE notifications SET status = 'cancelled', is_read = 1 WHERE id = %s",
+            (notification_id,)
+        )
+        connection.commit()
+        return jsonify({'message': 'Notification declined'}), 200
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()       
+
+@app.route('/api/shops/<int:shop_id>/services/<service_name>', methods=['GET'])
+@jwt_required
+def get_service_price(shop_id, service_name):
+    connection = None
+    try:
+        connection = create_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT price FROM shop_services
+            WHERE shop_id = %s AND service_name = %s
+        """, (shop_id, service_name))
+        service = cursor.fetchone()
+        if service:
+            return jsonify({'price': float(service['price'])}), 200
+        else:
+            return jsonify({'price': 0}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+
+@app.route('/api/shops/<int:shop_id>/kilo_price', methods=['GET'])
+@jwt_required
+def get_kilo_price(shop_id):
+    kilo = float(request.args.get('kilo', 0))
+    connection = None
+    try:
+        connection = create_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute("""
+            SELECT min_kilo, max_kilo, price_per_kilo
+            FROM kilo_prices
+            WHERE shop_id = %s AND %s BETWEEN min_kilo AND max_kilo
+            LIMIT 1
+        """, (shop_id, kilo))
+        row = cursor.fetchone()
+        if row:
+            return jsonify(row), 200
+        else:
+            return jsonify({'min_kilo': None, 'max_kilo': None, 'price_per_kilo': None}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+
+@app.route('/api/debug/transaction/<int:order_id>', methods=['GET'])
+def debug_transaction(order_id):
+    connection = None
+    try:
+        connection = create_connection()
+        cursor = connection.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT price_per_kilo, kilo_amount, service_fee, subtotal, total_amount FROM transactions WHERE id = %s",
+            (order_id,)
+        )
+        row = cursor.fetchone()
+        if not row:
+            return jsonify({'error': 'Order not found'}), 404
+        return jsonify(row), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()
+
+@app.route('/api/orders/<int:order_id>/update_total', methods=['PUT'])
+def update_total(order_id):
+    connection = None
+    try:
+        data = request.get_json()
+        total_amount = data.get('total_amount')
+        if total_amount is None:
+            return jsonify({'error': 'Missing total_amount'}), 400
+
+        connection = create_connection()
+        cursor = connection.cursor()
+        cursor.execute(
+            "UPDATE transactions SET total_amount = %s WHERE id = %s",
+            (total_amount, order_id)
+        )
+        connection.commit()
+        return jsonify({'message': 'Total amount updated successfully'}), 200
+    except Exception as e:
+        if connection:
+            connection.rollback()
+        return jsonify({'error': str(e)}), 500
+    finally:
+        if connection and connection.is_connected():
+            cursor.close()
+            connection.close()  
 
 if __name__ == '__main__':
     try:
